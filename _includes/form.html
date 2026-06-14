@@ -17,6 +17,21 @@
         <input type="text" id="website" name="website" placeholder="http://www.example.com" style="margin-bottom: 15px; margin-top: 0px;" required>
 
         <div id="location-fields">
+            <label for="org-location-search" class="required"><b>Organization location:</b> start typing your city/town and pick a suggestion (or fill in the fields below)</label>
+            <!-- Keyless autocomplete via Photon (OpenStreetMap); fills the fields below + coords. No API token. -->
+            <div style="position: relative;">
+                <input type="text" id="org-location-search" autocomplete="off" placeholder="Start typing a city, town, or address…" style="margin-bottom: 15px; margin-top: 0px;">
+                <div id="location-suggestions" style="position:absolute; top:100%; left:0; right:0; margin-top:-13px; background:#fff; border:1px solid #ccc; border-top:none; border-radius:0 0 4px 4px; max-height:240px; overflow:auto; display:none; z-index:1000; text-align:left;"></div>
+            </div>
+            <div style="font-size:11px; color:#888; margin-top:-8px; margin-bottom:15px;">Powered by © OpenStreetMap contributors</div>
+
+            <!-- Structured location (auto-filled on select, sent with the form) -->
+            <input type="hidden" name="location" id="location">
+            <input type="hidden" name="location_lat" id="location_lat">
+            <input type="hidden" name="location_lng" id="location_lng">
+            <input type="hidden" name="location_place_id" id="location_place_id">
+            <input type="hidden" name="location_country_code" id="location_country_code">
+
             <label for="country" class="required"><b>Country:</b></label>
             <input type="text" id="country" name="country" placeholder="Enter your country" style="margin-bottom: 15px; margin-top: 0px;" required>
 
@@ -335,6 +350,56 @@
                 cityField.style.display = 'none';
             }
         });
+
+        // --- Keyless location autocomplete via Photon (OpenStreetMap) ---
+        const searchBox = document.getElementById('org-location-search');
+        const suggestBox = document.getElementById('location-suggestions');
+        if (searchBox && suggestBox) {
+            let timer;
+            const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v == null ? '' : v; };
+            const clearStructured = () => ['location','location_lat','location_lng','location_place_id','location_country_code','country','state','city'].forEach((id) => setVal(id, ''));
+            const hide = () => { suggestBox.style.display = 'none'; suggestBox.innerHTML = ''; };
+            const label = (p) => [p.name, p.state, p.country].filter(Boolean).join(', ');
+            const choose = (f) => {
+                const p = f.properties || {};
+                const c = (f.geometry && f.geometry.coordinates) || [];
+                setVal('location_lng', c[0]); setVal('location_lat', c[1]);
+                setVal('location_place_id', (p.osm_type || '') + (p.osm_id || ''));
+                setVal('location_country_code', (p.countrycode || '').toUpperCase());
+                setVal('country', p.country || ''); setVal('state', p.state || ''); setVal('city', p.city || p.name || '');
+                setVal('location', label(p));
+                searchBox.value = label(p);
+                stateField.style.display = 'block';
+                cityField.style.display = 'block';
+                hide();
+            };
+            const render = (features) => {
+                suggestBox.innerHTML = '';
+                if (!features.length) { hide(); return; }
+                features.forEach((f) => {
+                    const d = document.createElement('div');
+                    d.textContent = label(f.properties || {});
+                    d.style.cssText = 'padding:8px 10px; cursor:pointer; border-bottom:1px solid #eee;';
+                    d.addEventListener('mouseover', () => { d.style.background = '#f2f2f2'; });
+                    d.addEventListener('mouseout', () => { d.style.background = '#fff'; });
+                    d.addEventListener('mousedown', (e) => { e.preventDefault(); choose(f); });
+                    suggestBox.appendChild(d);
+                });
+                suggestBox.style.display = 'block';
+            };
+            searchBox.addEventListener('input', () => {
+                const q = searchBox.value.trim();
+                clearTimeout(timer);
+                if (q.length < 3) { hide(); return; }
+                timer = setTimeout(() => {
+                    fetch('https://photon.komoot.io/api/?limit=6&lang=en&q=' + encodeURIComponent(q))
+                        .then((r) => r.json())
+                        .then((j) => render((j && j.features) || []))
+                        .catch(() => hide());
+                }, 300);
+            });
+            document.addEventListener('click', (e) => { if (e.target !== searchBox && !suggestBox.contains(e.target)) hide(); });
+        }
 
         // Update the formData collection to include all location fields
         function updateFormData() {
