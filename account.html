@@ -5094,6 +5094,19 @@ active: account
     // when the account isn't in cachedAccounts (rare - user has access
     // to a license via an org but isn't a member of the funding
     // account at all).
+    // Account "Admin" role detection. The backend sends both the raw members
+    // map (stored role "owner") and an additive members_display map (role
+    // "admin" — the user-facing vocabulary). Prefer members_display, falling
+    // back to the raw map for older API responses. One definition so the
+    // account-admin role is computed identically everywhere.
+    function accountMembersForRole(acc) {
+        return (acc && (acc.members_display || acc.members)) || {};
+    }
+    function isAccountAdminValue(roleValue) {
+        const r = String(roleValue || '').toLowerCase();
+        return r === 'admin' || r === 'owner';
+    }
+
     function getLicenseOwnership(license) {
         const myEmail = ((firebase.auth().currentUser || {}).email || '').toLowerCase();
         if (!license || license.account_id == null) {
@@ -5103,9 +5116,9 @@ active: account
             return String(a.account_id != null ? a.account_id : a.id) === String(license.account_id);
         });
         if (acc) {
-            const members = acc.members || {};
+            const members = accountMembersForRole(acc);
             const ownerEmails = Object.keys(members).filter(function(e) {
-                return String(members[e]).toLowerCase() === 'owner';
+                return isAccountAdminValue(members[e]);
             }).sort();
             const isOwner = ownerEmails.some(function(e) { return e.toLowerCase() === myEmail; });
             return { isOwner: isOwner, ownerEmails: ownerEmails, accountName: acc.name || '' };
@@ -9671,9 +9684,9 @@ active: account
             row.style.display = 'none';
             return;
         }
-        const members = acc.members || {};
+        const members = accountMembersForRole(acc);
         const owners = Object.keys(members).filter(function(email) {
-            return String(members[email]).toLowerCase() === 'owner';
+            return isAccountAdminValue(members[email]);
         });
         if (!owners.length) {
             row.style.display = 'none';
@@ -10161,9 +10174,9 @@ active: account
 
         // Admins of the funding account (account-scoped role).
         const fundingAccount = resolveFundingAccount(org.org_id);
-        const accMembers = (fundingAccount && fundingAccount.members) || {};
+        const accMembers = accountMembersForRole(fundingAccount);
         const billingAdminEmails = Object.keys(accMembers).filter(function(e) {
-            return String(accMembers[e]).toLowerCase() === 'owner';
+            return isAccountAdminValue(accMembers[e]);
         });
         const billingSet = new Set(billingAdminEmails.map(function(e) { return String(e).toLowerCase(); }));
         const accountId = fundingAccount ? (fundingAccount.account_id != null ? fundingAccount.account_id : fundingAccount.id) : null;
