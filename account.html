@@ -6259,12 +6259,45 @@ active: account
         btn.hidden = true;
     });
 
+    // The account id whose devices we fetch. list_account_devices is
+    // account-scoped, but the Devices/License views are *org*-scoped, and the
+    // account that funds an org isn't necessarily the one selected in the
+    // account-scope picker. So in org scope we derive the account id from the
+    // active org's own licenses (each cachedLicenseOverview row carries
+    // account_id), falling back to the org→account map, and only then to the
+    // stored picker value. This also fixes the never-settling Devices spinner
+    // on a direct org deep-link (#org=…&view=devices): the page-title layout
+    // writes ee-active-account only in account scope, so in org scope the
+    // stored value can be absent and the old code would poll for ~6s and give
+    // up with the spinner still up.
+    function resolveDevicesAccountId() {
+        if (activeScope === 'org') {
+            const source = getActiveSource();
+            if (source) {
+                const licIds = ((source.org && source.org.licenses) || [])
+                    .map(function(l) { return l && l.license_id; })
+                    .filter(Boolean);
+                for (let i = 0; i < licIds.length; i++) {
+                    const ov = (cachedLicenseOverview || []).find(function(l) {
+                        return l && l.license_id === licIds[i] && l.account_id != null;
+                    });
+                    if (ov) return String(ov.account_id);
+                }
+                const funding = resolveFundingAccount(source.id);
+                if (funding) {
+                    return String(funding.account_id != null ? funding.account_id : funding.id);
+                }
+            }
+        }
+        return getActiveAccountIdFromStorage();
+    }
+
     // Fetch the device list for whichever account is currently active in
     // the page-title dropdown, then re-render the Devices view if we're
     // currently looking at it. Caller is renderActiveDevices + the
     // accountScopeChanged listener; both paths need the same plumbing.
     async function fetchAccountDevicesForActiveAccount() {
-        const accountId = getActiveAccountIdFromStorage();
+        const accountId = resolveDevicesAccountId();
         if (!accountId) {
             // Active account id not written yet. Settle the empty state (a
             // no-op while accounts exist) but DON'T re-render — re-rendering
@@ -9961,7 +9994,11 @@ active: account
     // accounts whose device docs predate organization_id stamping. Shared by
     // the Devices view and the License view.
     function filterDevicesForOrg(source) {
-        const orgId = source && source.org_id;
+        // Source model keys the org id as `id` (the full org doc lives under
+        // `source.org`); there is no `source.org_id`. Reading the wrong field
+        // left this primary organization_id filter permanently empty, so every
+        // org silently fell through to the email/token fallbacks below.
+        const orgId = source && (source.id || (source.org && source.org.org_id));
         let filtered = orgId
             ? cachedAccountDevices.filter(function(d) {
                 return String(d.organization_id) === String(orgId);
@@ -10051,7 +10088,7 @@ active: account
 
         console.info('[devices] render', {
             org: source && source.name,
-            orgId: source && source.org_id,
+            orgId: source && source.id,
             cachedDeviceCount: cachedAccountDevices.length,
             filteredCount: filtered.length
         });
