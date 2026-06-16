@@ -131,12 +131,26 @@ permalink: /free-trial/
         height: 56px;
         box-sizing: border-box;
         min-width: 220px;
+        /* Clear the global form-input bottom margin so the input's margin-box
+           matches the button and they stay flush in the flex row. */
+        margin: 0;
     }
 
     .trial-email-form .trial-button {
         min-width: unset;
         white-space: nowrap;
         cursor: pointer;
+        /* Match the input's fixed height so they line up in the flex row.
+           Zero the vertical box model and center the label inside that height. */
+        margin-top: 0;
+        margin-bottom: 0;
+        height: 56px;
+        padding-top: 0;
+        padding-bottom: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
     }
 
     /* Secondary email-capture block (below primary form-request button) */
@@ -177,6 +191,20 @@ permalink: /free-trial/
         background-color: #1e90ff;
         border-color: #1e90ff;
         color: #fff;
+    }
+
+    /* In the email-alt flex row, override the stacked-link margin/padding/display
+       from .trial-button-secondary so it picks up the .trial-email-form .trial-button
+       sizing above and lines up with the input. Higher specificity than the rule above. */
+    .trial-email-alt .trial-email-form .trial-button-secondary {
+        margin-top: 0;
+        margin-bottom: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
     }
 
     @keyframes trial-email-spinner {
@@ -605,6 +633,7 @@ permalink: /free-trial/
 </style>
 
 <div class="content">
+
     <!-- Trial CTA Section at the Top -->
     <div class="trial-cta-top">
         <div>
