@@ -676,7 +676,7 @@
                             b.classList.toggle('is-on', b.getAttribute('data-view-mode') === (customer ? 'customer' : 'dev'));
                         });
                     }
-                    var isOwner = !!(dash && (dash.accounts || []).some(function(a) { return !!a.is_owner; }));
+                    var isOwner = !!(dash && (dash.accounts || []).some(function(a) { return !!(a.is_admin || a.is_owner); }));
                     applyDropdownCustomerGating(customer, isOwner);
                 }
                 var cached = window.eeDashboard && window.eeDashboard.read(user.uid);

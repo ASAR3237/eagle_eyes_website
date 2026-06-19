@@ -383,7 +383,7 @@ layout: main
 
         // The Billing group is Admin-only (account owners). A team member who
         // can see an account but doesn't own it gets no Billing group.
-        var isAccountAdmin = accounts.some(function(a) { return !!a.is_owner; });
+        var isAccountAdmin = accounts.some(function(a) { return !!(a.is_admin || a.is_owner); });
 
         // Resolve dev vs customer view (this also sets the .ee-view-customer
         // class on <html> + persists the pre-paint hint).

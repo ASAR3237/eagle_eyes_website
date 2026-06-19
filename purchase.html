@@ -751,7 +751,7 @@ active: purchase
     }
     function activeAccountIsOwner() {
         var acc = activeAccount();
-        return !!(acc && acc.is_owner);
+        return !!(acc && (acc.is_admin || acc.is_owner));
     }
 
     function licensesForActiveAccount() {
@@ -1201,7 +1201,7 @@ active: purchase
             matches.push({ license: l, account: acc });
         });
         if (matches.length === 0) return { kind: 'none', matches: [] };
-        var ownerMatches = matches.filter(function(m) { return m.account && m.account.is_owner; });
+        var ownerMatches = matches.filter(function(m) { return m.account && (m.account.is_admin || m.account.is_owner); });
         if (ownerMatches.length === 1) return { kind: 'owner', matches: ownerMatches };
         if (ownerMatches.length > 1) return { kind: 'multi', matches: ownerMatches };
         return { kind: 'member', matches: matches };
@@ -2148,7 +2148,7 @@ active: purchase
     function applyOwnerVisibility() {
         var acc = activeAccount();
         var hasAccount = !!acc;
-        var isOwner = !!(acc && acc.is_owner);
+        var isOwner = !!(acc && (acc.is_admin || acc.is_owner));
         if (!hasAccount) {
             $('purchaseContent').style.display = 'none';
             $('purchaseNonOwner').style.display = 'none';

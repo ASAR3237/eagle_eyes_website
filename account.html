@@ -9314,7 +9314,7 @@ active: account
     // The account-scope (Billing) views are Admin-only. A non-Admin viewer is
     // anyone who doesn't own any account they can see.
     function viewerIsAccountAdmin() {
-        return (cachedAccounts || []).some(function(a) { return !!a.is_owner; });
+        return (cachedAccounts || []).some(function(a) { return !!(a.is_admin || a.is_owner); });
     }
     // Send a non-Admin to their team's People view instead of a Billing view.
     // Returns true if it redirected (caller should stop).
@@ -9562,7 +9562,7 @@ active: account
             // Two-role model: "Admin" = owner of the account that funds this
             // org; everyone else on the team is a "Member".
             const fundAcc = resolveFundingAccount((source.org && source.org.org_id) || source.id);
-            const youAreAdmin = !!(fundAcc && fundAcc.is_owner);
+            const youAreAdmin = !!(fundAcc && (fundAcc.is_admin || fundAcc.is_owner));
             const roleTopic = youAreAdmin ? 'role-admin' : 'role-member';
             const roleLine = youAreAdmin
                 ? 'You are an <strong>Admin</strong> on this team'
@@ -9703,7 +9703,7 @@ active: account
                 return String(id) === String(activeId);
             }) || cachedAccounts[0];
             if (acc) {
-                isOwner = !!acc.is_owner;
+                isOwner = !!(acc.is_admin || acc.is_owner);
                 // Members reach a funding account via org membership
                 // (via: 'org_membership'); the backend lets them top up.
                 canTopUpCredits = isOwner || acc.via === 'org_membership';
@@ -10236,7 +10236,7 @@ active: account
 
         // Viewer capabilities. Two-role model: Admins (account owners of the
         // funding account) manage the team.
-        const callerIsAccountAdmin = !!(fundingAccount && fundingAccount.is_owner);
+        const callerIsAccountAdmin = !!(fundingAccount && (fundingAccount.is_admin || fundingAccount.is_owner));
         const callerCanManageTeam = callerIsAccountAdmin;
 
         // Guard: never remove/demote the last Admin (account owner).
