@@ -9341,10 +9341,23 @@ active: account
         activeDevicesMode = canonicalizeDevicesMode(params.devices);
         devicesScope = canonicalizeDevicesScope(params.devices_scope);
 
-        // Customer view: collapse everything to the account-scope Licenses &
-        // Credits view. Org views, #org=… deep links, and Account access are
-        // all unreachable here.
+        // Customer view exposes the org People + Devices + Configurations
+        // pages plus the account-scope Licenses & Credits overview. Any other
+        // view (Dashboard, License, Account access) collapses to overview.
         if (customerViewActive()) {
+            const coView = (params.view && isOrgView(params.view))
+                ? canonicalizeOrgView(params.view) : null;
+            if (coView === 'people' || coView === 'devices' || coView === 'configurations') {
+                const coOrg = (params.org && orgIds.indexOf(params.org) !== -1)
+                    ? params.org : pickDefaultOrgId();
+                if (coOrg) {
+                    activeScope = 'org';
+                    activeSourceId = coOrg;
+                    activeView = coView;
+                    writeHashOrg(coOrg, coView, true, getDevicesExtrasForHash());
+                    return;
+                }
+            }
             activeScope = 'account';
             activeSourceId = null;
             activeView = 'overview';
@@ -9394,21 +9407,13 @@ active: account
                 writeHashAccount('overview', true);
             }
         } else {
-            // No hash → default landing is the org Dashboard (everyone). Falls
-            // back to the account overview only when the user has no orgs.
-            const def = pickDefaultOrgId();
-            if (def) {
-                activeScope = 'org';
-                activeSourceId = def;
-                activeView = 'dashboard';
-                writeHashOrg(def, 'dashboard', true, getDevicesExtrasForHash());
-            } else {
-                if (redirectNonAdminToOrg()) return;
-                activeScope = 'account';
-                activeSourceId = null;
-                activeView = 'overview';
-                writeHashAccount('overview', true);
-            }
+            // No hash → default landing is the account-scope Licenses & Credits
+            // overview, for everyone (customers are also sent here by the
+            // customer-view block above).
+            activeScope = 'account';
+            activeSourceId = null;
+            activeView = 'overview';
+            writeHashAccount('overview', true);
         }
     }
 

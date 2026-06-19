@@ -197,6 +197,10 @@ heading: Profile
         .profile-grid { grid-template-columns: 1fr; gap: 16px; }
         .profile-card { padding: 20px; }
     }
+
+    /* Hide the Notifications card in customer view for now (preferences not
+       fully wired up). Staff/dev view still sees it. */
+    html.ee-view-customer #profileNotificationsCard { display: none; }
 </style>
 
 <div id="profileContent" style="display: none;">
@@ -242,8 +246,9 @@ heading: Profile
         </div>
     </section>
 
-    <!-- Notifications -->
-    <section class="profile-card">
+    <!-- Notifications. Hidden in customer view for now (not fully wired up);
+         see the .ee-view-customer rule in the <style> block above. -->
+    <section class="profile-card" id="profileNotificationsCard">
         <h2>Notifications</h2>
         <div class="profile-toggle">
             <div class="profile-toggle-text">

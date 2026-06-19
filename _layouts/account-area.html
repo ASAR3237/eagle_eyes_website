@@ -86,17 +86,23 @@ layout: main
         border-radius: 6px;
     }
 
-    /* Customer view: flatten the Billing group so its items read as top-level
-       siblings of Profile / Downloads / Support — drop the "Billing" header,
-       the indent, the left rule, and match the top-level link sizing. (The
-       Organization group + owner-gated items are hidden via head.html.) */
-    html.ee-view-customer #sidebarAccountSection { margin: 4px 0; }
-    html.ee-view-customer #sidebarAccountSection > .account-scope-label { display: none; }
-    html.ee-view-customer #sidebarAccountSection .account-scope-sublist {
+    /* Customer view: flatten the Billing + Organization groups so their items
+       read as top-level siblings of Profile / Downloads / Support — drop the
+       group header, the indent, the left rule, and match the top-level link
+       sizing. (In customer view the Organization group shows People + Devices
+       + Configurations; the other org items + owner-gated billing items are
+       hidden via head.html.) */
+    html.ee-view-customer #sidebarAccountSection,
+    html.ee-view-customer #sidebarOrgSection { margin: 4px 0; }
+    html.ee-view-customer #sidebarAccountSection > .account-scope-label,
+    html.ee-view-customer #sidebarOrgSection > .account-scope-label { display: none; }
+    html.ee-view-customer #sidebarAccountSection .account-scope-sublist,
+    html.ee-view-customer #sidebarOrgSection .account-scope-sublist {
         margin-left: 0;
         border-left: none;
     }
-    html.ee-view-customer #sidebarAccountSection .account-scope-sublist .account-sidebar-link {
+    html.ee-view-customer #sidebarAccountSection .account-scope-sublist .account-sidebar-link,
+    html.ee-view-customer #sidebarOrgSection .account-scope-sublist .account-sidebar-link {
         padding: 10px 14px;
         font-size: 14px;
         font-weight: 500;
@@ -428,7 +434,11 @@ layout: main
             }
         } catch (e) { /* localStorage disabled */ }
 
-        if (!customer && orgs.length > 0) {
+        // Rewrite org sub-item hrefs in BOTH dev and customer view — customer
+        // view now exposes People / Devices / Configurations, so their links
+        // must carry the active org id (otherwise they stay href="#" and a
+        // click just resets to the overview).
+        if (orgs.length > 0) {
             var activeOrgId = resolveActiveOrgId(user, orgs, licenses);
             if (activeOrgId) rewriteOrgHrefs(activeOrgId);
         }
