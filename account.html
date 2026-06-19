@@ -850,19 +850,21 @@ active: account
         list-style: none; padding: 0; margin: 0 0 8px 0;
         display: flex; flex-direction: column; gap: 6px;
     }
-    .contact-owners-list li a {
-        display: block;
+    .contact-owners-list li {
         padding: 8px 12px;
         border: 1px solid #cfd6dc;
         border-radius: 7px;
         font-size: 13px;
-        color: #1077dc;
-        text-decoration: none;
+        color: #1a1a2e;
         word-break: break-all;
         background: #fff;
-        transition: background-color 0.12s, border-color 0.12s;
+        user-select: all;
     }
-    .contact-owners-list li a:hover { background: #f3f9ff; border-color: #1e90ff; }
+    .contact-owners-section-title {
+        font-size: 12px; font-weight: 700; color: #1a1a2e;
+        text-transform: uppercase; letter-spacing: 0.03em;
+        margin: 18px 0 8px 0;
+    }
     .contact-owners-footer {
         margin-top: 14px;
         font-size: 11px;
@@ -919,17 +921,25 @@ active: account
         margin-top: 10px;
     }
     .plan-primary-card .plan-actions .plan-renew-link { margin-top: 0; }
-    /* "Expiring soon" corner tag. Top-right of the card so the urgency
-       is visible even when scanning a list of licenses. Used for both
-       paid licenses (within 90 days of expiry) and trial licenses
-       (within 7 days). Positioned to clear the eye-toggle button which
-       sits at right: 12px. For trials specifically, this is also the
-       only at-a-glance signal because trials are excluded from the
-       top-of-section renewal notice. */
+    /* "Expiring soon" tag. Sits inline next to the license name — the
+       card's right column now holds the Renew / Add-devices buttons, so a
+       top-right corner tag would overlap them. Used for both paid licenses
+       (within 90 days of expiry) and trial licenses (within 7 days). For
+       trials this is also the only at-a-glance signal, since trials are
+       excluded from the top-of-section renewal notice. */
+    .plan-primary-card .plan-title-row {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 4px;
+    }
+    .plan-primary-card .plan-title-row h3 {
+        margin: 0;
+        padding-right: 0;
+    }
     .plan-primary-card .plan-corner-tag-expiring {
-        position: absolute;
-        top: 14px;
-        right: 50px;
+        display: inline-block;
         background: #fff3cd;
         color: #856404;
         font-size: 11px;
@@ -938,6 +948,7 @@ active: account
         text-transform: uppercase;
         padding: 3px 10px;
         border-radius: 999px;
+        white-space: nowrap;
     }
 
     /* Top-of-section renewal notice. Always rendered for the soonest-
@@ -1191,6 +1202,17 @@ active: account
         line-height: 1.5;
         color: #2a3a52;
         margin: 14px 0 18px 0;
+    }
+    /* Top-of-page explainer callout (e.g. "what is a configuration"). */
+    .account-intro-callout {
+        background: #f0f7ff;
+        border: 1px solid #c4ddf7;
+        border-radius: 8px;
+        padding: 14px 16px;
+        font-size: 14px;
+        line-height: 1.6;
+        color: #2a3a52;
+        margin: 0 0 20px 0;
     }
     .account-section-note strong { color: #1a1a2e; }
     .account-section-note a { color: #1e90ff; }
@@ -2359,6 +2381,13 @@ active: account
         margin-top: 4px;
         flex-wrap: wrap;
     }
+    /* Account an Admin administers, shown next to their Admin badge. */
+    .people-admin-of {
+        align-self: center;
+        font-size: 12px;
+        color: #6c757d;
+    }
+    .people-admin-of::before { content: "·"; margin-right: 6px; color: #b9c0c7; }
     /* Note under an Admin who isn't a member of the current org (they own the
        funding account, not this team). */
     .people-row-note {
@@ -3384,9 +3413,8 @@ active: account
 <div id="signinButtonSection" class="account-signin-gate">
     <div class="account-signin-card">
         <h1 class="account-signin-title">Sign in to your account</h1>
-        <p class="account-signin-sub">Manage your Eagle Eyes licenses, devices, organizations and billing — all in one place.</p>
+        <p class="account-signin-sub">Manage your team and Eagle Eyes license and configurations, all in one place.</p>
         <button id="accountSignInButton" class="button rounded account-signin-btn" onclick="toggleSignIn()">Sign In or Create Account</button>
-        <p class="account-signin-help">New to Eagle Eyes? You can create an account from the same screen.</p>
     </div>
 </div>
 
@@ -3610,7 +3638,10 @@ active: account
                  no-op (its #plansExpiryNotice target no longer exists). -->
             <div id="plansSpinner" class="loading-spinner"><div class="spinner"></div></div>
             <div id="plansError" class="empty-card" style="display: none; border-color: #ffcccc; background-color: #fff8f8; color: #cc0000;">Error loading licenses. Please try again later.</div>
-            <div id="plansEmpty" class="empty-card" style="display: none;">No active licenses.<a class="owner-only-cta" id="plansEmptyBuyCta" href="{{ '/account/purchase/' | relative_url }}" style="display: none; margin-left: 6px;">Buy one &rarr;</a></div>
+            <div id="plansEmpty" class="empty-card" style="display: none;">
+                <div style="font-style: normal; margin-bottom: 14px;">No active licenses.</div>
+                <a class="owner-only-cta org-btn primary" id="plansEmptyBuyCta" href="{{ '/account/purchase/' | relative_url }}" style="display: none; text-decoration: none;">Purchase a new license</a>
+            </div>
             <div id="plansPrimary"></div>
             <a id="plansExpandLink" class="plan-expand" href="#" style="display: none;">Show other active licenses</a>
             <div id="plansOtherList" class="plan-other-list" style="display: none;"></div>
@@ -3671,6 +3702,12 @@ active: account
                 <h2 class="account-section-title">Configurations</h2>
                 <p class="account-section-hint">Saved configurations for this organization. Click one to edit.</p>
             </header>
+            <div class="account-intro-callout">
+                A configuration is a saved bundle of your team's Eagle Eyes settings, such as
+                CalTopo map connections, coordinate systems, the default map, and procedures.
+                Save one here and it syncs to every device and teammate you share it with, so
+                everyone works from the same setup.
+            </div>
             <div id="configurationsContent"></div>
         </section>
 
@@ -5441,10 +5478,12 @@ active: account
         // action buttons stacked on the right. Foldout details + the
         // bottom chevron toggle span the full card width below.
         card.innerHTML =
-            expiringCornerTagHtml
-            + '<div class="plan-card-main">'
+            '<div class="plan-card-main">'
             +   '<div class="plan-card-info">'
-            +     '<h3>' + planEscape(license.license_name || 'Eagle Eyes License') + '</h3>'
+            +     '<div class="plan-title-row">'
+            +       '<h3>' + planEscape(license.license_name || 'Eagle Eyes License') + '</h3>'
+            +       expiringCornerTagHtml
+            +     '</div>'
             +     '<div class="plan-meta">' + metaHtml + '</div>'
             +     relationshipHtml
             +   '</div>'
@@ -5772,49 +5811,19 @@ active: account
     // for the chosen action.
     function showContactOwnersModal(opts) {
         const action = opts.action || 'renew';
-        const ownerEmails = (opts.ownerEmails || []).filter(Boolean);
+        const adminEmails = (opts.ownerEmails || []).filter(Boolean);
         const accountName = opts.accountName || '';
-        const licenseName = opts.licenseName || 'this license';
-        const licenseId = opts.licenseId || '';
 
-        const actionVerb = action === 'add_devices'
-            ? 'add devices to'
-            : 'renew';
-        const subject = action === 'add_devices'
-            ? 'Add devices to ' + licenseName
-            : 'Renew ' + licenseName;
-        const bodyLines = action === 'add_devices'
-            ? [
-                'Hi,', '',
-                'Could you add some devices to our Eagle Eyes license? Details:',
-                '  License: ' + licenseName + (licenseId ? ' (' + licenseId + ')' : ''),
-                '  Number of devices to add: ',
-                '',
-                'Thanks!'
-              ]
-            : [
-                'Hi,', '',
-                'Could you renew our Eagle Eyes license? Details:',
-                '  License: ' + licenseName + (licenseId ? ' (' + licenseId + ')' : ''),
-                '  Renewal should start when the current license expires',
-                '  so there is no service interruption.',
-                '',
-                'Thanks!'
-              ];
-        function mailtoFor(email) {
-            return 'mailto:' + email
-                + '?subject=' + encodeURIComponent(subject)
-                + '&body=' + encodeURIComponent(bodyLines.join('\n'));
-        }
-
-        const accountSpan = accountName
+        const actionVerb = action === 'add_devices' ? 'add devices to' : 'renew';
+        const accountPhrase = accountName
             ? 'the <strong>' + planEscape(accountName) + '</strong> account'
             : 'the account that funds this license';
-        const ownersHtml = ownerEmails.length
-            ? ownerEmails.map(function(e) {
-                return '<li><a href="' + planEscape(mailtoFor(e)) + '">' + planEscape(e) + '</a></li>';
-            }).join('')
-            : '<li>(No owners listed - contact <a href="mailto:info@eagleeyessearch.com">info@eagleeyessearch.com</a>.)</li>';
+
+        const adminsListHtml = adminEmails.length
+            ? adminEmails.map(function(e) { return '<li>' + planEscape(e) + '</li>'; }).join('')
+            : '<li>No Admins listed — contact info@eagleeyessearch.com.</li>';
+
+        const title = action === 'add_devices' ? 'Adding devices is an Admin action' : 'Renewing is an Admin action';
 
         const overlay = document.createElement('div');
         overlay.className = 'contact-owners-modal';
@@ -5824,15 +5833,15 @@ active: account
             '<div class="contact-owners-backdrop"></div>'
             + '<div class="contact-owners-dialog">'
             +   '<button type="button" class="contact-owners-close" aria-label="Close">&times;</button>'
-            +   '<h3 class="contact-owners-title">Owner action required</h3>'
+            +   '<h3 class="contact-owners-title">' + title + '</h3>'
             +   '<p class="contact-owners-body">'
-            +     'To ' + actionVerb + ' this license you need to be an owner of '
-            +     accountSpan + '. Your organization has access to this license but doesn\'t pay for it, '
-            +     'so changes go through one of the owners.'
+            +     'Renewals and device purchases for ' + accountPhrase + ' are made by an '
+            +     '<strong>Admin</strong>. You can use this license through your team, but you\'re '
+            +     'not an Admin. Reach out to one of the Admins below to ' + actionVerb
+            +     ' it for you — or to ask them to make you an Admin so you can handle purchases yourself.'
             +   '</p>'
-            +   '<p class="contact-owners-body">Pick an owner to email:</p>'
-            +   '<ul class="contact-owners-list">' + ownersHtml + '</ul>'
-            +   '<p class="contact-owners-footer">Clicking opens your email client with the request pre-filled. They can renew or add devices on the account\'s behalf.</p>'
+            +   '<div class="contact-owners-section-title">Admins</div>'
+            +   '<ul class="contact-owners-list">' + adminsListHtml + '</ul>'
             + '</div>';
 
         function close() {
@@ -5870,8 +5879,8 @@ active: account
     // Roles & permissions, shown from the "?" next to "You are a <role> on this
     // team" (same content for Managers and Members).
     const ROLES_HELP_BODY = [
-        '<strong>Admin</strong> — runs the account that funds the team:'
-            + '<ul><li>Manage every team the account funds: add and remove Members</li>'
+        '<strong>Admin</strong>: runs the Eagle Eyes account and can make purchases:'
+            + '<ul><li>Can do anything a Manager can do</li>'
             + '<li>Assign Managers and other Admins</li>'
             + '<li>Purchase &amp; renew licenses, streaming credits, Unlimited</li>'
             + '<li>See billing history and invoices</li></ul>',
@@ -10809,17 +10818,21 @@ active: account
     }
 
     function dev2Card(d) {
-        const name = d.display_name || machineIdToAliasDisplay(d.machine_id || '') || 'Device';
         const alias = machineIdToAliasDisplay(d.machine_id || '');
+        const givenName = (d.display_name && String(d.display_name).trim()) || '';
         const drone = dev2DroneLine(d);
         const cfg = dev2ConfigName(d);
-        const aliasPill = (alias && alias.toLowerCase() !== String(name).toLowerCase())
+        // The alias is ALWAYS shown as a pill. With a given name, show the name
+        // (bold) + the alias pill beside it; without one, the pill stands alone
+        // as the device's identifier (never the bare alias as plain text).
+        const aliasPill = alias
             ? '<span class="device-card-alias has-tip has-tip--left" tabindex="0" data-tip="Auto-assigned memorable name for this device.">' + escapeHtmlOrg(alias) + '</span>'
             : '';
+        const nameText = givenName ? escapeHtmlOrg(givenName) : (alias ? '' : 'Device');
         return '<div class="dev2-card" data-machine="' + escapeHtmlAttr(d.machine_id || '') + '">'
             + '<div class="dev2-head">'
             +   '<span class="dev2-icon">' + DEVICE2_GLYPH + '</span>'
-            +   '<div class="dev2-id"><div class="dev2-name">' + escapeHtmlOrg(name) + aliasPill + '</div>'
+            +   '<div class="dev2-id"><div class="dev2-name">' + nameText + aliasPill + '</div>'
             +     (drone ? '<div class="dev2-drone">' + escapeHtmlOrg(drone) + '</div>' : '')
             +   '</div>'
             +   '<button type="button" class="dev2-info-btn" data-act="info" aria-label="Device details">' + DEV2_INFO_GLYPH + '</button>'
@@ -11165,16 +11178,20 @@ active: account
         let outsideNote = '';
         if (adminNotInOrg) {
             const orgNm = ctx.orgName ? escapeHtmlOrg(ctx.orgName) : 'this organization';
-            const acctNm = ctx.accountName ? escapeHtmlOrg(ctx.accountName) : 'this account';
             outsideNote = '<div class="people-row-note">Not a member of <strong>' + orgNm
-                + '</strong> — manages the <strong>' + acctNm + '</strong> account that funds it.</div>';
+                + '</strong> — manages the account that funds it.</div>';
         }
+
+        // For an Admin, show which account they administer next to the badge.
+        const adminOfHtml = (d.isBillingAdmin && ctx.accountName)
+            ? '<span class="people-admin-of">' + escapeHtmlOrg(ctx.accountName) + '</span>'
+            : '';
 
         left.innerHTML =
             '<span class="people-avatar" style="background:' + avatarColor + '">' + escapeHtmlOrg(initial) + '</span>' +
             '<div class="people-row-body">' +
                 idHtml +
-                '<div class="people-row-meta">' + badge +
+                '<div class="people-row-meta">' + badge + adminOfHtml +
                     (d.isYou ? '<span class="people-you-pill">you</span>' : '') +
                 '</div>' +
                 outsideNote +
