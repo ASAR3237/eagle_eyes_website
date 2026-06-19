@@ -5877,25 +5877,23 @@ active: account
     // carried via data-help-topic so we can serve different copy from
     // a single click handler.
     // Roles & permissions, shown from the "?" next to "You are a <role> on this
-    // team" (same content for Managers and Members).
+    // team". Two roles: Admin (account owner) and Member.
     const ROLES_HELP_BODY = [
-        '<strong>Admin</strong>: runs the Eagle Eyes account and can make purchases:'
-            + '<ul><li>Can do anything a Manager can do</li>'
-            + '<li>Assign Managers and other Admins</li>'
-            + '<li>Purchase &amp; renew licenses, streaming credits, Unlimited</li>'
-            + '<li>See billing history and invoices</li></ul>',
-        '<strong>Manager</strong> — helps run the team:'
-            + '<ul><li>Add and remove Members</li>'
-            + '<li>Promote and demote Managers</li>'
-            + '<li>Everything a Member can do</li>'
-            + '<li>No billing access (unless also an Admin)</li></ul>',
+        '<strong>Admin</strong> — runs the Eagle Eyes account and the team:'
+            + '<ul><li>Add and remove team members</li>'
+            + '<li>Rename the team and manage its domains</li>'
+            + '<li>Assign and unassign other Admins</li>'
+            + '<li>Purchase &amp; renew licenses, device slots, streaming credits</li>'
+            + '<li>See billing history and invoices</li>'
+            + '<li>Everything a Member can do</li></ul>',
         '<strong>Member</strong>:'
             + '<ul><li>Activate licenses and run the apps</li>'
             + '<li>Manage devices (disconnect / transfer)</li>'
-            + '<li>Edit the team’s shared configurations</li></ul>'
+            + '<li>Create, edit, and share team configurations</li>'
+            + '<li>Top up livestreaming credits</li></ul>'
     ];
     const PLAN_DETAIL_HELP_TOPICS = {
-        'role-manager': { title: 'Roles and permissions', body: ROLES_HELP_BODY },
+        'role-admin': { title: 'Roles and permissions', body: ROLES_HELP_BODY },
         'role-member': { title: 'Roles and permissions', body: ROLES_HELP_BODY },
         'device-releases': {
             title: 'Device transfers',
@@ -9561,9 +9559,13 @@ active: account
         if (viewHeader && viewHeaderOrg) {
             // Role line + a "?" that opens the matching role-permissions help
             // (same modal pattern as the device-transfers "?").
-            const roleTopic = source.is_admin ? 'role-manager' : 'role-member';
-            const roleLine = source.is_admin
-                ? 'You are a <strong>Manager</strong> on this team'
+            // Two-role model: "Admin" = owner of the account that funds this
+            // org; everyone else on the team is a "Member".
+            const fundAcc = resolveFundingAccount((source.org && source.org.org_id) || source.id);
+            const youAreAdmin = !!(fundAcc && fundAcc.is_owner);
+            const roleTopic = youAreAdmin ? 'role-admin' : 'role-member';
+            const roleLine = youAreAdmin
+                ? 'You are an <strong>Admin</strong> on this team'
                 : 'You are a <strong>Member</strong> of this team';
             viewHeaderOrg.innerHTML = roleLine
                 + ' <button type="button" class="plan-detail-help" data-help-topic="' + roleTopic + '"'
@@ -10154,15 +10156,6 @@ active: account
         else if (activeView === 'license') renderActiveLicense(source);
     }
 
-    // FLAG — flip to true once backend change B1 ships (account owners may
-    // manage the orgs their account funds; see ROLES_AND_PEOPLE_REVAMP.md).
-    // Until then, team-management controls (add/remove member, promote/demote
-    // Manager) show only to org Managers, so an Admin who isn't also a Manager
-    // doesn't get buttons that would 403. Admin-management controls (Make /
-    // Remove Admin) use the account-owner endpoints, which already work, so
-    // they are NOT gated by this flag.
-    const ACCOUNT_ADMIN_CAN_MANAGE_TEAM = false;
-
     // The billing account that funds an org = the account whose
     // organization_ids includes this org. One account can fund several orgs.
     function resolveFundingAccount(orgId) {
@@ -10178,7 +10171,7 @@ active: account
     }
 
     // People page = one roster of everyone who can touch this team: the team
-    // (Members + Managers) plus the Admins of the account that funds it.
+    // (Members) plus the Admins of the account that funds it.
     // Visible to every team member; edit controls appear only where the
     // viewer has the right role. Someone who is both an Admin and on the team
     // shows one row with both badges.
@@ -10230,9 +10223,6 @@ active: account
         })();
 
         const memberEmails = Array.isArray(org.emails) ? org.emails : [];
-        const adminEmails = Array.isArray(org.admin_emails) ? org.admin_emails : [];
-        const managerSet = new Set(adminEmails.map(function(e) { return String(e).toLowerCase(); }));
-        const memberSet = new Set(memberEmails.map(function(e) { return String(e).toLowerCase(); }));
 
         // Admins of the funding account (account-scoped role).
         const fundingAccount = resolveFundingAccount(org.org_id);
@@ -10244,15 +10234,13 @@ active: account
         const accountId = fundingAccount ? (fundingAccount.account_id != null ? fundingAccount.account_id : fundingAccount.id) : null;
         const accountName = fundingAccount ? (fundingAccount.name || '') : '';
 
-        // Viewer capabilities.
-        const callerIsManager = !!source.is_admin;
+        // Viewer capabilities. Two-role model: Admins (account owners of the
+        // funding account) manage the team.
         const callerIsAccountAdmin = !!(fundingAccount && fundingAccount.is_owner);
-        const callerCanManageTeam = callerIsManager
-            || (callerIsAccountAdmin && ACCOUNT_ADMIN_CAN_MANAGE_TEAM);
+        const callerCanManageTeam = callerIsAccountAdmin;
 
-        // Guards.
-        const canDemoteManager = adminEmails.length > 1;   // last-Manager guard
-        const canRemoveAdmin = billingAdminEmails.length > 1; // last-Admin guard
+        // Guard: never remove/demote the last Admin (account owner).
+        const canRemoveAdmin = billingAdminEmails.length > 1;
 
         // Build one descriptor per distinct email (union of team + Admins).
         const byEmail = {};
@@ -10262,13 +10250,13 @@ active: account
             return byEmail[k];
         }
         memberEmails.forEach(function(e) {
-            const d = ensure(e);
-            d.teamRole = managerSet.has(d.key) ? 'manager' : 'member';
+            // teamRole marks org membership; "Admin" is account-level (below).
+            ensure(e).teamRole = 'member';
         });
         billingAdminEmails.forEach(function(e) { ensure(e).isBillingAdmin = true; });
 
-        // Rank: Admin (0) → Manager (1) → Member (2); you first within a rank.
-        function rankOf(d) { return d.isBillingAdmin ? 0 : (d.teamRole === 'manager' ? 1 : 2); }
+        // Rank: Admin (0) → Member (1); you first within a rank.
+        function rankOf(d) { return d.isBillingAdmin ? 0 : 1; }
         const rows = Object.keys(byEmail).map(function(k) { return byEmail[k]; });
         rows.sort(function(a, b) {
             const ra = rankOf(a), rb = rankOf(b);
@@ -10280,7 +10268,7 @@ active: account
 
         container.innerHTML = '';
 
-        // Header — org name + counts + Rename (Rename only for managers).
+        // Header — org name + counts + Rename (Rename only for Admins).
         const header = document.createElement('div');
         header.className = 'members-header';
         header.innerHTML =
@@ -10300,7 +10288,6 @@ active: account
             currentUserEmail: currentUserEmail,
             callerCanManageTeam: callerCanManageTeam,
             callerIsAccountAdmin: callerIsAccountAdmin,
-            canDemoteManager: canDemoteManager,
             canRemoveAdmin: canRemoveAdmin
         };
 
@@ -10312,9 +10299,9 @@ active: account
         });
         container.appendChild(list);
 
-        // Add-member card — Managers + Admins. The role dropdown defaults to
-        // Member; Managers can also add as Manager; Admins can also add as
-        // Admin. orgAddMember chains the promote / make-admin calls.
+        // Add-member card — Admins only. People join as a Member by default;
+        // an Admin can also add someone straight as another Admin (account
+        // owner). orgAddMember chains the make-Admin call when chosen.
         if (callerCanManageTeam) {
             const canSetAdmin = callerIsAccountAdmin && accountId != null;
             const accIdAttr = accountId != null ? escapeHtmlAttr(String(accountId)) : '';
@@ -10322,16 +10309,15 @@ active: account
             addForm.className = 'people-add-card';
             addForm.innerHTML =
                 '<div class="people-add-card-title">Add someone to this team</div>' +
-                '<div class="people-add-card-hint">They join as a Member by default. '
+                '<div class="people-add-card-hint">They join as a Member by default.'
                     + (canSetAdmin
-                        ? 'Managers help run the team; Admins also manage billing for '
+                        ? ' Admins also manage billing for '
                             + (accountName ? escapeHtmlOrg(accountName) : 'this account') + '.'
-                        : 'Choose Manager to let them help run the team.') + '</div>' +
+                        : '') + '</div>' +
                 '<form class="org-add-member-form" onsubmit="return orgAddMember(event, \'' + orgIdAttr + '\', \'' + accIdAttr + '\')">' +
                 '  <input type="email" placeholder="email@example.com" required>' +
                 '  <select class="org-add-role" aria-label="Role">' +
                 '    <option value="member">Member</option>' +
-                '    <option value="manager">Manager</option>' +
                     (canSetAdmin ? '    <option value="admin">Admin</option>' : '') +
                 '  </select>' +
                 '  <button type="submit" class="org-btn primary">Add</button>' +
@@ -10395,11 +10381,10 @@ active: account
         }
     }
 
-    // Admin demote ladder (kebab on an Admin row). Each removes the account
-    // owner (Admin) role first, then adjusts the team role:
-    //   Demote to Manager → keep/set the org manager role (add_admin if needed)
-    //   Demote to Member  → also drop the manager role (remove_admin)
-    //   Remove from team  → also leave the org (remove_member)
+    // Admin transitions (kebab on an Admin row). Each removes the account
+    // owner (Admin) role first, then adjusts org membership:
+    //   Remove Admin (make Member) → drop any lingering org-admin role (remove_admin)
+    //   Remove from team           → also leave the org (remove_member)
     async function adminRoleTransition(accountId, orgId, email, orgEndpoint, successMsg, btn) {
         if (btn) btn.disabled = true;
         const lc = String(email).toLowerCase();
@@ -10421,13 +10406,6 @@ active: account
             if (btn) btn.disabled = false;
         }
     }
-    window.adminDemoteToManager = function(accountId, orgId, email, btn) {
-        const org = findOrgById(orgId);
-        const lc = String(email).toLowerCase();
-        const isMgr = !!(org && Array.isArray(org.admin_emails)
-            && org.admin_emails.some(function(e) { return String(e).toLowerCase() === lc; }));
-        return adminRoleTransition(accountId, orgId, email, isMgr ? null : 'add_admin', email + ' is now a Manager.', btn);
-    };
     window.adminDemoteToMember = function(accountId, orgId, email, btn) {
         return adminRoleTransition(accountId, orgId, email, 'remove_admin', email + ' is now a Member.', btn);
     };
@@ -10609,8 +10587,8 @@ active: account
                 members.sort(function(a, b) { return (b.added_at || 0) - (a.added_at || 0); });
                 rp.innerHTML = members.slice(0, 3).map(function(m) {
                     var label = m.name || [m.first_name, m.last_name].filter(Boolean).join(' ') || m.email;
-                    var badge = m.role === 'manager'
-                        ? '<span class="people-role-badge admin">Manager</span>'
+                    var badge = (m.role === 'manager' || m.role === 'admin')
+                        ? '<span class="people-role-badge owner">Admin</span>'
                         : '<span class="people-role-badge member">Member</span>';
                     var ago = m.added_at ? dashTimeAgo(m.added_at) : '';
                     var sub = [m.email, ago ? 'added ' + ago : ''].filter(Boolean).join('  ·  ');
@@ -11151,11 +11129,11 @@ active: account
     }
 
     // Build one roster row from a descriptor:
-    //   d = { email, key, teamRole: 'manager'|'member'|null, isBillingAdmin, isYou }
+    //   d = { email, key, teamRole: 'member'|null, isBillingAdmin, isYou }
     //   ctx = { orgIdAttr, accountId, callerCanManageTeam, callerIsAccountAdmin,
-    //           canDemoteManager, canRemoveAdmin, currentUserEmail }
-    // Someone who is both an Admin and on the team shows two badges; controls
-    // appear per the viewer's rights (team vs Admin are independent).
+    //           canRemoveAdmin, currentUserEmail }
+    // Admin (account owner) shows the Admin badge; everyone else on the team
+    // shows Member. Controls appear per the viewer's rights.
     function buildMemberRow(org, d, ctx) {
         const email = d.email;
         const row = document.createElement('div');
@@ -11168,12 +11146,9 @@ active: account
         const dispName = memberProfileName(org, email);
         const initial = ((dispName || email).charAt(0) || '?').toUpperCase();
 
-        // One badge — the highest role. Admin outranks Manager outranks
-        // Member (Admin already implies full team-management power), so we
-        // never stack badges.
+        // One badge — Admin (account owner) outranks Member, so we never stack.
         let badge;
         if (d.isBillingAdmin) badge = '<span class="people-role-badge owner">Admin</span>';
-        else if (d.teamRole === 'manager') badge = '<span class="people-role-badge admin">Manager</span>';
         else badge = '<span class="people-role-badge member">Member</span>';
 
         // Name (when known) over the email; email-only otherwise.
@@ -11216,49 +11191,32 @@ active: account
         const orgIdAttr = ctx.orgIdAttr;
         const emailAttr = escapeAttrOrg(email);
 
-        // Team controls — Managers (or Admins). Acts on the person's TEAM role
-        // only. Skipped for Admin rows (the Admin control carries that row).
+        // Team controls — Admins only. A plain Member row can be promoted to
+        // Admin (account owner) or removed from the team. Skipped for Admin
+        // rows (the Admin controls below carry those).
         if (ctx.callerCanManageTeam && d.teamRole && !d.isBillingAdmin) {
-            if (d.teamRole === 'manager') {
-                items.push('<button class="people-kebab-item"'
-                    + ' onclick="orgDemote(\'' + orgIdAttr + '\', \'' + emailAttr + '\', this)">Demote to Member</button>');
-                if (ctx.canDemoteManager) {
-                    items.push('<button class="people-kebab-item danger"'
-                        + ' onclick="orgRemoveMember(\'' + orgIdAttr + '\', \'' + emailAttr + '\', this)">Remove from team</button>');
-                } else {
-                    items.push('<button class="people-kebab-item danger" disabled'
-                        + ' title="Promote another Manager before removing the last one">Remove from team</button>');
-                }
-            } else {
-                items.push('<button class="people-kebab-item"'
-                    + ' onclick="orgPromote(\'' + orgIdAttr + '\', \'' + emailAttr + '\', this)">Promote to Manager</button>');
-                items.push('<button class="people-kebab-item danger"'
-                    + ' onclick="orgRemoveMember(\'' + orgIdAttr + '\', \'' + emailAttr + '\', this)">Remove from team</button>');
-            }
-        }
-
-        // Admin controls — account Admins only. Acts on the person's BILLING
-        // (account owner) role.
-        if (ctx.callerIsAccountAdmin && ctx.accountId != null) {
-            const accIdAttr = escapeAttrOrg(String(ctx.accountId));
-            if (d.isBillingAdmin) {
-                // Admin demote ladder. All three drop the Admin (account owner)
-                // role, so all are gated by the last-Admin guard.
-                if (ctx.canRemoveAdmin) {
-                    const oid = ctx.orgIdAttr;
-                    items.push('<button class="people-kebab-item"'
-                        + ' onclick="adminDemoteToManager(\'' + accIdAttr + '\', \'' + oid + '\', \'' + emailAttr + '\', this)">Demote to Manager</button>');
-                    items.push('<button class="people-kebab-item"'
-                        + ' onclick="adminDemoteToMember(\'' + accIdAttr + '\', \'' + oid + '\', \'' + emailAttr + '\', this)">Demote to Member</button>');
-                    items.push('<button class="people-kebab-item danger"'
-                        + ' onclick="adminRemoveFromTeam(\'' + accIdAttr + '\', \'' + oid + '\', \'' + emailAttr + '\', this)">Remove from team</button>');
-                } else {
-                    items.push('<button class="people-kebab-item" disabled'
-                        + ' title="Add another Admin before changing the last Admin’s role">Demote / remove Admin</button>');
-                }
-            } else {
+            if (ctx.callerIsAccountAdmin && ctx.accountId != null) {
+                const accIdAttr = escapeAttrOrg(String(ctx.accountId));
                 items.push('<button class="people-kebab-item"'
                     + ' onclick="peopleMakeAdmin(\'' + accIdAttr + '\', \'' + emailAttr + '\', this)">Make Admin</button>');
+            }
+            items.push('<button class="people-kebab-item danger"'
+                + ' onclick="orgRemoveMember(\'' + orgIdAttr + '\', \'' + emailAttr + '\', this)">Remove from team</button>');
+        }
+
+        // Admin controls — account Admins only, acting on an Admin row's
+        // (account owner) role. Gated by the last-Admin guard.
+        if (ctx.callerIsAccountAdmin && ctx.accountId != null && d.isBillingAdmin) {
+            const accIdAttr = escapeAttrOrg(String(ctx.accountId));
+            const oid = ctx.orgIdAttr;
+            if (ctx.canRemoveAdmin) {
+                items.push('<button class="people-kebab-item"'
+                    + ' onclick="adminDemoteToMember(\'' + accIdAttr + '\', \'' + oid + '\', \'' + emailAttr + '\', this)">Remove Admin (make Member)</button>');
+                items.push('<button class="people-kebab-item danger"'
+                    + ' onclick="adminRemoveFromTeam(\'' + accIdAttr + '\', \'' + oid + '\', \'' + emailAttr + '\', this)">Remove from team</button>');
+            } else {
+                items.push('<button class="people-kebab-item" disabled'
+                    + ' title="Add another Admin before changing the last Admin’s role">Remove Admin</button>');
             }
         }
 
@@ -11410,37 +11368,26 @@ active: account
         // Clear the input immediately. Instant feedback. We revert on error.
         input.value = '';
         if (roleSel) roleSel.value = 'member';
-        // Manager + Admin both grant the team Manager role; Admin additionally
-        // grants account (billing) access. We add the member first, then chain
-        // the elevation calls in onSuccess.
-        const elevate = (role === 'manager' || role === 'admin');
+        // "Admin" grants account (billing) ownership. Add the member first,
+        // then chain the make-Admin call in onSuccess.
+        const elevate = (role === 'admin');
         await optimisticOrgWrite({
             orgId: orgId,
             endpoint: 'add_member',
             body: { org_id: orgId, value: email },
             patch: function(o) {
                 o.emails = (o.emails || []).concat([email]);
-                if (elevate) {
-                    if (!Array.isArray(o.admin_emails)) o.admin_emails = [];
-                    if (o.admin_emails.indexOf(email) === -1) o.admin_emails.push(email);
-                }
             },
             optimisticToast: 'Added ' + email + ' to ' + orgNameById(orgId)
-                + (role === 'manager' ? ' as Manager.' : role === 'admin' ? ' as Admin.' : '.'),
+                + (role === 'admin' ? ' as Admin.' : '.'),
             onSuccess: function() {
-                if (!elevate) return;
-                orgApiCall('add_admin', { org_id: orgId, value: email }, false, 'POST')
-                    .then(function() {
-                        if (role === 'admin' && accountId) {
-                            return orgApiCall('add_account_owner',
-                                { account_id: Number(accountId), email: email }, false, 'POST')
-                                .then(function(data) { applyAccountMembers(accountId, data && data.members); });
-                        }
-                    })
+                if (!elevate || !accountId) return;
+                orgApiCall('add_account_owner',
+                    { account_id: Number(accountId), email: email }, false, 'POST')
+                    .then(function(data) { applyAccountMembers(accountId, data && data.members); })
                     .catch(function() {
-                        showToast('Added ' + email + ' as a Member, but setting '
-                            + (role === 'admin' ? 'Admin' : 'Manager')
-                            + ' didn\'t go through — set it from the ⋯ menu.', 'error', 5000);
+                        showToast('Added ' + email + ' as a Member, but making them an '
+                            + 'Admin didn\'t go through — set it from the ⋯ menu.', 'error', 5000);
                     });
             },
             onError: function() {
@@ -11487,15 +11434,6 @@ active: account
     }
 
     async function orgRemoveMember(orgId, email, btn) {
-        // Guard: never remove the last admin (would leave the org with none).
-        const org = (cachedOrganizations || []).find(function(o) { return String(o.org_id) === String(orgId); });
-        const adminEmails = (org && Array.isArray(org.admin_emails)) ? org.admin_emails : [];
-        const isOnlyAdmin = adminEmails.length <= 1
-            && adminEmails.some(function(e) { return String(e).toLowerCase() === String(email).toLowerCase(); });
-        if (isOnlyAdmin) {
-            alert('You can\'t remove the last Manager. Promote another Member to Manager first.');
-            return;
-        }
         if (!confirm(`Remove ${email} from the organization?`)) return;
         await optimisticOrgWrite({
             orgId: orgId,
@@ -11577,31 +11515,6 @@ active: account
         });
     }
 
-    async function orgPromote(orgId, email, btn) {
-        await optimisticOrgWrite({
-            orgId: orgId,
-            endpoint: 'add_admin',
-            body: { org_id: orgId, value: email },
-            patch: function(o) {
-                if (!Array.isArray(o.admin_emails)) o.admin_emails = [];
-                if (o.admin_emails.indexOf(email) === -1) o.admin_emails.push(email);
-            },
-            optimisticToast: 'Promoted ' + email + ' to Manager.'
-        });
-    }
-
-    async function orgDemote(orgId, email, btn) {
-        if (!confirm(`Demote ${email} to a regular member?`)) return;
-        await optimisticOrgWrite({
-            orgId: orgId,
-            endpoint: 'remove_admin',
-            body: { org_id: orgId, value: email },
-            patch: function(o) {
-                o.admin_emails = (o.admin_emails || []).filter(function(e) { return e !== email; });
-            },
-            optimisticToast: 'Demoted ' + email + ' to Member.'
-        });
-    }
 </script>
 
 </body>
