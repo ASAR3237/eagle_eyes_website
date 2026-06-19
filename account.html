@@ -3609,7 +3609,7 @@ active: account
                 </div>
                 <div class="streaming-credits-right">
                     <div class="streaming-credits-badges" id="streamingCreditsBadges"></div>
-                    <a class="streaming-credits-cta owner-only-cta" id="streamingBuyCreditsCta"
+                    <a class="streaming-credits-cta member-allowed-cta" id="streamingBuyCreditsCta"
                        href="{{ '/account/purchase/?add=credits:payg' | relative_url }}"
                        style="display: none;">+ Add credits</a>
                 </div>
@@ -3617,7 +3617,7 @@ active: account
             <!-- Shown to non-owners (who can view the balance but can't buy).
                  Toggled by applyOwnerGatedCtas(). -->
             <div id="streamingCreditsNonOwner" class="overview-note" style="display: none;">
-                You don't have permission to add credits. Ask an account owner to top up.
+                You don't have permission to add credits. Ask a member of this team to top up.
             </div>
             <div id="streamingCreditsEmpty" class="overview-empty" style="display: none;">
                 No streaming credits yet. <a href="{{ '/account/purchase/?add=credits:payg' | relative_url }}">Add your first credits &rarr;</a>
@@ -9683,28 +9683,39 @@ active: account
         return false;
     };
 
-    // Show / hide purchase CTAs on the Overview based on whether the
-    // current user is an owner of the active account. Backend enforces
-    // (403 owner-only); this is the UX gate. Affects:
-    //   - "Purchase / Renew" button in the section header
-    //   - "Add credits" button next to the Streaming credits subheading
-    //   - "Buy one →" link in the empty active-licenses state
+    // Show / hide purchase CTAs on the Overview based on the caller's role
+    // on the active account. Backend enforces (403); this is the UX gate.
+    // Two-role model:
+    //   - Billing actions stay owner-only (.owner-only-cta): "Purchase /
+    //     Renew" header button, "Buy one →" empty-state link.
+    //   - Streaming-credits top-up (.member-allowed-cta) is allowed for any
+    //     team member — owners and members who reach the funding account via
+    //     org membership (mirrors top_up_streaming_credits' gate).
     function applyOwnerGatedCtas() {
         var isOwner = false;
+        var canTopUpCredits = false;
         if (cachedAccounts && cachedAccounts.length) {
             var activeId = getActiveAccountIdFromStorage();
             var acc = cachedAccounts.find(function(a) {
                 var id = a.account_id != null ? a.account_id : a.id;
                 return String(id) === String(activeId);
             }) || cachedAccounts[0];
-            if (acc) isOwner = !!acc.is_owner;
+            if (acc) {
+                isOwner = !!acc.is_owner;
+                // Members reach a funding account via org membership
+                // (via: 'org_membership'); the backend lets them top up.
+                canTopUpCredits = isOwner || acc.via === 'org_membership';
+            }
         }
         document.querySelectorAll('.owner-only-cta').forEach(function(el) {
             el.style.display = isOwner ? '' : 'none';
         });
-        // Tell non-owners why the "Add credits" CTA isn't available to them.
+        document.querySelectorAll('.member-allowed-cta').forEach(function(el) {
+            el.style.display = canTopUpCredits ? '' : 'none';
+        });
+        // Tell anyone who still can't top up why the "Add credits" CTA is hidden.
         var note = document.getElementById('streamingCreditsNonOwner');
-        if (note) note.style.display = isOwner ? 'none' : '';
+        if (note) note.style.display = canTopUpCredits ? 'none' : '';
     }
 
     // Surface who owns the active account at the top of Overview so users
@@ -10537,10 +10548,11 @@ active: account
         var devicesLicensed = orgDevices.filter(function(d) { return (d.n_active_tokens || 0) > 0; }).length;
         var kpis = document.getElementById('dashKpis');
         if (kpis) {
-            // Owner-only "Add credits" CTA on the streaming-credits KPI (the
-            // top-right card). Hidden by default; applyOwnerGatedCtas() shows it
-            // for account owners (re-run below since this KPI is re-rendered).
-            var creditsCta = '<a class="dash-kpi-cta owner-only-cta"'
+            // "Add credits" CTA on the streaming-credits KPI (the top-right
+            // card). Hidden by default; applyOwnerGatedCtas() shows it for any
+            // team member (two-role model — re-run below since this KPI is
+            // re-rendered).
+            var creditsCta = '<a class="dash-kpi-cta member-allowed-cta"'
                 + ' href="{{ "/account/purchase/?add=credits:payg" | relative_url }}"'
                 + ' style="display:none;">+ Add credits</a>';
             kpis.innerHTML =

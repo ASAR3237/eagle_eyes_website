@@ -4701,10 +4701,13 @@ async function renderConfigSavePicker(existingConfig) {
     var warnEl = document.getElementById('configSavePickerWarning');
     if (!picker || !optsEl) return;
 
-    var adminOrgs = (cachedOrgsForPicker || []).filter(function(o) { return o.is_admin; });
+    // Two-role model: any member of an org can create & share a team
+    // configuration (not just org admins). The picker lists every org the
+    // user belongs to; sharing is opt-in (default stays "Just me" below).
+    var shareableOrgs = (cachedOrgsForPicker || []);
 
-    // 0 admin orgs → no picker, save as personal silently.
-    if (adminOrgs.length === 0) {
+    // 0 orgs → no picker, save as personal silently.
+    if (shareableOrgs.length === 0) {
         configSaveOrgIds = [];
         picker.style.display = 'none';
         return;
@@ -4717,8 +4720,8 @@ async function renderConfigSavePicker(existingConfig) {
     var preselectOrgId;
     if (existingConfig && Array.isArray(existingConfig.organization_ids) && existingConfig.organization_ids.length) {
         preselectOrgId = existingConfig.organization_ids[0];
-        // Make sure that org is still in the admin list; if not, fall back.
-        if (!adminOrgs.some(function(o) { return o.org_id === preselectOrgId; })) {
+        // Make sure that org is still in the shareable list; if not, fall back.
+        if (!shareableOrgs.some(function(o) { return o.org_id === preselectOrgId; })) {
             preselectOrgId = null;
         }
     }
@@ -4730,13 +4733,13 @@ async function renderConfigSavePicker(existingConfig) {
     configSaveOrgIds = preselectOrgId != null ? [preselectOrgId] : [];
 
     var html = '';
-    adminOrgs.forEach(function(o) {
+    shareableOrgs.forEach(function(o) {
         var isSel = configSaveOrgIds[0] === o.org_id;
         html += '<label class="config-save-pick-row' + (isSel ? ' is-active' : '') + '">'
             +   '<input type="radio" name="configSaveTarget" value="org:' + o.org_id + '"' + (isSel ? ' checked' : '') + '>'
             +   '<div class="config-save-pick-row-body">'
             +     '<div class="config-save-pick-row-name">' + escapeHtml(o.name || 'Organization') + '</div>'
-            +     '<div class="config-save-pick-row-hint">You\'re an admin of this team. They\'ll all see this configuration.</div>'
+            +     '<div class="config-save-pick-row-hint">Everyone on this team will see this configuration.</div>'
             +   '</div>'
             + '</label>';
     });
