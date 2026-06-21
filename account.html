@@ -9362,13 +9362,13 @@ active: account
         activeDevicesMode = canonicalizeDevicesMode(params.devices);
         devicesScope = canonicalizeDevicesScope(params.devices_scope);
 
-        // Customer view exposes the org People + Devices + Configurations
-        // pages plus the account-scope Licenses & Credits overview. Any other
-        // view (Dashboard, License, Account access) collapses to overview.
+        // Customer view exposes the org Devices + Configurations pages plus the
+        // account-scope Licenses & Credits overview. Any other view (Dashboard,
+        // People, License, Account access) is dev-only and collapses to overview.
         if (customerViewActive()) {
             const coView = (params.view && isOrgView(params.view))
                 ? canonicalizeOrgView(params.view) : null;
-            if (coView === 'people' || coView === 'devices' || coView === 'configurations') {
+            if (coView === 'devices' || coView === 'configurations') {
                 const coOrg = (params.org && orgIds.indexOf(params.org) !== -1)
                     ? params.org : pickDefaultOrgId();
                 if (coOrg) {
@@ -10330,32 +10330,21 @@ active: account
             container.appendChild(pendList);
         }
 
-        // Add-member card — any team member (or admin) can add people. Two ways:
-        //  • Invite by email → sends an invite; they confirm + set up their account.
-        //  • Add directly → adds an existing Eagle Eyes user to the team immediately.
-        // Admins can also add someone straight as another Admin (account owner).
+        // Add-member card — any team member (or admin) can invite people. Invite
+        // by email only: the person confirms via the emailed link and sets up
+        // their own account, then joins the team. (Direct-add-by-existing-account
+        // is gone from here — we can't tell whether an email already has an
+        // account before it's entered, so a single Invite covers both cases;
+        // orgAddDirectly is kept for a future "already has an account" path.)
         if (callerCanInvite) {
-            const canSetAdmin = callerIsAccountAdmin && accountId != null;
-            const accIdAttr = accountId != null ? escapeHtmlAttr(String(accountId)) : '';
             const addForm = document.createElement('div');
             addForm.className = 'people-add-card';
             addForm.innerHTML =
-                '<div class="people-add-card-title">Add someone to this team</div>' +
-                '<div class="people-add-card-hint">Invite by email (they confirm and set up their account), or add an existing Eagle Eyes user directly.'
-                    + (canSetAdmin
-                        ? ' Admins also manage billing for '
-                            + (accountName ? escapeHtmlOrg(accountName) : 'this account') + '.'
-                        : '') + '</div>' +
+                '<div class="people-add-card-title">Invite someone to this team</div>' +
+                '<div class="people-add-card-hint">Invite by email — they confirm and set up their account, then join the team.</div>' +
                 '<form class="org-add-member-form" onsubmit="return false;">' +
                 '  <input type="email" placeholder="email@example.com" required>' +
-                    (canSetAdmin
-                        ? '  <select class="org-add-role" aria-label="Role (direct add)">'
-                          + '    <option value="member">Member</option>'
-                          + '    <option value="admin">Admin</option>'
-                          + '  </select>'
-                        : '') +
-                '  <button type="button" class="org-btn primary" onclick="orgInviteMember(this, \'' + orgIdAttr + '\')">Invite by email</button>' +
-                '  <button type="button" class="org-btn" onclick="orgAddDirectly(this, \'' + orgIdAttr + '\', \'' + accIdAttr + '\')">Add directly</button>' +
+                '  <button type="button" class="org-btn primary" onclick="orgInviteMember(this, \'' + orgIdAttr + '\')">Invite</button>' +
                 '</form>' +
                 '<div class="org-status-msg" data-status="add"></div>';
             container.appendChild(addForm);
