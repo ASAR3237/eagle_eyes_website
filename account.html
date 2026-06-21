@@ -5835,7 +5835,7 @@ active: account
 
         const adminsListHtml = adminEmails.length
             ? adminEmails.map(function(e) { return '<li>' + planEscape(e) + '</li>'; }).join('')
-            : '<li>No Admins listed — contact info@eagleeyessearch.com.</li>';
+            : '<li>No Admins listed. Contact info@eagleeyessearch.com.</li>';
 
         const title = action === 'add_devices' ? 'Adding devices is an Admin action' : 'Renewing is an Admin action';
 
@@ -5852,7 +5852,7 @@ active: account
             +     'Renewals and device purchases for ' + accountPhrase + ' are made by an '
             +     '<strong>Admin</strong>. You can use this license through your team, but you\'re '
             +     'not an Admin. Reach out to one of the Admins below to ' + actionVerb
-            +     ' it for you — or to ask them to make you an Admin so you can handle purchases yourself.'
+            +     ' it for you, or to ask them to make you an Admin so you can handle purchases yourself.'
             +   '</p>'
             +   '<div class="contact-owners-section-title">Admins</div>'
             +   '<ul class="contact-owners-list">' + adminsListHtml + '</ul>'
@@ -5893,7 +5893,7 @@ active: account
     // Roles & permissions, shown from the "?" next to "You are a <role> on this
     // team". Two roles: Admin (account owner) and Member.
     const ROLES_HELP_BODY = [
-        '<strong>Admin</strong> — runs the Eagle Eyes account and the team:'
+        '<strong>Admin</strong>: runs the Eagle Eyes account and the team:'
             + '<ul><li>Add and remove team members</li>'
             + '<li>Rename the team and manage its domains</li>'
             + '<li>Assign and unassign other Admins</li>'
@@ -5912,7 +5912,7 @@ active: account
         'device-releases': {
             title: 'Device transfers',
             body: [
-                'Disconnecting a device frees the slot it is using on this license, so a different device can activate in its place — in effect, transferring the license to another device. You do this when you replace a controller, reset a device to factory defaults, or move a device between users.',
+                'Disconnecting a device frees the slot it is using on this license, so a different device can activate in its place, in effect transferring the license to another device. You do this when you replace a controller, reset a device to factory defaults, or move a device between users.',
                 '<strong>Reinstalling the Eagle Eyes app on the same device does not require a transfer.</strong> The app re-uses the existing slot on activation. Only disconnect when the license needs to move to a different physical device.',
                 'Each device slot comes with a limited number of transfers per license term. That covers the common cases such as an initial mistake, or one move during the term, without anyone having to contact support. A new license resets the counter.'
             ]
@@ -7146,7 +7146,7 @@ active: account
         // cards, with the same hover tooltip.
         const aliasPill = aliasStr
           ? '<span class="device-card-alias has-tip has-tip--left" tabindex="0"'
-            + ' data-tip="Auto-assigned name for this device — a memorable handle so you don\'t have to use the machine ID.">'
+            + ' data-tip="Auto-assigned name for this device: a memorable handle so you don\'t have to use the machine ID.">'
             + escapeHtmlOrg(aliasStr) + '</span>'
           : '';
 
@@ -7432,7 +7432,7 @@ active: account
         }
         if (aliasStr) {
           line1 += '<span class="device-card-alias has-tip has-tip--left" tabindex="0"'
-            + ' data-tip="Auto-assigned name for this device — a memorable handle so you don\'t have to use the machine ID.">'
+            + ' data-tip="Auto-assigned name for this device: a memorable handle so you don\'t have to use the machine ID.">'
             + escapeHtmlOrg(aliasStr) + '</span>';
         }
         // Machine ID is always shown (right of the head row), no toggle.
@@ -7902,7 +7902,7 @@ active: account
           ' from <strong>' + escapeHtmlOrg(licenseName) + '</strong>?' +
           cascadeLine +
           (costLine ? ' ' + escapeHtmlOrg(costLine) : '') +
-          '<span class="hint">Reinstalling the app on the same device doesn’t need a transfer — only use this to move the license to a different device.</span>' +
+          '<span class="hint">Reinstalling the app on the same device doesn’t need a transfer. Only use this to move the license to a different device.</span>' +
         '</div>' +
         '<div class="device-row-key-confirm-actions">' +
           '<button type="button" class="people-icon-btn" data-act="cancel">Cancel</button>' +
@@ -8013,7 +8013,7 @@ active: account
         ? ' (' + releasedCount + ' installs freed)'
         : '';
       showToast('Disconnected ' + (item.dataset.deviceDisplayName || 'device') + installsNote
-        + '. The slot is now free — another device can activate from the app.', 'success', 4500);
+        + '. The slot is now free. Another device can activate from the app.', 'success', 4500);
 
       // Re-render the active org view immediately from the mutated caches.
       // (Doesn't refetch — that's deferred 1s below.)
@@ -8983,7 +8983,7 @@ active: account
     }
 
     var CART_PROCESSING_NOTE = 'Processing your purchase…';
-    var CART_SLOW_NOTE = "Still processing your purchase — we've emailed your receipt. "
+    var CART_SLOW_NOTE = "Still processing your purchase. We've emailed your receipt. "
         + "If your account doesn't update shortly, contact support.";
 
     // One poll tick. Returns true when terminal (caller stops the interval).
@@ -9003,7 +9003,7 @@ active: account
                     }
                 } catch (e) {}
             }
-            setCartNote(anyFailed ? 'Some items need attention — see above.'
+            setCartNote(anyFailed ? 'Some items need attention, see above.'
                                   : 'All set. Your account has been updated.');
             return true;
         }
@@ -10333,17 +10333,33 @@ active: account
         // Add-member card — any team member (or admin) can invite people. Invite
         // by email only: the person confirms via the emailed link and sets up
         // their own account, then joins the team. (Direct-add-by-existing-account
-        // is gone from here — we can't tell whether an email already has an
+        // is gone from here: we can't tell whether an email already has an
         // account before it's entered, so a single Invite covers both cases;
         // orgAddDirectly is kept for a future "already has an account" path.)
+        // Account admins also choose the role the invite grants (Member or
+        // Admin); the chosen role rides along on invite_member and is shown to
+        // the invited person on the accept page. Non-admins can only invite
+        // Members, so they see a fixed "joins as a Member" note instead.
         if (callerCanInvite) {
+            const canSetAdmin = callerIsAccountAdmin;
+            const roleSelect = canSetAdmin
+                ? '  <select class="org-add-role" aria-label="Role for the invited person">'
+                  + '    <option value="member">Member</option>'
+                  + '    <option value="admin">Admin</option>'
+                  + '  </select>'
+                : '';
+            const roleHint = canSetAdmin
+                ? 'Pick whether they join as a Member or an Admin (Admins also manage billing'
+                    + (accountName ? ' for ' + escapeHtmlOrg(accountName) : '') + '). '
+                : 'They join as a Member. ';
             const addForm = document.createElement('div');
             addForm.className = 'people-add-card';
             addForm.innerHTML =
                 '<div class="people-add-card-title">Invite someone to this team</div>' +
-                '<div class="people-add-card-hint">Invite by email — they confirm and set up their account, then join the team.</div>' +
+                '<div class="people-add-card-hint">' + roleHint + 'Invite by email. They confirm and set up their account, then join the team.</div>' +
                 '<form class="org-add-member-form" onsubmit="return false;">' +
                 '  <input type="email" placeholder="email@example.com" required>' +
+                roleSelect +
                 '  <button type="button" class="org-btn primary" onclick="orgInviteMember(this, \'' + orgIdAttr + '\')">Invite</button>' +
                 '</form>' +
                 '<div class="org-status-msg" data-status="add"></div>';
@@ -11194,7 +11210,7 @@ active: account
         if (adminNotInOrg) {
             const orgNm = ctx.orgName ? escapeHtmlOrg(ctx.orgName) : 'this organization';
             outsideNote = '<div class="people-row-note">Not a member of <strong>' + orgNm
-                + '</strong> — manages the account that funds it.</div>';
+                + '</strong> manages the account that funds it.</div>';
         }
 
         // For an Admin, show which account they administer next to the badge.
@@ -11395,22 +11411,28 @@ active: account
     async function orgInviteMember(btn, orgId) {
         const c = _peopleAddCard(btn);
         if (!c.email) return;
+        // Role select is shown only to account admins; everyone else invites
+        // Members. The role rides along on invite_member so the backend can
+        // stamp it on the invite (surfaced to the invitee on the accept page).
+        const role = (c.roleSel && c.roleSel.value === 'admin') ? 'admin' : 'member';
+        const roleLabel = role === 'admin' ? 'an Admin' : 'a Member';
         if (c.statusEl) { c.statusEl.textContent = ''; c.statusEl.className = 'org-status-msg'; }
         btn.disabled = true;
         try {
-            const data = await orgApiCall('invite_member', { org_id: orgId, email: c.email }, false, 'POST');
+            const data = await orgApiCall('invite_member', { org_id: orgId, email: c.email, role: role }, false, 'POST');
             if (data && data.already_member) {
                 showToast(c.email + ' is already on this team.', 'error');
             } else {
-                showToast((data && data.resent ? 'Invitation re-sent to ' : 'Invitation sent to ') + c.email + '.', 'success');
+                showToast((data && data.resent ? 'Invitation re-sent to ' : 'Invitation sent to ') + c.email + ' as ' + roleLabel + '.', 'success');
                 if (c.input) c.input.value = '';
+                if (c.roleSel) c.roleSel.value = 'member';
                 // Optimistic pending row on the active org.
                 try {
                     const src = getActiveSource();
                     const org = src && src.org;
                     if (org) {
                         org.pending_invites = (org.pending_invites || []).filter(function(p) { return p.email !== c.email; });
-                        org.pending_invites.push({ email: c.email, invited_by: 'you', invited_at: (Date.now() / 1000), expired: false });
+                        org.pending_invites.push({ email: c.email, role: role, invited_by: 'you', invited_at: (Date.now() / 1000), expired: false });
                     }
                 } catch (e) {}
                 _rerenderPeople();
@@ -11449,7 +11471,7 @@ active: account
                 orgApiCall('add_account_owner', { account_id: Number(accountId), email: email }, false, 'POST')
                     .then(function(data) { applyAccountMembers(accountId, data && data.members); })
                     .catch(function() {
-                        showToast('Added ' + email + ' as a Member, but making them an Admin didn\'t go through — set it from the ⋯ menu.', 'error', 5000);
+                        showToast('Added ' + email + ' as a Member, but making them an Admin didn\'t go through. Set it from the ⋯ menu.', 'error', 5000);
                     });
             },
             onError: function() {
@@ -11465,9 +11487,12 @@ active: account
         const row = document.createElement('div');
         row.className = 'people-row';
         const initial = (email.charAt(0) || '?').toUpperCase();
+        // Surface the invited role so the team can see, before the person
+        // accepts, whether they'll land as a Member or an Admin.
+        const roleLabel = String(inv.role || 'member').toLowerCase() === 'admin' ? 'Admin' : 'Member';
         const badge = inv.expired
             ? '<span class="people-status-badge expired">Invite expired</span>'
-            : '<span class="people-status-badge pending">Invited — waiting to accept</span>';
+            : '<span class="people-status-badge pending">Invited as ' + roleLabel + ', waiting to accept</span>';
         const emailAttr = escapeAttrOrg(email);
         const orgIdAttr = ctx.orgIdAttr;
         let actions = '';

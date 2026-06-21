@@ -1130,7 +1130,7 @@ noindex: true
             const startDate = new Date(licenseStartMs(license)).toLocaleDateString();
             cardClass += ' disabled';
             buttonHtml = `<button class="btn-select-license btn-disabled" disabled>Available from ${startDate}</button>`;
-            statusText = `<span style="color: #888; font-size: 12px;">Available from ${startDate} — your current license covers you until then.</span>`;
+            statusText = `<span style="color: #888; font-size: 12px;">Available from ${startDate}. Your current license covers you until then.</span>`;
         } else if (hasExistingKey) {
             cardClass += ' reactivate';
             buttonHtml = `<button class="btn-reactivate-license" onclick="selectLicense('${license.license_id}')">Reactivate on this license</button>`;
@@ -1297,7 +1297,7 @@ noindex: true
             const startDate = new Date(licenseStartMs(license)).toLocaleDateString();
             showActivationError(
                 'This license is available from ' + startDate +
-                ' — your current license covers you until then.',
+                '. Your current license covers you until then.',
                 hasExistingKey
             );
             return;

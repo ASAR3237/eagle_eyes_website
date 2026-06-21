@@ -2251,7 +2251,7 @@ function lpRenderPrimary(lic) {
         return '<div class="' + cls + (lic.is_pending ? ' disabled' : '') + '">' +
             '<h3>' + escapeHtml(lic.license_name || 'Eagle Eyes License') + '</h3>' +
             '<div class="lp-meta"><span>' + lic.license_id + '</span><span>Expires: ' + expiry + '</span></div>' +
-            (lic.is_pending ? '<div style="margin-bottom: 8px;"><span style="color: #888; font-size: 1.2rem;">Available from ' + startDate + ' — your current license covers you until then.</span></div>' : '') +
+            (lic.is_pending ? '<div style="margin-bottom: 8px;"><span style="color: #888; font-size: 1.2rem;">Available from ' + startDate + '. Your current license covers you until then.</span></div>' : '') +
             '<div class="lp-actions">' + btn + '</div></div>';
     }
 
@@ -2259,7 +2259,7 @@ function lpRenderPrimary(lic) {
         // Future-start renewal: visible but not activatable until start_at.
         cls += ' disabled';
         btn = '<button class="lp-btn disabled" disabled>Available from ' + startDate + '</button>';
-        status = '<span style="color: #888; font-size: 1.2rem;">Available from ' + startDate + ' — your current license covers you until then.</span>';
+        status = '<span style="color: #888; font-size: 1.2rem;">Available from ' + startDate + '. Your current license covers you until then.</span>';
     } else if (lic.has_existing_key) {
         cls += ' reactivate';
         btn = '<button class="lp-btn reactivate" onclick="lpSelect(\'' + lic.license_id + '\')">Reactivate on this license</button>';
@@ -2390,7 +2390,7 @@ async function lpConfirmActivation() {
         var resultEl = document.getElementById('lpActivationResult');
         if (resultEl) {
             resultEl.innerHTML = '<p style="color: #888;">This license is available from ' + startDate +
-                ' — your current license covers you until then.</p>';
+                '. Your current license covers you until then.</p>';
             resultEl.style.display = 'block';
         }
         return;
