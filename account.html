@@ -10382,8 +10382,9 @@ active: account
     }
 
     // Admin transitions (kebab on an Admin row). Each removes the account
-    // owner (Admin) role first, then adjusts org membership:
-    //   Remove Admin (make Member) → drop any lingering org-admin role (remove_admin)
+    // owner (Admin) role first, then optionally adjusts org membership:
+    //   Remove Admin (make Member) → just drop account ownership (orgs are
+    //     members-only now — no org-admin role to remove).
     //   Remove from team           → also leave the org (remove_member)
     async function adminRoleTransition(accountId, orgId, email, orgEndpoint, successMsg, btn) {
         if (btn) btn.disabled = true;
@@ -10407,7 +10408,10 @@ active: account
         }
     }
     window.adminDemoteToMember = function(accountId, orgId, email, btn) {
-        return adminRoleTransition(accountId, orgId, email, 'remove_admin', email + ' is now a Member.', btn);
+        // Orgs are members-only; removing the account-owner role alone makes
+        // them a plain Member. No org-level remove_admin call (that endpoint
+        // was retired).
+        return adminRoleTransition(accountId, orgId, email, null, email + ' is now a Member.', btn);
     };
     window.adminRemoveFromTeam = function(accountId, orgId, email, btn) {
         if (!window.confirm('Remove ' + email + ' from this team? They lose Admin access and team membership.')) return;
