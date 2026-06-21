@@ -1,0 +1,193 @@
+---
+layout: main
+title: Accept your team invitation - Eagle Eyes
+permalink: /invite/accept/
+noindex: true
+---
+
+<link rel="custom-stylesheet" href="{{ '/css/form_buttons_and_boxes.css' | relative_url }}?t=[timestamp]">
+{% include form_styling.html %}
+
+<style>
+  .invite-wrap { max-width: 560px; margin: 60px auto; padding: 0 20px; }
+  .invite-card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 28px; background: #fff; }
+  .invite-lede { font-size: 18px; line-height: 1.5; margin: 0 0 8px; }
+  .invite-lede strong { color: #1a1a2e; }
+  .invite-sub { color: #6b7280; font-size: 14px; margin: 0 0 20px; }
+  .invite-row { display: flex; gap: 12px; }
+  .invite-row > div { flex: 1; }
+  .invite-wrap label.fld { display:block; font-weight:600; font-size:13px; margin:14px 0 4px; }
+  .invite-wrap input[type=text] { width:100%; box-sizing:border-box; padding:9px 11px; border:1px solid #d1d5db; border-radius:7px; }
+  .invite-mismatch { background:#fff7ed; border:1px solid #fed7aa; color:#9a3412; border-radius:8px; padding:10px 12px; font-size:13px; margin:16px 0; }
+  .invite-btn { margin-top:20px; width:100%; padding:11px; background:#1e90ff; color:#fff; border:none; border-radius:8px; font-weight:700; font-size:15px; cursor:pointer; }
+  .invite-btn:disabled { background:#9cc7f0; cursor:not-allowed; }
+  .invite-status { color:#b91c1c; font-size:13px; text-align:center; margin-top:12px; min-height:18px; }
+  .invite-muted { color:#6b7280; font-size:13px; }
+</style>
+
+<div class="invite-wrap">
+  <div class="invite-card">
+    <div id="invite-loading" class="invite-muted">Loading your invitation…</div>
+
+    <div id="invite-error" hidden>
+      <p class="invite-lede">This invitation can't be used.</p>
+      <p id="invite-error-msg" class="invite-sub"></p>
+      <p class="invite-muted">If you think this is a mistake, ask whoever invited you to send a new invitation, or contact <a href="mailto:info@eagleeyessearch.com">info@eagleeyessearch.com</a>.</p>
+    </div>
+
+    <div id="invite-body" hidden>
+      <p class="invite-lede"><strong id="inv-inviter"></strong> invited you to join <strong id="inv-org"></strong> on Eagle Eyes.</p>
+      <p class="invite-sub">Sign in to accept — you can use any Eagle Eyes account (it doesn't have to match the email this was sent to).</p>
+
+      <div id="signin-section">
+        {% include signinWidget.html %}
+      </div>
+
+      <div id="accept-section" hidden>
+        <div id="invite-mismatch" class="invite-mismatch" hidden></div>
+        <label class="fld">Signed in as</label>
+        <div id="signed-as" class="invite-muted" style="margin-bottom:6px;"></div>
+        <div class="invite-row">
+          <div>
+            <label class="fld" for="inv-first">First name</label>
+            <input type="text" id="inv-first" autocomplete="given-name">
+          </div>
+          <div>
+            <label class="fld" for="inv-last">Last name</label>
+            <input type="text" id="inv-last" autocomplete="family-name">
+          </div>
+        </div>
+
+        <div class="checkboxes" style="margin-top:16px;">
+          <div class="checkbox-container">
+            <input type="checkbox" id="agree_terms" name="agree_terms" required>
+            <label for="agree_terms"><span class="checkbox-label required">I have read and agree to the <a href="https://docs.google.com/document/d/1-8v4klW0DhZjkuYcEChX0frsQ8AcRqEumssS0wI7lSg/edit?usp=sharing" target="_blank">Eagle Eyes Search Terms of Use</a>.</span></label>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="agree_privacy" name="agree_privacy" required>
+            <label for="agree_privacy"><span class="checkbox-label required">I have read and agree to the <a href="https://docs.google.com/document/d/1iRn_idL4gx7XhqIi5FhQy8Er_k9qxHjEBUwWCgJUI6M/edit?usp=sharing" target="_blank">Eagle Eyes Search Privacy Policy</a>.</span></label>
+          </div>
+          <div class="checkbox-container">
+            <input type="checkbox" id="receive_newsletter" name="receive_newsletter">
+            <label for="receive_newsletter"><span class="checkbox-label">I want to receive updates about Eagle Eyes Search.</span></label>
+          </div>
+        </div>
+
+        <button id="invite-accept-btn" class="invite-btn" onclick="submitAccept()">Join {{ '' }}<span id="inv-org-btn"></span></button>
+        <div id="invite-status" class="invite-status"></div>
+      </div>
+    </div>
+
+    <div id="invite-success" hidden>
+      <p class="invite-lede">🎉 You're in!</p>
+      <p class="invite-sub">You've joined <strong id="inv-org-done"></strong>. Taking you to your account…</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var token = new URLSearchParams(window.location.search).get('token');
+  var invite = null;       // {org_name, invited_by_name, email}
+  var currentUser = null;
+
+  function host() { return window.getHostUrl ? window.getHostUrl() : 'https://us-central1-eagleeyessearch.cloudfunctions.net'; }
+  function show(id, on) { var el = document.getElementById(id); if (el) el.hidden = !on; }
+  function text(id, v) { var el = document.getElementById(id); if (el) el.textContent = v || ''; }
+
+  function showError(msg) {
+    show('invite-loading', false); show('invite-body', false); show('invite-success', false);
+    text('invite-error-msg', msg); show('invite-error', true);
+  }
+
+  // 1) Load invite context (public — no auth).
+  function loadInvite() {
+    if (!token) { showError('This link is missing its invitation token.'); return; }
+    fetch(host() + '/get_invite_info?token=' + encodeURIComponent(token))
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d || !d.valid) {
+          if (d && d.status === 'accepted') { showError('This invitation has already been accepted. Try signing in at /account/.'); }
+          else if (d && (d.expired || d.status === 'pending')) { showError('This invitation has expired. Please ask for a new one.'); }
+          else if (d && d.status === 'revoked') { showError('This invitation has been cancelled.'); }
+          else { showError('This invitation is no longer valid.'); }
+          return;
+        }
+        invite = d;
+        text('inv-inviter', d.invited_by_name || 'A teammate');
+        text('inv-org', d.org_name || 'their team');
+        text('inv-org-btn', d.org_name ? (' ' + d.org_name) : '');
+        text('inv-org-done', d.org_name || 'the team');
+        show('invite-loading', false); show('invite-body', true);
+        applyAuthState();
+      })
+      .catch(function () { showError('We could not load this invitation. Please try again later.'); });
+  }
+
+  // 2) React to auth — covers already-signed-in and fresh sign-in.
+  function applyAuthState() {
+    if (!invite) return;
+    if (currentUser && currentUser.email) {
+      show('signin-section', false); show('accept-section', true);
+      text('signed-as', currentUser.email);
+      var invited = (invite.email || '').toLowerCase();
+      var signed = currentUser.email.toLowerCase();
+      var mm = document.getElementById('invite-mismatch');
+      if (invited && signed !== invited) {
+        mm.hidden = false;
+        mm.innerHTML = 'This invite was sent to <strong>' + invited + '</strong>, but you\'re signed in as <strong>' + signed + '</strong>. You\'ll join as <strong>' + signed + '</strong> — sign out and back in if that\'s not the account you want to use.';
+      } else { mm.hidden = true; }
+      // Prefill names if empty (best-effort from displayName).
+      var dn = (currentUser.displayName || '').trim().split(/\s+/);
+      if (dn[0] && !document.getElementById('inv-first').value) document.getElementById('inv-first').value = dn[0];
+      if (dn.length > 1 && !document.getElementById('inv-last').value) document.getElementById('inv-last').value = dn.slice(1).join(' ');
+    } else {
+      show('signin-section', true); show('accept-section', false);
+    }
+  }
+
+  window.submitAccept = function () {
+    var statusEl = document.getElementById('invite-status');
+    statusEl.textContent = '';
+    if (!currentUser) { statusEl.textContent = 'Please sign in first.'; return; }
+    var terms = document.getElementById('agree_terms').checked;
+    var privacy = document.getElementById('agree_privacy').checked;
+    if (!terms || !privacy) { statusEl.textContent = 'Please accept the Terms of Use and Privacy Policy.'; return; }
+    var btn = document.getElementById('invite-accept-btn');
+    btn.disabled = true; btn.textContent = 'Joining…';
+    currentUser.getIdToken().then(function (idToken) {
+      return fetch(host() + '/accept_org_invite', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + idToken, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: token,
+          first_name: document.getElementById('inv-first').value.trim(),
+          last_name: document.getElementById('inv-last').value.trim(),
+          agree_terms: terms ? 'yes' : 'no',
+          agree_privacy: privacy ? 'yes' : 'no',
+          receive_newsletter: document.getElementById('receive_newsletter').checked ? 'yes' : 'no'
+        })
+      });
+    }).then(function (r) {
+      return r.json().then(function (d) { return { ok: r.ok, d: d }; });
+    }).then(function (res) {
+      if (!res.ok) { throw new Error((res.d && (res.d.error || res.d.message)) || 'Could not accept the invitation.'); }
+      show('invite-body', false); show('invite-success', true);
+      setTimeout(function () { window.location.href = '{{ "/account/" | relative_url }}'; }, 1500);
+    }).catch(function (err) {
+      statusEl.textContent = (err && err.message) || 'Something went wrong. Please try again.';
+      btn.disabled = false; btn.textContent = 'Join' + (invite && invite.org_name ? ' ' + invite.org_name : '');
+    });
+  };
+
+  // Wire auth listeners (signinWidget fires signInComplete; onAuthStateChanged covers already-signed-in).
+  document.addEventListener('signInComplete', function (e) { currentUser = e.detail.user; applyAuthState(); });
+  function initAuth() {
+    try {
+      firebase.auth().onAuthStateChanged(function (u) { currentUser = u; applyAuthState(); });
+    } catch (e) { setTimeout(initAuth, 150); }
+  }
+  initAuth();
+  loadInvite();
+})();
+</script>

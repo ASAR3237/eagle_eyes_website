@@ -2409,6 +2409,20 @@ active: account
     .people-role-badge.admin { background: #fde8c6; color: #8a5a00; }
     .people-role-badge.member { background: #ececec; color: #555; }
     .people-role-badge.owner { background: #d6e9ff; color: #0a5fb8; }
+    /* Pending-invite status badge (People view). */
+    .people-status-badge {
+        display: inline-block;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        padding: 2px 8px;
+        border-radius: 999px;
+    }
+    .people-status-badge.pending { background: #fef3c7; color: #92400e; }
+    .people-status-badge.expired { background: #fee2e2; color: #991b1b; }
+    .people-invite-actions { display: flex; gap: 8px; align-items: center; }
+    .people-invite-actions .org-btn { padding: 4px 10px; font-size: 12px; }
 
     /* "?" help icon. Clickable on both desktop and mobile (hover-tooltip
        would silently fail on touch). Opens the owner-role modal. */
@@ -10238,6 +10252,9 @@ active: account
         // funding account) manage the team.
         const callerIsAccountAdmin = !!(fundingAccount && (fundingAccount.is_admin || fundingAccount.is_owner));
         const callerCanManageTeam = callerIsAccountAdmin;
+        // Inviting/adding members is membership-level: any team member (or admin) can do it.
+        const callerIsMember = memberEmails.some(function(e) { return String(e).toLowerCase() === currentUserEmail; });
+        const callerCanInvite = callerIsMember || callerIsAccountAdmin;
 
         // Guard: never remove/demote the last Admin (account owner).
         const canRemoveAdmin = billingAdminEmails.length > 1;
@@ -10288,6 +10305,7 @@ active: account
             currentUserEmail: currentUserEmail,
             callerCanManageTeam: callerCanManageTeam,
             callerIsAccountAdmin: callerIsAccountAdmin,
+            callerCanInvite: callerCanInvite,
             canRemoveAdmin: canRemoveAdmin
         };
 
@@ -10299,28 +10317,45 @@ active: account
         });
         container.appendChild(list);
 
-        // Add-member card — Admins only. People join as a Member by default;
-        // an Admin can also add someone straight as another Admin (account
-        // owner). orgAddMember chains the make-Admin call when chosen.
-        if (callerCanManageTeam) {
+        // Pending invites — people who've been invited but haven't accepted yet.
+        const pending = Array.isArray(org.pending_invites) ? org.pending_invites : [];
+        if (pending.length) {
+            const pendList = document.createElement('div');
+            pendList.className = 'people-list';
+            pending.slice().sort(function(a, b) {
+                return String(a.email || '').localeCompare(String(b.email || ''));
+            }).forEach(function(inv) {
+                pendList.appendChild(buildPendingInviteRow(org, inv, ctx));
+            });
+            container.appendChild(pendList);
+        }
+
+        // Add-member card — any team member (or admin) can add people. Two ways:
+        //  • Invite by email → sends an invite; they confirm + set up their account.
+        //  • Add directly → adds an existing Eagle Eyes user to the team immediately.
+        // Admins can also add someone straight as another Admin (account owner).
+        if (callerCanInvite) {
             const canSetAdmin = callerIsAccountAdmin && accountId != null;
             const accIdAttr = accountId != null ? escapeHtmlAttr(String(accountId)) : '';
             const addForm = document.createElement('div');
             addForm.className = 'people-add-card';
             addForm.innerHTML =
                 '<div class="people-add-card-title">Add someone to this team</div>' +
-                '<div class="people-add-card-hint">They join as a Member by default.'
+                '<div class="people-add-card-hint">Invite by email (they confirm and set up their account), or add an existing Eagle Eyes user directly.'
                     + (canSetAdmin
                         ? ' Admins also manage billing for '
                             + (accountName ? escapeHtmlOrg(accountName) : 'this account') + '.'
                         : '') + '</div>' +
-                '<form class="org-add-member-form" onsubmit="return orgAddMember(event, \'' + orgIdAttr + '\', \'' + accIdAttr + '\')">' +
+                '<form class="org-add-member-form" onsubmit="return false;">' +
                 '  <input type="email" placeholder="email@example.com" required>' +
-                '  <select class="org-add-role" aria-label="Role">' +
-                '    <option value="member">Member</option>' +
-                    (canSetAdmin ? '    <option value="admin">Admin</option>' : '') +
-                '  </select>' +
-                '  <button type="submit" class="org-btn primary">Add</button>' +
+                    (canSetAdmin
+                        ? '  <select class="org-add-role" aria-label="Role (direct add)">'
+                          + '    <option value="member">Member</option>'
+                          + '    <option value="admin">Admin</option>'
+                          + '  </select>'
+                        : '') +
+                '  <button type="button" class="org-btn primary" onclick="orgInviteMember(this, \'' + orgIdAttr + '\')">Invite by email</button>' +
+                '  <button type="button" class="org-btn" onclick="orgAddDirectly(this, \'' + orgIdAttr + '\', \'' + accIdAttr + '\')">Add directly</button>' +
                 '</form>' +
                 '<div class="org-status-msg" data-status="add"></div>';
             container.appendChild(addForm);
@@ -11350,60 +11385,149 @@ active: account
         }
     }
 
-    async function orgAddMember(event, orgId, accountId) {
-        event.preventDefault();
-        const form = event.target;
-        const input = form.querySelector('input[type="email"]');
-        const roleSel = form.querySelector('.org-add-role');
-        const role = roleSel ? roleSel.value : 'member';
-        const statusEl = form.parentElement.querySelector('[data-status="add"]');
-        const email = (input.value || '').trim().toLowerCase();
-        if (!email) return false;
+    // Reads the shared add-member card around a clicked button.
+    function _peopleAddCard(btn) {
+        const card = btn.closest('.people-add-card');
+        const form = card ? card.querySelector('.org-add-member-form') : null;
+        const input = form ? form.querySelector('input[type="email"]') : null;
+        const roleSel = form ? form.querySelector('.org-add-role') : null;
+        const statusEl = card ? card.querySelector('[data-status="add"]') : null;
+        return {
+            card: card, form: form, input: input, roleSel: roleSel, statusEl: statusEl,
+            email: input ? (input.value || '').trim().toLowerCase() : ''
+        };
+    }
+    function _rerenderPeople() {
+        try { const s = getActiveSource(); if (s) renderActiveMembers(s); } catch (e) {}
+    }
 
-        statusEl.textContent = '';
-        statusEl.className = 'org-status-msg';
-
-        const org = findOrgById(orgId);
-        if (org && Array.isArray(org.emails) && org.emails.indexOf(email) !== -1) {
-            statusEl.textContent = email + ' is already on this team.';
-            statusEl.classList.add('error');
-            return false;
+    // Invite by email: creates a pending invite; the person confirms + sets up
+    // their account via the emailed link, then becomes a full member.
+    async function orgInviteMember(btn, orgId) {
+        const c = _peopleAddCard(btn);
+        if (!c.email) return;
+        if (c.statusEl) { c.statusEl.textContent = ''; c.statusEl.className = 'org-status-msg'; }
+        btn.disabled = true;
+        try {
+            const data = await orgApiCall('invite_member', { org_id: orgId, email: c.email }, false, 'POST');
+            if (data && data.already_member) {
+                showToast(c.email + ' is already on this team.', 'error');
+            } else {
+                showToast((data && data.resent ? 'Invitation re-sent to ' : 'Invitation sent to ') + c.email + '.', 'success');
+                if (c.input) c.input.value = '';
+                // Optimistic pending row on the active org.
+                try {
+                    const src = getActiveSource();
+                    const org = src && src.org;
+                    if (org) {
+                        org.pending_invites = (org.pending_invites || []).filter(function(p) { return p.email !== c.email; });
+                        org.pending_invites.push({ email: c.email, invited_by: 'you', invited_at: (Date.now() / 1000), expired: false });
+                    }
+                } catch (e) {}
+                _rerenderPeople();
+            }
+        } catch (err) {
+            showToast((err && err.message) || 'Could not send the invitation.', 'error');
+        } finally {
+            btn.disabled = false;
         }
-        // Clear the input immediately. Instant feedback. We revert on error.
-        input.value = '';
-        if (roleSel) roleSel.value = 'member';
-        // "Admin" grants account (billing) ownership. Add the member first,
-        // then chain the make-Admin call in onSuccess.
+    }
+
+    // Add directly: immediately adds an (existing) Eagle Eyes user to the team,
+    // no email. Admins can add straight as Admin via the role select.
+    async function orgAddDirectly(btn, orgId, accountId) {
+        const c = _peopleAddCard(btn);
+        if (!c.email) return;
+        if (c.statusEl) { c.statusEl.textContent = ''; c.statusEl.className = 'org-status-msg'; }
+        const org = findOrgById(orgId);
+        if (org && Array.isArray(org.emails) && org.emails.indexOf(c.email) !== -1) {
+            if (c.statusEl) { c.statusEl.textContent = c.email + ' is already on this team.'; c.statusEl.classList.add('error'); }
+            return;
+        }
+        const role = c.roleSel ? c.roleSel.value : 'member';
+        const email = c.email;
+        if (c.input) c.input.value = '';
+        if (c.roleSel) c.roleSel.value = 'member';
         const elevate = (role === 'admin');
         await optimisticOrgWrite({
             orgId: orgId,
             endpoint: 'add_member',
             body: { org_id: orgId, value: email },
-            patch: function(o) {
-                o.emails = (o.emails || []).concat([email]);
-            },
-            optimisticToast: 'Added ' + email + ' to ' + orgNameById(orgId)
-                + (role === 'admin' ? ' as Admin.' : '.'),
+            patch: function(o) { o.emails = (o.emails || []).concat([email]); },
+            optimisticToast: 'Added ' + email + ' to ' + orgNameById(orgId) + (role === 'admin' ? ' as Admin.' : '.'),
             onSuccess: function() {
                 if (!elevate || !accountId) return;
-                orgApiCall('add_account_owner',
-                    { account_id: Number(accountId), email: email }, false, 'POST')
+                orgApiCall('add_account_owner', { account_id: Number(accountId), email: email }, false, 'POST')
                     .then(function(data) { applyAccountMembers(accountId, data && data.members); })
                     .catch(function() {
-                        showToast('Added ' + email + ' as a Member, but making them an '
-                            + 'Admin didn\'t go through — set it from the ⋯ menu.', 'error', 5000);
+                        showToast('Added ' + email + ' as a Member, but making them an Admin didn\'t go through — set it from the ⋯ menu.', 'error', 5000);
                     });
             },
             onError: function() {
-                // Restore the typed value so the user can try again.
-                if (input) input.value = email;
-                if (statusEl) {
-                    statusEl.textContent = 'Couldn\'t add this member.';
-                    statusEl.classList.add('error');
-                }
+                if (c.input) c.input.value = email;
+                if (c.statusEl) { c.statusEl.textContent = 'Couldn\'t add this member.'; c.statusEl.classList.add('error'); }
             }
         });
-        return false;
+    }
+
+    // A row for a pending (not-yet-accepted) invite.
+    function buildPendingInviteRow(org, inv, ctx) {
+        const email = inv.email || '';
+        const row = document.createElement('div');
+        row.className = 'people-row';
+        const initial = (email.charAt(0) || '?').toUpperCase();
+        const badge = inv.expired
+            ? '<span class="people-status-badge expired">Invite expired</span>'
+            : '<span class="people-status-badge pending">Invited — waiting to accept</span>';
+        const emailAttr = escapeAttrOrg(email);
+        const orgIdAttr = ctx.orgIdAttr;
+        let actions = '';
+        if (ctx.callerCanInvite) {
+            actions = '<div class="people-row-actions people-invite-actions">'
+                + '<button class="org-btn" onclick="orgResendInvite(\'' + orgIdAttr + '\', \'' + emailAttr + '\', this)">Resend</button>'
+                + '<button class="org-btn danger" onclick="orgRevokeInvite(\'' + orgIdAttr + '\', \'' + emailAttr + '\', this)">Revoke</button>'
+                + '</div>';
+        }
+        row.innerHTML =
+            '<div class="people-row-left">'
+            + '<span class="people-avatar" style="background:' + colorForEmail(email) + ';opacity:.7">' + escapeHtmlOrg(initial) + '</span>'
+            + '<div class="people-row-body">'
+            +   '<div class="people-row-email">' + escapeHtmlOrg(email) + '</div>'
+            +   '<div class="people-row-meta">' + badge + '</div>'
+            + '</div></div>' + actions;
+        return row;
+    }
+
+    async function orgResendInvite(orgId, email, btn) {
+        if (btn) btn.disabled = true;
+        try {
+            await orgApiCall('resend_invite', { org_id: orgId, email: email }, false, 'POST');
+            showToast('Invitation re-sent to ' + email + '.', 'success');
+        } catch (err) {
+            showToast((err && err.message) || 'Could not resend the invitation.', 'error');
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    async function orgRevokeInvite(orgId, email, btn) {
+        if (!confirm('Revoke the invitation for ' + email + '?')) return;
+        if (btn) btn.disabled = true;
+        try {
+            await orgApiCall('revoke_invite', { org_id: orgId, email: email }, false, 'POST');
+            showToast('Invitation for ' + email + ' revoked.', 'success');
+            try {
+                const src = getActiveSource();
+                const org = src && src.org;
+                if (org && Array.isArray(org.pending_invites)) {
+                    org.pending_invites = org.pending_invites.filter(function(p) { return p.email !== email; });
+                }
+            } catch (e) {}
+            _rerenderPeople();
+        } catch (err) {
+            showToast((err && err.message) || 'Could not revoke the invitation.', 'error');
+            if (btn) btn.disabled = false;
+        }
     }
 
     function showToast(message, type, duration) {
