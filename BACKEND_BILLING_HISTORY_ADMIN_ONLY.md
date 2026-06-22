@@ -1,5 +1,12 @@
 # Backend: make billing history Admin-only
 
+> **Status: ✅ Already implemented (verified 2026-06-22).** `list_account_billing`
+> already gates on `_is_account_owner(account, caller_email) or is_admin(...)`
+> (returns 403 to non-owners), using the same `is_account_admin_role` predicate
+> as the cart/purchase endpoints. No backend change needed; this doc is kept as
+> the spec of record. (Minor unrelated rough edge: an unauthenticated request
+> returns 500 instead of 401 — optional cleanup, not part of this gate.)
+
 ## Context
 The Purchase history page (`/account/billing/`) shows an account's invoices,
 receipts, and charges. Per the roles model, **only an Admin (owner) of the

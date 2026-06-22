@@ -871,6 +871,13 @@ active: account
         color: #999;
         line-height: 1.5;
     }
+    /* Action row for confirmation modals (e.g. Remove from team). */
+    .contact-owners-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 18px;
+    }
     /* Passive "Renewal queued" status badge shown in place of the
        Renew button on licenses that already have a future-dated
        renewal (successor_license_id is set). Same dimensions as
@@ -2313,9 +2320,12 @@ active: account
        "Invite as [role] (?) [Invite]" control row. Scoped to the invite card
        so the shared .org-add-member-form (the account-owners add form) keeps
        its inline layout. */
-    .people-add-card .org-add-member-form { flex-direction: column; align-items: stretch; flex-wrap: nowrap; gap: 10px; }
+    .people-add-card .org-add-member-form { flex-direction: column; align-items: stretch; flex-wrap: nowrap; gap: 12px; }
     .people-add-card .org-add-member-form input[type="email"] { flex: none; width: 100%; min-width: 0; box-sizing: border-box; }
-    .people-add-card .org-add-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    /* One inline row: "Invite as:" + role dropdown + (?) + Invite. Stays on a
+       single left-aligned line (the dropdown is a fixed width, not stretched);
+       only wraps on very narrow viewports. */
+    .people-add-card .org-add-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .people-add-card .org-add-role-label { font-size: 13px; font-weight: 600; color: #555; }
     /* Match the role control (select / static pill) and the Invite button to
        the same height so they line up on the row. */
@@ -2329,9 +2339,12 @@ active: account
         font-size: 14px;
         line-height: normal;
     }
-    .people-add-card .org-add-role-static { color: #2a3442; padding-left: 12px; padding-right: 12px; border: 1px solid #e6e9ee; border-radius: 4px; background: #f7f8fa; display: inline-flex; align-items: center; }
-    .people-add-card .org-add-row .plan-detail-help { width: 18px; height: 18px; font-size: 11px; margin-left: 0; }
-    .people-add-card .org-add-invite-btn { margin-left: auto; }
+    .people-add-card .org-add-row .org-add-role { flex: 0 0 auto; width: 170px; }
+    .people-add-card .org-add-role-static { flex: 0 0 auto; width: 170px; color: #2a3442; padding-left: 12px; padding-right: 12px; border: 1px solid #e6e9ee; border-radius: 4px; background: #f7f8fa; display: inline-flex; align-items: center; }
+    .people-add-card .org-add-row .plan-detail-help { width: 18px; height: 18px; font-size: 11px; margin-left: 0; flex: 0 0 auto; }
+    /* Invite sits right after the (?), grouped with the controls, and is wide
+       enough to read as the primary action (not a tiny button). */
+    .people-add-card .org-add-invite-btn { flex: 0 0 auto; min-width: 120px; padding-left: 22px; padding-right: 22px; }
 
     /* People list. Redesigned card-style rows with circular avatars,
        role badges, and compact action buttons. The current user's row gets
@@ -2601,7 +2614,6 @@ active: account
         border-radius: 10px;
         padding: 16px 18px;
         margin-top: 4px;
-        max-width: 480px;
     }
     .people-add-card-title {
         font-size: 14px;
@@ -5851,6 +5863,58 @@ active: account
             accountName: opts.accountName || '',
             adminEmails: (opts.ownerEmails || []).filter(Boolean)
         });
+    }
+
+    // Confirmation modal for removing someone from a team. Spells out what the
+    // removal does and does not do: it revokes their access to this Eagle Eyes
+    // account, but does NOT deactivate or disconnect any device they already
+    // activated; they aren't notified; and it can't be undone. onConfirm() runs
+    // only if the user proceeds. Used by both the member and Admin removal paths.
+    function confirmRemoveFromTeam(opts) {
+        opts = opts || {};
+        const email = opts.email || 'this person';
+        const orgId = opts.orgId || '';
+        const onConfirm = (typeof opts.onConfirm === 'function') ? opts.onConfirm : function() {};
+        const devicesHref = orgId ? '#org=' + encodeURIComponent(orgId) + '&view=devices' : '';
+        const devicesLine = devicesHref
+            ? 'To free a license slot or disconnect a specific device, go to the <a href="' + devicesHref + '" data-act="devices">Devices page</a>.'
+            : 'To free a license slot or disconnect a specific device, use the Devices page.';
+
+        const overlay = document.createElement('div');
+        overlay.className = 'contact-owners-modal';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.innerHTML =
+            '<div class="contact-owners-backdrop"></div>'
+            + '<div class="contact-owners-dialog">'
+            +   '<button type="button" class="contact-owners-close" aria-label="Close">&times;</button>'
+            +   '<h3 class="contact-owners-title">Remove ' + planEscape(email) + ' from this team?</h3>'
+            +   '<p class="contact-owners-body">They will lose access to this team\'s Eagle Eyes account, including its licenses, devices, and configurations.</p>'
+            +   '<p class="contact-owners-body">They will not be notified, and this cannot be undone.</p>'
+            +   '<p class="contact-owners-body">If they have already activated Eagle Eyes on a controller or computer, that device keeps working. Removing them here does not deactivate or disconnect any device. ' + devicesLine + '</p>'
+            +   '<div class="contact-owners-actions">'
+            +     '<button type="button" class="org-btn" data-act="cancel">Cancel</button>'
+            +     '<button type="button" class="org-btn danger" data-act="confirm">Remove from team</button>'
+            +   '</div>'
+            + '</div>';
+
+        function close() {
+            try { overlay.remove(); } catch (e) {}
+            document.removeEventListener('keydown', onKey);
+        }
+        function onKey(e) { if (e.key === 'Escape') close(); }
+
+        overlay.querySelector('.contact-owners-backdrop').addEventListener('click', close);
+        overlay.querySelector('.contact-owners-close').addEventListener('click', close);
+        overlay.querySelector('[data-act="cancel"]').addEventListener('click', close);
+        overlay.querySelector('[data-act="confirm"]').addEventListener('click', function() {
+            close();
+            onConfirm();
+        });
+        const devLink = overlay.querySelector('[data-act="devices"]');
+        if (devLink) devLink.addEventListener('click', close);
+        document.addEventListener('keydown', onKey);
+        document.body.appendChild(overlay);
     }
 
     // Click delegation for the non-owner action buttons rendered by
@@ -10371,7 +10435,15 @@ active: account
             const id = a.account_id != null ? a.account_id : a.id;
             return String(id) === String(accountId);
         });
-        if (acc && members) acc.members = members;
+        if (acc && members) {
+            acc.members = members;
+            // members_display is a server-rendered presentation copy of members.
+            // Drop the now-stale one so accountMembersForRole() falls back to the
+            // fresh members map we just got; otherwise it keeps preferring the
+            // old members_display and a just-removed/added Admin reverts on the
+            // optimistic re-render. The next dashboard refetch repopulates it.
+            delete acc.members_display;
+        }
     }
 
     // Promote an existing person to Admin (account owner). Works today — uses
@@ -10442,8 +10514,9 @@ active: account
         return adminRoleTransition(accountId, orgId, email, null, email + ' is now a Member.', btn);
     };
     window.adminRemoveFromTeam = function(accountId, orgId, email, btn) {
-        if (!window.confirm('Remove ' + email + ' from this team? They lose Admin access and team membership.')) return;
-        return adminRoleTransition(accountId, orgId, email, 'remove_member', email + ' was removed from the team.', btn);
+        confirmRemoveFromTeam({ email: email, orgId: orgId, onConfirm: function() {
+            adminRoleTransition(accountId, orgId, email, 'remove_member', email + ' was removed from the team.', btn);
+        }});
     };
 
     // Add-Admin form submit (new email → account owner).
@@ -11563,18 +11636,19 @@ active: account
         return (match && match.name) || 'the organization';
     }
 
-    async function orgRemoveMember(orgId, email, btn) {
-        if (!confirm(`Remove ${email} from the organization?`)) return;
-        await optimisticOrgWrite({
-            orgId: orgId,
-            endpoint: 'remove_member',
-            body: { org_id: orgId, value: email },
-            patch: function(o) {
-                o.emails = (o.emails || []).filter(function(e) { return e !== email; });
-                o.admin_emails = (o.admin_emails || []).filter(function(e) { return e !== email; });
-            },
-            optimisticToast: 'Removed ' + email + ' from ' + orgNameById(orgId) + '.'
-        });
+    function orgRemoveMember(orgId, email, btn) {
+        confirmRemoveFromTeam({ email: email, orgId: orgId, onConfirm: function() {
+            optimisticOrgWrite({
+                orgId: orgId,
+                endpoint: 'remove_member',
+                body: { org_id: orgId, value: email },
+                patch: function(o) {
+                    o.emails = (o.emails || []).filter(function(e) { return e !== email; });
+                    o.admin_emails = (o.admin_emails || []).filter(function(e) { return e !== email; });
+                },
+                optimisticToast: 'Removed ' + email + ' from ' + orgNameById(orgId) + '.'
+            });
+        }});
     }
 
     function orgStartRename(orgId, btn) {
