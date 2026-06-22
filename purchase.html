@@ -1463,12 +1463,16 @@ active: purchase
             if (cartHasCategory(s.slot)) return;
             var open = state.activePicker === s.slot;
             var adminLocked = !!s.adminOnly;
-            var disabled = !s.available;
+            // Admin-locked rows stay clickable (they open the "Admins only"
+            // modal that lists who to ask); only data-unavailable rows are
+            // truly disabled.
+            var disabled = !adminLocked && !s.available;
             html += '<div class="catalog-row'
                 + (open ? ' is-open' : '')
                 + (disabled ? ' is-disabled' : '')
                 + '" data-slot="' + esc(s.slot) + '">';
-            html += '<button type="button" class="catalog-row-trigger" data-action="open-picker" data-slot="'
+            html += '<button type="button" class="catalog-row-trigger" data-action="'
+                + (adminLocked ? 'admin-locked' : 'open-picker') + '" data-slot="'
                 + esc(s.slot) + '"' + (disabled ? ' disabled' : '') + '>'
                 + '<span>' + esc(s.label) + '</span>'
                 + (adminLocked
@@ -1476,7 +1480,7 @@ active: purchase
                     : '<span class="catalog-row-arrow">▸</span>')
                 + '</button>';
             if (adminLocked) {
-                html += '<div class="catalog-already" style="font-style:normal;">Only Admins can renew licenses or add devices. See who your team\'s Admins are on the <a href="{{ "/account/" | relative_url }}#view=people">People page</a>, or top up streaming credits below.</div>';
+                html += '<div class="catalog-already" style="font-style:normal;">Only Admins can renew licenses or add devices. Click to see who to ask, or top up streaming credits below.</div>';
             } else if (disabled && s.unavailableReason) {
                 html += '<div class="catalog-already" style="font-style:normal;">' + esc(s.unavailableReason) + '</div>';
             }
@@ -2374,6 +2378,19 @@ active: purchase
         var action = act.getAttribute('data-action');
         if (action === 'open-picker') {
             openPicker(act.getAttribute('data-slot'));
+        } else if (action === 'admin-locked') {
+            // Member clicked an owner-only catalog row: explain it's an Admin
+            // action and show who to ask (shared modal from the layout).
+            var slot = act.getAttribute('data-slot');
+            var modalAction = slot === 'devices' ? 'add_devices' : (slot === 'new' ? 'purchase' : 'renew');
+            var lockedAcc = activeAccount();
+            if (window.eeAdminActionModal) {
+                window.eeAdminActionModal.show({
+                    action: modalAction,
+                    accountName: (lockedAcc && lockedAcc.name) || '',
+                    adminEmails: window.eeAdminActionModal.adminEmailsForAccount(lockedAcc)
+                });
+            }
         } else if (action === 'close-picker') {
             closePicker();
         } else if (action === 'commit-picker') {

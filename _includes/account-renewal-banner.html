@@ -58,8 +58,35 @@
     var textEl = banner.querySelector('.arb-text');
     var actionEl = banner.querySelector('.arb-action');
     var RENEW_PATH = '{{ "/account/purchase/" | relative_url }}';
+    var currentUser = null;
 
     function isTrial(l) { return /trial/i.test(String((l && l.tier) || '')); }
+
+    // The account that funds a license (matched by account_id). Returns null
+    // when it can't be resolved unambiguously, so callers fall back to the
+    // plain navigate-to-purchase behavior rather than guessing.
+    function fundingAccount(dash, l) {
+        var accounts = (dash && dash.accounts) || [];
+        if (!accounts.length) return null;
+        var aid = l && l.account_id;
+        if (aid != null) {
+            var match = accounts.find(function(a) {
+                return String(a.account_id != null ? a.account_id : a.id) === String(aid);
+            });
+            if (match) return match;
+        }
+        return accounts.length === 1 ? accounts[0] : null;
+    }
+    function isAdminOf(acc, email) {
+        if (!acc || !email) return false;
+        var members = acc.members_display || acc.members || {};
+        var lower = String(email).toLowerCase();
+        return Object.keys(members).some(function(k) {
+            if (k.toLowerCase() !== lower) return false;
+            var r = String(members[k] || '').toLowerCase();
+            return r === 'admin' || r === 'owner';
+        });
+    }
 
     // Mirrors getLicenseExpiryStatus() in account.html.
     function expiryStatus(l) {
@@ -99,11 +126,33 @@
         textEl.innerHTML = 'Your <strong>' + esc(l.license_name || 'Eagle Eyes license')
             + '</strong> expires in <strong>' + d + ' ' + dayWord + '</strong>. '
             + 'Renew now to prevent service interruptions.';
-        actionEl.setAttribute('href', RENEW_PATH + '?add=renew:' + encodeURIComponent(l.license_id || ''));
+
+        // Renewing is an Admin action. If the viewer is an Admin of the funding
+        // account, send them straight to checkout. If they're a member (and we
+        // can tell), pop the shared "this is an Admin action" modal listing who
+        // to ask instead. When the role can't be determined, keep the plain
+        // navigate-to-purchase fallback.
+        var acc = fundingAccount(dash, l);
+        var email = (currentUser && currentUser.email) || '';
+        actionEl.onclick = null;
+        if (acc && email && !isAdminOf(acc, email) && window.eeAdminActionModal) {
+            actionEl.setAttribute('href', '#');
+            actionEl.onclick = function(ev) {
+                ev.preventDefault();
+                window.eeAdminActionModal.show({
+                    action: 'renew',
+                    accountName: acc.name || '',
+                    adminEmails: window.eeAdminActionModal.adminEmailsForAccount(acc)
+                });
+            };
+        } else {
+            actionEl.setAttribute('href', RENEW_PATH + '?add=renew:' + encodeURIComponent(l.license_id || ''));
+        }
         banner.style.display = '';
     }
 
     function refresh(user) {
+        currentUser = user || null;
         if (!user || !window.eeDashboard) { banner.style.display = 'none'; return; }
         try {
             var cached = window.eeDashboard.read(user.uid);

@@ -3536,14 +3536,14 @@ active: account
                  conflate the two; spelling it out inline saves support
                  tickets. -->
             <p class="account-section-hint" style="margin-top: 0; margin-bottom: 10px;">
-                Account owners control the money and licenses tied to this account. They can
+                Admins control the money and licenses tied to this account. They can
                 purchase and renew licenses, manage streaming credits, view billing history,
-                and add or remove other owners.
+                and add or remove other Admins.
             </p>
             <div class="account-section-note">
                 <strong>Not the same as organization members.</strong>
                 Being an admin or member of one of your organizations does not grant any billing
-                authority on this account, and adding someone as an account owner does not place
+                authority on this account, and adding someone as an Admin does not place
                 them in any organization. To manage who is on a team, go to
                 <strong>Organization &rsaquo; People</strong> in the sidebar.
             </div>
@@ -3553,8 +3553,8 @@ active: account
                     <div class="members-header-left">
                         <h4 class="members-header-name" id="accountOwnersHeading">Admins</h4>
                         <button type="button" id="accountOwnerHelpLink" class="account-owner-help-icon"
-                                aria-label="What does an account owner do?"
-                                title="What does an account owner do?">?</button>
+                                aria-label="What does an Admin do?"
+                                title="What does an Admin do?">?</button>
                     </div>
                 </div>
                 <div class="people-list" id="accountOwnersList"></div>
@@ -3565,16 +3565,16 @@ active: account
                      email input + Add button). Only shown when the current
                      user is themselves an owner. -->
                 <div id="accountOwnersAddWrap" style="display: none;">
-                    <a href="#" id="accountOwnersAddToggle" class="account-owners-add-toggle">+ Add another account owner</a>
+                    <a href="#" id="accountOwnersAddToggle" class="account-owners-add-toggle">+ Add another Admin</a>
                     <div id="accountOwnersAddPanel" class="account-owners-add-panel" style="display: none;">
                         <p class="account-owners-add-hint">
                             Enter the email of the person you want to promote. They must already have an Eagle Eyes
-                            account at that address. They get owner powers immediately (purchase, billing, add /
-                            remove other owners).
+                            account at that address. They get Admin powers immediately (purchase, billing, add /
+                            remove other Admins).
                         </p>
                         <form class="org-add-member-form" id="accountOwnersAddForm" onsubmit="return onAddAccountOwnerSubmit(event)">
-                            <input type="email" name="newOwnerEmail" placeholder="new-owner@example.com" autocomplete="off" required>
-                            <button type="submit" class="org-btn primary">Add owner</button>
+                            <input type="email" name="newOwnerEmail" placeholder="new-admin@example.com" autocomplete="off" required>
+                            <button type="submit" class="org-btn primary">Add Admin</button>
                         </form>
                     </div>
                 </div>
@@ -3593,19 +3593,19 @@ active: account
                             <path d="M6 6 L18 18 M6 18 L18 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"></path>
                         </svg>
                     </button>
-                    <h3 id="accountOwnerModalTitle" class="account-modal-title">About the account owner</h3>
+                    <h3 id="accountOwnerModalTitle" class="account-modal-title">About the Admin role</h3>
                     <p class="account-modal-intro">
-                        The <strong>account owner</strong> is responsible for everything financial on this Eagle Eyes account.
-                        Account ownership is independent of organization roles (admin / member).
+                        An <strong>Admin</strong> is responsible for everything financial on this Eagle Eyes account.
+                        This account-level role is separate from your organization memberships.
                     </p>
                     <div class="account-modal-perms">
-                        <div class="account-modal-perms-label">Account owners can:</div>
+                        <div class="account-modal-perms-label">Admins can:</div>
                         <ul>
                             <li>Purchase and renew licenses</li>
                             <li>Buy streaming credits and subscribe to Annual Unlimited</li>
                             <li>Add and remove organizations from the account</li>
                             <li>See billing history and manage payment method</li>
-                            <li>Add another account owner</li>
+                            <li>Add another Admin</li>
                         </ul>
                     </div>
                     <!-- The actual "Add owner" control lives on the Overview
@@ -3613,7 +3613,7 @@ active: account
                          info-only. Explains the role, doesn't duplicate
                          the form. -->
                     <p class="account-modal-footer">
-                        To add or remove account owners, use the controls next to the owners list on this page.
+                        To add or remove Admins, use the controls next to the Admins list on this page.
                     </p>
                 </div>
             </div>
@@ -5827,55 +5827,18 @@ active: account
         });
     }
 
-    // Open a "contact one of the owners" modal when a non-owner clicks
-    // Renew / Add devices on a license they have access to via an org
-    // but don't pay for. Lists owner emails as mailto links prefilled
-    // for the chosen action.
+    // Open the shared "this is an Admin action" modal when a non-Admin clicks
+    // Renew / Add devices on a license they have access to via an org but don't
+    // fund. The modal markup + behavior live in _includes/admin-action-modal.html
+    // (also used by the renewal banner and the purchase page); this just forwards
+    // the account context to it.
     function showContactOwnersModal(opts) {
-        const action = opts.action || 'renew';
-        const adminEmails = (opts.ownerEmails || []).filter(Boolean);
-        const accountName = opts.accountName || '';
-
-        const actionVerb = action === 'add_devices' ? 'add devices to' : 'renew';
-        const accountPhrase = accountName
-            ? 'the <strong>' + planEscape(accountName) + '</strong> account'
-            : 'the account that funds this license';
-
-        const adminsListHtml = adminEmails.length
-            ? adminEmails.map(function(e) { return '<li>' + planEscape(e) + '</li>'; }).join('')
-            : '<li>No Admins listed. Contact info@eagleeyessearch.com.</li>';
-
-        const title = action === 'add_devices' ? 'Adding devices is an Admin action' : 'Renewing is an Admin action';
-
-        const overlay = document.createElement('div');
-        overlay.className = 'contact-owners-modal';
-        overlay.setAttribute('role', 'dialog');
-        overlay.setAttribute('aria-modal', 'true');
-        overlay.innerHTML =
-            '<div class="contact-owners-backdrop"></div>'
-            + '<div class="contact-owners-dialog">'
-            +   '<button type="button" class="contact-owners-close" aria-label="Close">&times;</button>'
-            +   '<h3 class="contact-owners-title">' + title + '</h3>'
-            +   '<p class="contact-owners-body">'
-            +     'Renewals and device purchases for ' + accountPhrase + ' are made by an '
-            +     '<strong>Admin</strong>. You can use this license through your team, but you\'re '
-            +     'not an Admin. Reach out to one of the Admins below to ' + actionVerb
-            +     ' it for you, or to ask them to make you an Admin so you can handle purchases yourself.'
-            +   '</p>'
-            +   '<div class="contact-owners-section-title">Admins</div>'
-            +   '<ul class="contact-owners-list">' + adminsListHtml + '</ul>'
-            + '</div>';
-
-        function close() {
-            try { overlay.remove(); } catch (e) {}
-            document.removeEventListener('keydown', onKey);
-        }
-        function onKey(e) { if (e.key === 'Escape') close(); }
-
-        overlay.querySelector('.contact-owners-backdrop').addEventListener('click', close);
-        overlay.querySelector('.contact-owners-close').addEventListener('click', close);
-        document.addEventListener('keydown', onKey);
-        document.body.appendChild(overlay);
+        if (!window.eeAdminActionModal) return;
+        window.eeAdminActionModal.show({
+            action: opts.action || 'renew',
+            accountName: opts.accountName || '',
+            adminEmails: (opts.ownerEmails || []).filter(Boolean)
+        });
     }
 
     // Click delegation for the non-owner action buttons rendered by
@@ -8420,7 +8383,7 @@ active: account
                 e.preventDefault();
                 const isOpen = addOwnerPanel.style.display !== 'none';
                 addOwnerPanel.style.display = isOpen ? 'none' : '';
-                addOwnerToggle.textContent = isOpen ? '+ Add another account owner' : '– Cancel';
+                addOwnerToggle.textContent = isOpen ? '+ Add another Admin' : '– Cancel';
                 if (!isOpen) {
                     const input = addOwnerPanel.querySelector('input[type="email"]');
                     if (input) setTimeout(function() { input.focus(); }, 0);
@@ -9691,15 +9654,15 @@ active: account
                 } catch (e) {}
                 if (input) input.value = '';
                 renderAccountInfo();
-                setStatus(newEmail + ' is now an owner.', 'success');
+                setStatus(newEmail + ' is now an Admin.', 'success');
             })
             .catch(function(err) {
                 console.error('add_account_owner failed:', err);
                 let msg;
-                if (err.status === 403) msg = 'Only an existing account owner can add another owner.';
-                else if (err.status === 409) msg = err.message || 'That user is already an owner.';
+                if (err.status === 403) msg = 'Only an existing Admin can add another Admin.';
+                else if (err.status === 409) msg = err.message || 'That user is already an Admin.';
                 else if (err.status === 400) msg = err.message || 'Bad request. Check the email and try again.';
-                else msg = err.message || 'Could not add owner. Try again.';
+                else msg = err.message || 'Could not add Admin. Try again.';
                 setStatus(msg, 'error');
             })
             .finally(function() {
@@ -9818,7 +9781,7 @@ active: account
                 + '</div>';
             if (canRemove) {
                 html += '<div class="people-row-actions">'
-                    + '<button class="people-icon-btn danger" title="Remove owner"'
+                    + '<button class="people-icon-btn danger" title="Remove Admin"'
                     + ' data-account-id="' + accountIdAttr + '"'
                     + ' data-email="' + emailAttr + '"'
                     + ' onclick="onRemoveAccountOwnerClick(event)">× Remove</button>'
@@ -9902,20 +9865,20 @@ active: account
                 const panel = document.getElementById('accountOwnersAddPanel');
                 const toggle = document.getElementById('accountOwnersAddToggle');
                 if (panel) panel.style.display = 'none';
-                if (toggle) toggle.textContent = '+ Add another account owner';
-                setOwnerActionStatus(newEmail + ' is now an owner.', 'success');
+                if (toggle) toggle.textContent = '+ Add another Admin';
+                setOwnerActionStatus(newEmail + ' is now an Admin.', 'success');
             })
             .catch(function(err) {
                 console.error('add_account_owner failed:', err);
                 let msg;
                 if (err.status === 403) {
-                    msg = 'Only an existing account owner can add another owner.';
+                    msg = 'Only an existing Admin can add another Admin.';
                 } else if (err.status === 409) {
-                    msg = err.message || 'That user is already an owner.';
+                    msg = err.message || 'That user is already an Admin.';
                 } else if (err.status === 400) {
                     msg = err.message || 'Bad request. Check the email and try again.';
                 } else {
-                    msg = err.message || 'Could not add owner. Try again.';
+                    msg = err.message || 'Could not add Admin. Try again.';
                 }
                 setOwnerActionStatus(msg, 'error');
             })
@@ -9943,8 +9906,8 @@ active: account
         const currentEmail = ((firebase.auth().currentUser || {}).email || '').toLowerCase();
         const removingSelf = email.toLowerCase() === currentEmail;
         const confirmMsg = removingSelf
-            ? 'Remove yourself as an account owner? You will lose the ability to purchase, manage billing, and manage owners for this account.'
-            : 'Remove ' + email + ' as an account owner? They will no longer be able to purchase, manage billing, or manage owners for this account.';
+            ? 'Remove yourself as an Admin? You will lose the ability to purchase, manage billing, and manage Admins for this account.'
+            : 'Remove ' + email + ' as an Admin? They will no longer be able to purchase, manage billing, or manage Admins for this account.';
         if (!window.confirm(confirmMsg)) return;
 
         btn.disabled = true;
@@ -9962,17 +9925,17 @@ active: account
                     if (u && window.eeDashboard) window.eeDashboard.invalidate(u.uid);
                 } catch (e) {}
                 renderAccountInfo();
-                setOwnerActionStatus(email + ' is no longer an owner.', 'success');
+                setOwnerActionStatus(email + ' is no longer an Admin.', 'success');
             })
             .catch(function(err) {
                 console.error('remove_account_owner failed:', err);
                 let msg;
                 if (err.status === 409) {
-                    msg = 'Cannot remove the last owner. Promote another owner first.';
+                    msg = 'Cannot remove the last Admin. Promote another Admin first.';
                 } else if (err.status === 403) {
-                    msg = 'Only an existing account owner can remove an owner.';
+                    msg = 'Only an existing Admin can remove an Admin.';
                 } else {
-                    msg = err.message || 'Could not remove owner. Try again.';
+                    msg = err.message || 'Could not remove Admin. Try again.';
                 }
                 setOwnerActionStatus(msg, 'error');
                 btn.disabled = false;
