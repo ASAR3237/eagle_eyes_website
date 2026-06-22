@@ -1480,7 +1480,7 @@ active: purchase
                     : '<span class="catalog-row-arrow">▸</span>')
                 + '</button>';
             if (adminLocked) {
-                html += '<div class="catalog-already" style="font-style:normal;">Only Admins can renew licenses or add devices. Click to see who to ask, or top up streaming credits below.</div>';
+                html += '<div class="catalog-already" style="font-style:normal;">Only Admins can renew licenses or add devices.</div>';
             } else if (disabled && s.unavailableReason) {
                 html += '<div class="catalog-already" style="font-style:normal;">' + esc(s.unavailableReason) + '</div>';
             }

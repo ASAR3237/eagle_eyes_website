@@ -2317,7 +2317,19 @@ active: account
     .people-add-card .org-add-member-form input[type="email"] { flex: none; width: 100%; min-width: 0; box-sizing: border-box; }
     .people-add-card .org-add-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .people-add-card .org-add-role-label { font-size: 13px; font-weight: 600; color: #555; }
-    .people-add-card .org-add-role-static { font-size: 14px; color: #2a3442; padding: 8px 12px; border: 1px solid #e6e9ee; border-radius: 4px; background: #f7f8fa; }
+    /* Match the role control (select / static pill) and the Invite button to
+       the same height so they line up on the row. */
+    .people-add-card .org-add-row .org-add-role,
+    .people-add-card .org-add-row .org-add-role-static,
+    .people-add-card .org-add-row .org-btn {
+        height: 38px;
+        box-sizing: border-box;
+        padding-top: 0;
+        padding-bottom: 0;
+        font-size: 14px;
+        line-height: normal;
+    }
+    .people-add-card .org-add-role-static { color: #2a3442; padding-left: 12px; padding-right: 12px; border: 1px solid #e6e9ee; border-radius: 4px; background: #f7f8fa; display: inline-flex; align-items: center; }
     .people-add-card .org-add-row .plan-detail-help { width: 18px; height: 18px; font-size: 11px; margin-left: 0; }
     .people-add-card .org-add-invite-btn { margin-left: auto; }
 
@@ -3727,7 +3739,7 @@ active: account
         <section id="configurationsSection" class="account-section" style="display: none;">
             <header class="account-section-header">
                 <h2 class="account-section-title">Configurations</h2>
-                <p class="account-section-hint">A configuration is a saved bundle of your organization's Eagle Eyes settings: a CalTopo service account connection, a default CalTopo map (if your team uses one), coordinate systems, and emergency procedures. When a pilot activates Eagle Eyes Pilot on a drone controller, they can apply a configuration so all of these settings are ready to use straight away, with no setup on the controller. Click a configuration below to edit it.</p>
+                <p class="account-section-hint">A configuration is a saved bundle of your organization's Eagle Eyes settings: a CalTopo service account connection, a default CalTopo map (if your team uses one), coordinate systems, and emergency procedures. When a pilot activates Eagle Eyes Pilot on a drone controller, they can apply a configuration so all of these settings are ready to use straight away. Click a configuration below to edit it.</p>
                 <p class="account-section-hint" style="font-size:13px; margin-top:8px; color:#999;">A CalTopo service account keeps the controller permanently connected to CalTopo, so pilots don't need to sign in again periodically.</p>
             </header>
             <div id="configurationsContent"></div>
