@@ -481,11 +481,16 @@ active: billing
             pill = item.status === 'succeeded' ? 'paid' : (item.status || 'charge');
             title = escapeHtml(item.description || 'Card payment');
             sub = dateStr + (item.refunded ? ' · refunded' : '');
-            // Standalone charges (no invoice) only have Stripe's hosted HTML
-            // receipt page; there is no PDF for these.
+            // A charge only carries Stripe's hosted HTML receipt page. If the
+            // backend resolves the charge's invoice and attaches its PDF, show a
+            // download for it too (forward-compatible; no-op until then).
             if (item.receipt_url) {
                 actions.push('<a class="billing-item-link" href="' + escapeHtml(item.receipt_url)
                     + '" target="_blank" rel="noopener">View receipt</a>');
+            }
+            if (item.pdf_url) {
+                actions.push('<a class="billing-item-link" href="' + escapeHtml(item.pdf_url)
+                    + '" target="_blank" rel="noopener" download>Download PDF</a>');
             }
         } else if (item.type === 'quote') {
             pill = item.status || 'quote';
