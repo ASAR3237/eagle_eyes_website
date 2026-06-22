@@ -3652,6 +3652,10 @@ active: account
             <div class="overview-subhead-row">
                 <h3 class="overview-subhead">Streaming credits</h3>
             </div>
+            <p class="account-section-hint" style="margin-bottom: 12px;">
+                Credits let people outside your WiFi watch your livestream online over the internet. Watching on your local WiFi is always free and never uses credits. Cloud livestreaming (online viewing over the internet) requires Eagle Eyes Pilot 1.7.1 or newer.
+                <a href="#" class="help-topic-link" data-help-topic="streaming-credits">How livestreaming and credits work</a>
+            </p>
             <div id="streamingCreditsWidget" class="streaming-credits-widget" style="display: none;">
                 <div class="streaming-credits-left">
                     <div class="streaming-credits-label">Streaming credits</div>
@@ -5866,21 +5870,18 @@ active: account
         });
     }
 
-    // Confirmation modal for removing someone from a team. Spells out what the
-    // removal does and does not do: it revokes their access to this Eagle Eyes
-    // account, but does NOT deactivate or disconnect any device they already
-    // activated; they aren't notified; and it can't be undone. onConfirm() runs
-    // only if the user proceeds. Used by both the member and Admin removal paths.
-    function confirmRemoveFromTeam(opts) {
+    // Generic confirmation modal (reuses the .contact-owners-* chrome). opts:
+    //   title:        heading HTML (caller escapes any interpolated values)
+    //   bodyHtml:     the body markup (one or more <p class="contact-owners-body">)
+    //   confirmLabel: text for the proceed button (default "Confirm")
+    //   confirmDanger:true → red proceed button; else primary blue
+    //   onConfirm:    called only if the user proceeds
+    // Any link inside bodyHtml marked data-act="close-on-click" closes the modal
+    // when clicked (e.g. a "Devices page" link that navigates away).
+    function showConfirmModal(opts) {
         opts = opts || {};
-        const email = opts.email || 'this person';
-        const orgId = opts.orgId || '';
         const onConfirm = (typeof opts.onConfirm === 'function') ? opts.onConfirm : function() {};
-        const devicesHref = orgId ? '#org=' + encodeURIComponent(orgId) + '&view=devices' : '';
-        const devicesLine = devicesHref
-            ? 'To free a license slot or disconnect a specific device, go to the <a href="' + devicesHref + '" data-act="devices">Devices page</a>.'
-            : 'To free a license slot or disconnect a specific device, use the Devices page.';
-
+        const confirmClass = opts.confirmDanger ? 'org-btn danger' : 'org-btn primary';
         const overlay = document.createElement('div');
         overlay.className = 'contact-owners-modal';
         overlay.setAttribute('role', 'dialog');
@@ -5889,13 +5890,11 @@ active: account
             '<div class="contact-owners-backdrop"></div>'
             + '<div class="contact-owners-dialog">'
             +   '<button type="button" class="contact-owners-close" aria-label="Close">&times;</button>'
-            +   '<h3 class="contact-owners-title">Remove ' + planEscape(email) + ' from this team?</h3>'
-            +   '<p class="contact-owners-body">They will lose access to this team\'s Eagle Eyes account, including its licenses, devices, and configurations.</p>'
-            +   '<p class="contact-owners-body">They will not be notified, and this cannot be undone.</p>'
-            +   '<p class="contact-owners-body">If they have already activated Eagle Eyes on a controller or computer, that device keeps working. Removing them here does not deactivate or disconnect any device. ' + devicesLine + '</p>'
+            +   '<h3 class="contact-owners-title">' + (opts.title || '') + '</h3>'
+            +   (opts.bodyHtml || '')
             +   '<div class="contact-owners-actions">'
             +     '<button type="button" class="org-btn" data-act="cancel">Cancel</button>'
-            +     '<button type="button" class="org-btn danger" data-act="confirm">Remove from team</button>'
+            +     '<button type="button" class="' + confirmClass + '" data-act="confirm">' + planEscape(opts.confirmLabel || 'Confirm') + '</button>'
             +   '</div>'
             + '</div>';
 
@@ -5912,10 +5911,35 @@ active: account
             close();
             onConfirm();
         });
-        const devLink = overlay.querySelector('[data-act="devices"]');
-        if (devLink) devLink.addEventListener('click', close);
+        overlay.querySelectorAll('[data-act="close-on-click"]').forEach(function(el) {
+            el.addEventListener('click', close);
+        });
         document.addEventListener('keydown', onKey);
         document.body.appendChild(overlay);
+    }
+
+    // Confirmation for removing someone from a team. Spells out what the removal
+    // does and does not do: it revokes their access to this Eagle Eyes account,
+    // but does NOT deactivate or disconnect any device they already activated;
+    // they aren't notified; and it can't be undone.
+    function confirmRemoveFromTeam(opts) {
+        opts = opts || {};
+        const email = opts.email || 'this person';
+        const orgId = opts.orgId || '';
+        const devicesHref = orgId ? '#org=' + encodeURIComponent(orgId) + '&view=devices' : '';
+        const devicesLine = devicesHref
+            ? 'To free a license slot or disconnect a specific device, go to the <a href="' + devicesHref + '" data-act="close-on-click">Devices page</a>.'
+            : 'To free a license slot or disconnect a specific device, use the Devices page.';
+        showConfirmModal({
+            title: 'Remove ' + planEscape(email) + ' from this team?',
+            bodyHtml:
+                '<p class="contact-owners-body">They will lose access to this team\'s Eagle Eyes account, including its licenses, devices, and configurations.</p>'
+                + '<p class="contact-owners-body">They will not be notified, and this cannot be undone.</p>'
+                + '<p class="contact-owners-body">If they have already activated Eagle Eyes on a controller or computer, that device keeps working. Removing them here does not deactivate or disconnect any device. ' + devicesLine + '</p>',
+            confirmLabel: 'Remove from team',
+            confirmDanger: true,
+            onConfirm: opts.onConfirm
+        });
     }
 
     // Click delegation for the non-owner action buttons rendered by
@@ -5958,6 +5982,14 @@ active: account
     const PLAN_DETAIL_HELP_TOPICS = {
         'role-admin': { title: 'Roles and permissions', body: ROLES_HELP_BODY },
         'role-member': { title: 'Roles and permissions', body: ROLES_HELP_BODY },
+        'streaming-credits': {
+            title: 'Livestreaming and credits',
+            body: [
+                '<strong>Two ways to watch.</strong> When you start a livestream, Eagle Eyes shares your drone video two ways at once: over your local WiFi and online over the internet. Anyone on the same WiFi can watch directly from the controller, and that is always free, no matter how many people connect. Anyone who is not on your network (they scan the QR code or open the link you share) watches online over the internet instead, so they can be anywhere.',
+                '<strong>What credits pay for.</strong> Livestreaming requires a paid license tier (it is turned off on the Free tier), and only the online viewing over the internet uses credits. That online viewing over the internet (cloud livestreaming) requires Eagle Eyes Pilot 1.7.1 or newer; local WiFi viewing does not. Credits are a prepaid balance that lets people outside your WiFi watch your feed. You are charged only while at least one person is actually watching online. If nobody is watching over the internet, or everyone is on your local WiFi, no credits are used. While streaming, the app shows your balance live with an OK, LOW, or CRITICAL indicator and tells you in real time whether you are using credits or streaming for free.',
+                '<strong>If credits run out.</strong> Online viewing over the internet stops and the app shows an "Out of credits, top up to stream" message with a "Buy More Minutes" option (a QR code or link to add funds). Local WiFi streaming keeps working for free, so anyone on the same network as the controller can still watch even at a zero balance. To let remote people watch again, top up your balance and online viewing turns back on.'
+            ]
+        },
         'device-releases': {
             title: 'Device transfers',
             body: [
@@ -5994,8 +6026,10 @@ active: account
         document.addEventListener('keydown', onKey);
         document.body.appendChild(overlay);
     }
+    // Both the circular "?" icons (.plan-detail-help) and inline text links
+    // (.help-topic-link) open the same topic modal via data-help-topic.
     document.addEventListener('click', function(e) {
-        const btn = e.target.closest('.plan-detail-help');
+        const btn = e.target.closest('.plan-detail-help, .help-topic-link');
         if (!btn) return;
         e.preventDefault();
         e.stopPropagation();
@@ -10511,8 +10545,19 @@ active: account
     window.adminDemoteToMember = function(accountId, orgId, email, btn) {
         // Orgs are members-only; removing the account-owner role alone makes
         // them a plain Member. No org-level remove_admin call (that endpoint
-        // was retired).
-        return adminRoleTransition(accountId, orgId, email, null, email + ' is now a Member.', btn);
+        // was retired). Confirm first: it's a real privilege change, though a
+        // reversible one (you can make them an Admin again).
+        showConfirmModal({
+            title: 'Remove ' + planEscape(email) + ' as an Admin?',
+            bodyHtml:
+                '<p class="contact-owners-body">They will stay a Member of the team and can keep using Eagle Eyes, but they will no longer be able to purchase, renew, manage billing, or add and remove Admins and members.</p>'
+                + '<p class="contact-owners-body">They will not be notified. You can make them an Admin again at any time.</p>',
+            confirmLabel: 'Remove Admin',
+            confirmDanger: true,
+            onConfirm: function() {
+                adminRoleTransition(accountId, orgId, email, null, email + ' is now a Member.', btn);
+            }
+        });
     };
     window.adminRemoveFromTeam = function(accountId, orgId, email, btn) {
         confirmRemoveFromTeam({ email: email, orgId: orgId, onConfirm: function() {

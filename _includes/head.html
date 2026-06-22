@@ -235,10 +235,14 @@
 				if (localStorage.getItem('eeIsAccountAdmin') === 'true') {
 					document.documentElement.classList.add('ee-auth-hint-account-admin');
 				}
-				// Customer view (staff who toggled it, or any non-staff user the
-				// previous load resolved). Pre-paints the stripped sidebar layout
-				// so it doesn't flash the dev layout. eeView.mode() rewrites this.
-				if (localStorage.getItem('eeViewCustomer') === 'true') {
+				// Customer view is the default layout. Pre-paint it so it doesn't
+				// flash the dev layout. eeViewCustomer carries the last resolved
+				// mode for returning visitors; when it's absent (first visit) fall
+				// back to customer unless the user explicitly chose the dev view.
+				// eeView.mode() rewrites this once auth + dashboard resolve.
+				var _eeVm = localStorage.getItem('eeViewMode');
+				var _eeVc = localStorage.getItem('eeViewCustomer');
+				if (_eeVc === 'true' || (_eeVc === null && _eeVm !== 'dev')) {
 					document.documentElement.classList.add('ee-view-customer');
 				}
 			} catch (e) { /* localStorage disabled. Accept the flash */ }
@@ -266,8 +270,11 @@
 				return !!(dash && dash.user_account_info && dash.user_account_info.is_site_admin);
 			}
 			function chosen() {
-				try { return localStorage.getItem('eeViewMode') === 'customer' ? 'customer' : 'dev'; }
-				catch (e) { return 'dev'; }
+				// Default to the customer view for everyone (including staff who
+				// can toggle); only an explicit 'dev' choice keeps the full dev
+				// layout. Non-staff are forced to customer by mode() regardless.
+				try { return localStorage.getItem('eeViewMode') === 'dev' ? 'dev' : 'customer'; }
+				catch (e) { return 'customer'; }
 			}
 			// Reflect the resolved mode onto <html> immediately + persist the
 			// effective hint for the next page's pre-paint.

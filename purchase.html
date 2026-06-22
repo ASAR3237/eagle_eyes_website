@@ -1684,7 +1684,8 @@ active: purchase
             fieldAttrs: 'data-picker-field="amount_usd"'
         });
 
-        return '<div class="pkg-list">'
+        return '<div style="font-size:12px; color:#777; margin-bottom:10px;">Cloud livestreaming (online viewing over the internet) requires Eagle Eyes Pilot 1.7.1 or newer. Credits are only used for this online viewing; watching on local WiFi is always free.</div>'
+            + '<div class="pkg-list">'
             +   '<label class="pkg-row' + (pkg === 'payg' ? ' is-active' : '') + '" data-pkg="payg">'
             +     '<input type="radio" name="creditsPkgPick" value="payg"' + (pkg === 'payg' ? ' checked' : '') + '>'
             +     '<div class="pkg-row-body">'
