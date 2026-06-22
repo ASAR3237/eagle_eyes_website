@@ -464,22 +464,28 @@ active: billing
             } else if (item.status === 'paid' && item.paid_at_iso) {
                 sub += ' · paid ' + new Date(item.paid_at_iso).toLocaleDateString();
             }
+            // "View receipt" opens Stripe's hosted invoice/receipt page (HTML)
+            // in the browser; "Download PDF" pulls the actual invoice PDF
+            // (Stripe serves invoice_pdf as a file download). Keeping both makes
+            // it obvious which one downloads, so people don't save the HTML page.
             if (item.hosted_url) {
-                var label = item.status === 'paid' ? 'View' : (item.status === 'open' ? 'Pay now' : 'View');
+                var label = item.status === 'open' ? 'Pay now' : 'View receipt';
                 actions.push('<a class="billing-item-link" href="' + escapeHtml(item.hosted_url)
                     + '" target="_blank" rel="noopener">' + label + '</a>');
             }
             if (item.pdf_url) {
                 actions.push('<a class="billing-item-link" href="' + escapeHtml(item.pdf_url)
-                    + '" target="_blank" rel="noopener">PDF</a>');
+                    + '" target="_blank" rel="noopener" download>Download PDF</a>');
             }
         } else if (item.type === 'charge') {
             pill = item.status === 'succeeded' ? 'paid' : (item.status || 'charge');
             title = escapeHtml(item.description || 'Card payment');
             sub = dateStr + (item.refunded ? ' · refunded' : '');
+            // Standalone charges (no invoice) only have Stripe's hosted HTML
+            // receipt page; there is no PDF for these.
             if (item.receipt_url) {
                 actions.push('<a class="billing-item-link" href="' + escapeHtml(item.receipt_url)
-                    + '" target="_blank" rel="noopener">Receipt</a>');
+                    + '" target="_blank" rel="noopener">View receipt</a>');
             }
         } else if (item.type === 'quote') {
             pill = item.status || 'quote';
