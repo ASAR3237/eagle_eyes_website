@@ -3714,14 +3714,9 @@ active: account
         <section id="configurationsSection" class="account-section" style="display: none;">
             <header class="account-section-header">
                 <h2 class="account-section-title">Configurations</h2>
-                <p class="account-section-hint">Saved configurations for this organization. Click one to edit.</p>
+                <p class="account-section-hint">A configuration is a saved bundle of your organization's Eagle Eyes settings: a CalTopo service account connection, a default CalTopo map (if your team uses one), coordinate systems, and emergency procedures. When a pilot activates Eagle Eyes Pilot on a drone controller, they can apply a configuration so all of these settings are ready to use straight away, with no setup on the controller. Click a configuration below to edit it.</p>
+                <p class="account-section-hint" style="font-size:13px; margin-top:8px; color:#999;">A CalTopo service account keeps the controller permanently connected to CalTopo, so pilots don't need to sign in again periodically.</p>
             </header>
-            <div class="account-intro-callout">
-                A configuration is a saved bundle of your team's Eagle Eyes settings, such as
-                CalTopo map connections, coordinate systems, the default map, and procedures.
-                Save one here and it syncs to every device and teammate you share it with, so
-                everyone works from the same setup.
-            </div>
             <div id="configurationsContent"></div>
         </section>
 
@@ -5893,18 +5888,19 @@ active: account
     // Roles & permissions, shown from the "?" next to "You are a <role> on this
     // team". Two roles: Admin (account owner) and Member.
     const ROLES_HELP_BODY = [
-        '<strong>Admin</strong>: runs the Eagle Eyes account and the team:'
-            + '<ul><li>Add and remove team members</li>'
-            + '<li>Rename the team and manage its domains</li>'
-            + '<li>Assign and unassign other Admins</li>'
-            + '<li>Purchase &amp; renew licenses, device slots, streaming credits</li>'
-            + '<li>See billing history and invoices</li>'
-            + '<li>Everything a Member can do</li></ul>',
         '<strong>Member</strong>:'
-            + '<ul><li>Activate licenses and run the apps</li>'
+            + '<ul><li>Download and run apps and activate licenses</li>'
             + '<li>Manage devices (disconnect / transfer)</li>'
             + '<li>Create, edit, and share team configurations</li>'
-            + '<li>Top up livestreaming credits</li></ul>'
+            + '<li>Top up livestreaming credits</li>'
+            + '<li>Add other team members</li></ul>',
+        '<strong>Admin</strong>:'
+            + '<ul><li>Everything a Member can do</li>'
+            + '<li>Remove team members</li>'
+            + '<li>Assign and unassign other Admins</li>'
+            + '<li>Purchase &amp; renew licenses</li>'
+            + '<li>Add more devices to a license</li>'
+            + '<li>See billing history and invoices</li></ul>'
     ];
     const PLAN_DETAIL_HELP_TOPICS = {
         'role-admin': { title: 'Roles and permissions', body: ROLES_HELP_BODY },
@@ -9362,13 +9358,13 @@ active: account
         activeDevicesMode = canonicalizeDevicesMode(params.devices);
         devicesScope = canonicalizeDevicesScope(params.devices_scope);
 
-        // Customer view exposes the org Devices + Configurations pages plus the
-        // account-scope Licenses & Credits overview. Any other view (Dashboard,
-        // People, License, Account access) is dev-only and collapses to overview.
+        // Customer view exposes the org People + Devices + Configurations
+        // pages plus the account-scope Licenses & Credits overview. Any other
+        // view (Dashboard, License, Account access) collapses to overview.
         if (customerViewActive()) {
             const coView = (params.view && isOrgView(params.view))
                 ? canonicalizeOrgView(params.view) : null;
-            if (coView === 'devices' || coView === 'configurations') {
+            if (coView === 'people' || coView === 'devices' || coView === 'configurations') {
                 const coOrg = (params.org && orgIds.indexOf(params.org) !== -1)
                     ? params.org : pickDefaultOrgId();
                 if (coOrg) {
