@@ -394,11 +394,12 @@ layout: main
         var billingItem = $('sidebarItemBilling');
         if (customer) {
             // Customer: no Organization group. Billing flattened to top level:
-            // Licenses & Credits for everyone; Purchase/Renew + Purchase history
-            // for account owners only.
+            // Licenses & Credits and Purchase / Renew for everyone (members can
+            // top up streaming credits there); Purchase history (invoices) stays
+            // Admin-only.
             showOrgGroup(false);
             showAccountGroup(true);
-            if (purchaseItem) purchaseItem.style.display = isAccountAdmin ? '' : 'none';
+            if (purchaseItem) purchaseItem.style.display = '';
             if (billingItem) billingItem.style.display = isAccountAdmin ? '' : 'none';
         } else {
             showAccountGroup(isAccountAdmin);

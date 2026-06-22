@@ -335,16 +335,15 @@
 		/* Customer view: the Organization group exposes People + Devices +
 		   Configurations (Dashboard / License stay dev-only); it shows when the
 		   user has orgs (has-orgs hint above) and is flattened to top level in
-		   account-area.html. Billing is also flattened: Licenses & Credits shows
-		   for every signed-in user; Purchase / Renew + Purchase history stay
-		   owner-only (reuse the account-admin hint). These come after — and
-		   outweigh — the generic hints above. */
+		   account-area.html. Billing is also flattened: Licenses & Credits and
+		   Purchase / Renew show for every signed-in user (members can top up
+		   streaming credits there); only Purchase history stays Admin-only
+		   (reuse the account-admin hint). These come after — and outweigh — the
+		   generic hints above. */
 		html.ee-view-customer #sidebarOrgItemDashboard,
 		html.ee-view-customer #sidebarOrgItemLicense { display: none !important; }
 		html.ee-view-customer.ee-auth-hint-signed-in #sidebarAccountSection { display: block !important; }
-		html.ee-view-customer #sidebarItemPurchase,
 		html.ee-view-customer #sidebarItemBilling { display: none !important; }
-		html.ee-view-customer.ee-auth-hint-account-admin #sidebarItemPurchase,
 		html.ee-view-customer.ee-auth-hint-account-admin #sidebarItemBilling { display: block !important; }
 
 		/* On /account/ specifically: if the user was signed in last time,

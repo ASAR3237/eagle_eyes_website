@@ -236,6 +236,20 @@ active: purchase
         transition: transform 0.15s;
     }
     .catalog-row.is-open .catalog-row-arrow { transform: rotate(90deg); color: #1077dc; }
+    /* "Admins only" pill shown in place of the arrow on owner-only catalog
+       rows (Renew / Add devices / Buy new license) when the viewer is a
+       member, not an account admin. */
+    .catalog-admin-badge {
+        flex: 0 0 auto;
+        font-size: 11px;
+        font-weight: 600;
+        color: #8a6d00;
+        background: #fff4d6;
+        border: 1px solid #f0dca3;
+        border-radius: 999px;
+        padding: 2px 9px;
+        white-space: nowrap;
+    }
     .catalog-already {
         padding: 12px 16px;
         background: #f6f8fa;
@@ -479,6 +493,8 @@ active: purchase
     }
     .cta-btn.secondary:hover { background: #f3f9ff; border-color: #1e90ff; }
     .cta-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+    .checkout-invoice-note { margin-top: 12px; font-size: 13px; color: #777; }
+    .checkout-invoice-note a { color: #1077dc; }
 
     .purchase-loading { color: #777; font-size: 14px; padding: 30px 0; }
     .purchase-signed-out { color: #555; font-size: 14px; padding: 30px 0; }
@@ -652,6 +668,8 @@ active: purchase
             </div>
 
             <div id="ctaStatus" class="purchase-error" style="display: none;"></div>
+
+            <p class="checkout-invoice-note">Need an invoice or a quote? Email us at <a href="mailto:info@eagleeyessearch.com?subject=Invoice%20or%20quote%20request">info@eagleeyessearch.com</a> with your request.</p>
         </div>
     </div>
 </div>
@@ -1398,17 +1416,25 @@ active: purchase
 
     // ===== Catalog UI =====
     function catalogSlots() {
+        // Members (non-owners) see the full catalog, but the owner-only
+        // actions (renew, add devices, buy new license) are disabled with an
+        // "Admins only" badge. Topping up streaming credits is open to every
+        // team member. adminOnly takes precedence over the data-availability
+        // reason since a member can't do it regardless of license state.
+        var isOwner = activeAccountIsOwner();
         var slots = [];
         slots.push({
             slot: 'devices',
             label: '+ Add device slots to an existing license',
-            available: licensesEligibleToExtend().length > 0,
+            available: isOwner && licensesEligibleToExtend().length > 0,
+            adminOnly: !isOwner,
             unavailableReason: 'No active licenses with room to add devices.'
         });
         slots.push({
             slot: 'renew',
             label: '+ Renew a license',
-            available: licensesEligibleToRenew().length > 0,
+            available: isOwner && licensesEligibleToRenew().length > 0,
+            adminOnly: !isOwner,
             unavailableReason: 'No licenses are within their renewal window yet (≤90 days from expiry, ≤7 for trials).'
         });
         slots.push({
@@ -1420,7 +1446,8 @@ active: purchase
             slots.push({
                 slot: 'new',
                 label: '+ Buy a new license',
-                available: true
+                available: isOwner,
+                adminOnly: !isOwner
             });
         }
         return slots;
@@ -1435,6 +1462,7 @@ active: purchase
             // cart to bring it back.
             if (cartHasCategory(s.slot)) return;
             var open = state.activePicker === s.slot;
+            var adminLocked = !!s.adminOnly;
             var disabled = !s.available;
             html += '<div class="catalog-row'
                 + (open ? ' is-open' : '')
@@ -1443,9 +1471,13 @@ active: purchase
             html += '<button type="button" class="catalog-row-trigger" data-action="open-picker" data-slot="'
                 + esc(s.slot) + '"' + (disabled ? ' disabled' : '') + '>'
                 + '<span>' + esc(s.label) + '</span>'
-                + '<span class="catalog-row-arrow">▸</span>'
+                + (adminLocked
+                    ? '<span class="catalog-admin-badge">Admins only</span>'
+                    : '<span class="catalog-row-arrow">▸</span>')
                 + '</button>';
-            if (disabled && s.unavailableReason) {
+            if (adminLocked) {
+                html += '<div class="catalog-already" style="font-style:normal;">Only Admins can renew licenses or add devices. See who your team\'s Admins are on the <a href="{{ "/account/" | relative_url }}#view=people">People page</a>, or top up streaming credits below.</div>';
+            } else if (disabled && s.unavailableReason) {
                 html += '<div class="catalog-already" style="font-style:normal;">' + esc(s.unavailableReason) + '</div>';
             }
             if (open) {
@@ -1556,8 +1588,7 @@ active: purchase
                     fieldAttrs: 'data-picker-field="new_n_tokens"'
                 })
             +   '<span class="picker-row-hint">' + (newN < currentDevices
-                    ? 'Downsizing: at renewal start, the first ' + newN
-                      + ' devices to be active keep slots. Release others from the Devices page if needed.'
+                    ? ''
                     : 'Currently ' + currentDevices + '. Raise to add devices in the same renewal.')
             +   devWarn
             + '</div>'
@@ -2148,22 +2179,22 @@ active: purchase
     function applyOwnerVisibility() {
         var acc = activeAccount();
         var hasAccount = !!acc;
-        var isOwner = !!(acc && (acc.is_admin || acc.is_owner));
         if (!hasAccount) {
+            // Signed in but not a member of any billing account.
             $('purchaseContent').style.display = 'none';
             $('purchaseNonOwner').style.display = 'none';
             renderNoAccountPanel();
             $('purchaseNoAccount').style.display = '';
-        } else if (isOwner) {
-            $('purchaseNoAccount').style.display = 'none';
-            $('purchaseNonOwner').style.display = 'none';
-            $('purchaseContent').style.display = '';
-        } else {
-            $('purchaseContent').style.display = 'none';
-            $('purchaseNoAccount').style.display = 'none';
-            renderNonOwnerPanel(acc);
-            $('purchaseNonOwner').style.display = '';
+            return;
         }
+        // Both owners and members see the full purchase page now. Members can
+        // top up streaming credits; the owner-only catalog rows (renew, add
+        // devices, buy new license) render disabled with an "Admins only"
+        // badge (see catalogSlots / renderCatalog). The old member lock-out
+        // panel is no longer shown.
+        $('purchaseNoAccount').style.display = 'none';
+        $('purchaseNonOwner').style.display = 'none';
+        $('purchaseContent').style.display = '';
     }
     function renderNoAccountPanel() {
         var emailEl = $('noAccountEmail');
@@ -2293,7 +2324,12 @@ active: purchase
         if (!state.urlAddsApplied) {
             state.urlAddsApplied = true;
             var urlItems = parseUrlAddItems();
+            var ownerForAdds = activeAccountIsOwner();
             urlItems.forEach(function(it) {
+                // Members can only add streaming credits. Ignore owner-only
+                // deep-link items (renew / devices / new license) so a shared
+                // ?add=... URL can't seed a cart they're not allowed to buy.
+                if (!ownerForAdds && !isCreditsSku(it.sku)) return;
                 var slot = catalogSlotForSku(it.sku);
                 var existing = slot && state.cart.items.find(function(x) {
                     return catalogSlotForSku(x.sku) === slot;

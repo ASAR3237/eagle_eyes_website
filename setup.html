@@ -145,17 +145,6 @@ noindex: true
         color: #777;
         margin-top: 0.2rem;
     }
-    .config-save-picker-warning {
-        margin-top: 1rem;
-        padding: 0.8rem 1rem;
-        background: #fff8e7;
-        border: 1px solid #f5d99b;
-        color: #6b4f00;
-        font-size: 1.3rem;
-        line-height: 1.45;
-        border-radius: 6px;
-    }
-    .config-save-picker-warning strong { color: #6b4f00; }
     /* Form mode: each section matches the toggle container style */
     .setup-form.form-mode .form-step {
         background: #f8f9fa;
@@ -1443,10 +1432,6 @@ noindex: true
         <div id="configSavePicker" class="config-save-picker" style="display: none;">
             <div class="config-save-picker-label">Who can use this configuration?</div>
             <div id="configSavePickerOptions" class="config-save-picker-options"></div>
-            <div id="configSavePickerWarning" class="config-save-picker-warning" style="display: none;">
-                <strong>Heads up:</strong> anyone on the selected team will be able to use this configuration,
-                including any credentials it contains (CalTopo API keys, TAK creds, etc.).
-            </div>
         </div>
 
         <!-- Label for optional sections (form mode only) -->
@@ -4698,7 +4683,6 @@ async function renderConfigSavePicker(existingConfig) {
     await ensureOrgsLoaded();
     var picker = document.getElementById('configSavePicker');
     var optsEl = document.getElementById('configSavePickerOptions');
-    var warnEl = document.getElementById('configSavePickerWarning');
     if (!picker || !optsEl) return;
 
     // Two-role model: any member of an org can create & share a team
@@ -4754,7 +4738,6 @@ async function renderConfigSavePicker(existingConfig) {
 
     optsEl.innerHTML = html;
     picker.style.display = '';
-    warnEl.style.display = configSaveOrgIds.length > 0 ? '' : 'none';
 
     // Wire change handler. Debounced to a delegated listener to avoid
     // rebinding per option on each render.
@@ -4770,7 +4753,6 @@ async function renderConfigSavePicker(existingConfig) {
             var radio = row.querySelector('input[type="radio"]');
             row.classList.toggle('is-active', !!radio && radio.checked);
         });
-        warnEl.style.display = configSaveOrgIds.length > 0 ? '' : 'none';
     };
 }
 

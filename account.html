@@ -2309,6 +2309,18 @@ active: account
     .org-status-msg.error { color: #c0392b; }
     .org-status-msg.success { color: #27ae60; }
 
+    /* People invite card: email on its own row, then a compact
+       "Invite as [role] (?) [Invite]" control row. Scoped to the invite card
+       so the shared .org-add-member-form (the account-owners add form) keeps
+       its inline layout. */
+    .people-add-card .org-add-member-form { flex-direction: column; align-items: stretch; flex-wrap: nowrap; gap: 10px; }
+    .people-add-card .org-add-member-form input[type="email"] { flex: none; width: 100%; min-width: 0; box-sizing: border-box; }
+    .people-add-card .org-add-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .people-add-card .org-add-role-label { font-size: 13px; font-weight: 600; color: #555; }
+    .people-add-card .org-add-role-static { font-size: 14px; color: #2a3442; padding: 8px 12px; border: 1px solid #e6e9ee; border-radius: 4px; background: #f7f8fa; }
+    .people-add-card .org-add-row .plan-detail-help { width: 18px; height: 18px; font-size: 11px; margin-left: 0; }
+    .people-add-card .org-add-invite-btn { margin-left: auto; }
+
     /* People list. Redesigned card-style rows with circular avatars,
        role badges, and compact action buttons. The current user's row gets
        a subtle blue tint so it's easy to find. */
@@ -2577,6 +2589,7 @@ active: account
         border-radius: 10px;
         padding: 16px 18px;
         margin-top: 4px;
+        max-width: 480px;
     }
     .people-add-card-title {
         font-size: 14px;
@@ -10338,25 +10351,29 @@ active: account
         // Members, so they see a fixed "joins as a Member" note instead.
         if (callerCanInvite) {
             const canSetAdmin = callerIsAccountAdmin;
-            const roleSelect = canSetAdmin
-                ? '  <select class="org-add-role" aria-label="Role for the invited person">'
-                  + '    <option value="member">Member</option>'
-                  + '    <option value="admin">Admin</option>'
-                  + '  </select>'
-                : '';
-            const roleHint = canSetAdmin
-                ? 'Pick whether they join as a Member or an Admin (Admins also manage billing'
-                    + (accountName ? ' for ' + escapeHtmlOrg(accountName) : '') + '). '
-                : 'They join as a Member. ';
+            // Admins choose the role; everyone else can only invite Members, so
+            // they see a fixed "Member" label in the same slot. The "?" opens
+            // the shared Roles & permissions modal (what each role can do), so
+            // the hint stays short.
+            const roleControl = canSetAdmin
+                ? '<select class="org-add-role" aria-label="Role for the invited person">'
+                  + '<option value="member">Member</option>'
+                  + '<option value="admin">Admin</option>'
+                  + '</select>'
+                : '<span class="org-add-role-static">Member</span>';
             const addForm = document.createElement('div');
             addForm.className = 'people-add-card';
             addForm.innerHTML =
                 '<div class="people-add-card-title">Invite someone to this team</div>' +
-                '<div class="people-add-card-hint">' + roleHint + 'Invite by email. They confirm and set up their account, then join the team.</div>' +
+                '<div class="people-add-card-hint">Invite by email. They confirm and set up their account, then join the team.</div>' +
                 '<form class="org-add-member-form" onsubmit="return false;">' +
                 '  <input type="email" placeholder="email@example.com" required>' +
-                roleSelect +
-                '  <button type="button" class="org-btn primary" onclick="orgInviteMember(this, \'' + orgIdAttr + '\')">Invite</button>' +
+                '  <div class="org-add-row">' +
+                '    <span class="org-add-role-label">Invite as:</span>' +
+                '    ' + roleControl +
+                '    <button type="button" class="plan-detail-help" data-help-topic="role-admin" aria-label="What Members and Admins can do">?</button>' +
+                '    <button type="button" class="org-btn primary org-add-invite-btn" onclick="orgInviteMember(this, \'' + orgIdAttr + '\')">Invite</button>' +
+                '  </div>' +
                 '</form>' +
                 '<div class="org-status-msg" data-status="add"></div>';
             container.appendChild(addForm);
