@@ -25,7 +25,7 @@ Quiz tags: `airlaw`, `systems`, `humanfactors`, `weather`, `navigation`,
 | `app.js` | Quiz engine (reads `?q=` from the URL; menu when absent) |
 | `quizzes.js` | **The content** — all questions live here |
 | `style.css` | Mobile-first styling |
-| `config.js` | `COURSE_NAME` + `BASE_URL` (used only by the QR generator) |
+| `quiz-config.js` | `COURSE_NAME`, `BASE_URL` (QR generator), and `RESULTS_URL` (optional Sheet collection) |
 
 ## Editing / adding quizzes
 
@@ -56,7 +56,7 @@ student's phone. To instead collect submissions in a Google Sheet:
    `google-apps-script.gs` collector (kept in the authoring workspace).
 2. **Deploy ▸ New deployment ▸ Web app** (Execute as *Me*, access
    *Anyone*) and copy the `/exec` URL.
-3. Put that URL in `config.js` → `RESULTS_URL`.
+3. Put that URL in `quiz-config.js` → `RESULTS_URL`.
 
 A "Submit" box then appears on the results screen; each submission adds a
 row (one tab per quiz, a column per question). Leave `RESULTS_URL` blank
@@ -66,7 +66,7 @@ to keep everything anonymous.
 
 The QR-code generator (`generate_qr.py`) and printable sheet live in the
 authoring workspace, not in this repo. They build codes pointing at
-`BASE_URL` in `config.js`. Re-run after adding a quiz to make a new code.
+`BASE_URL` in `quiz-config.js`. Re-run after adding a quiz to make a new code.
 
 > Jekyll serves this folder's static files as-is (no front matter), so it
 > deploys with the rest of the site on merge to `master`.
