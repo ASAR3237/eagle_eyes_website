@@ -206,6 +206,15 @@ active: billing
         Sign in to view your billing details.
     </div>
 
+    <!-- Non-Admin block. Purchase history (invoices/receipts) is Admin-only;
+         members of the account land here instead of the timeline. Re-evaluated
+         on account switch. -->
+    <div id="billingNonAdmin" class="billing-signed-out" style="display: none;">
+        Purchase history is only available to Admins of this account. Ask one of your
+        account Admins for invoices or receipts, or email
+        <a href="mailto:info@eagleeyessearch.com" style="color: #1e90ff;">info@eagleeyessearch.com</a>.
+    </div>
+
     <div id="billingContent" style="display: none;">
 
         <!-- Account-owners + funds info live on /account/ (Overview). The
@@ -358,6 +367,26 @@ active: billing
         }) || state.accounts[0];
     }
 
+    function activeAccountIsAdmin() {
+        var acc = findActiveAccount();
+        return !!(acc && (acc.is_admin || acc.is_owner));
+    }
+
+    // Purchase history is Admin-only. Show the billing content for Admins of the
+    // active account; otherwise show the non-Admin block. Returns true when the
+    // viewer may see the page. Called on first load and on every account switch.
+    function applyAdminVisibility() {
+        $('billingLoading').style.display = 'none';
+        if (activeAccountIsAdmin()) {
+            $('billingNonAdmin').style.display = 'none';
+            $('billingContent').style.display = '';
+            return true;
+        }
+        $('billingContent').style.display = 'none';
+        $('billingNonAdmin').style.display = '';
+        return false;
+    }
+
     function orgNamesForAccount(account) {
         var ids = (account && account.organization_ids) || [];
         if (!ids.length) return [];
@@ -384,6 +413,7 @@ active: billing
     async function applyActiveAccount(user, newId) {
         if (!newId) return;
         state.activeAccountId = String(newId);
+        if (!applyAdminVisibility()) return;
         renderAccountSummary();
         loadBillingTimeline(state.activeAccountId);
     }
@@ -523,8 +553,7 @@ active: billing
         // helpers were deleted; that ReferenceError was killing the await
         // chain before loadBillingTimeline could run, which is why the
         // Invoices & receipts section appeared blank.)
-        $('billingLoading').style.display = 'none';
-        $('billingContent').style.display = '';
+        if (!applyAdminVisibility()) return;
         renderAccountSummary();
         loadBillingTimeline(state.activeAccountId);
     }
@@ -532,6 +561,7 @@ active: billing
     function initSignedOut() {
         $('billingLoading').style.display = 'none';
         $('billingContent').style.display = 'none';
+        $('billingNonAdmin').style.display = 'none';
         $('billingSignedOut').style.display = '';
     }
 
