@@ -186,5 +186,31 @@ html, body {
 .quizlink p { margin: 0; color: var(--muted); font-size: 0.9rem; }
 .quizlink .meta { margin-top: 8px; font-size: 0.8rem; color: var(--sky); font-weight: 700; }
 
+/* ---- Save results ---- */
+.save {
+  margin: 4px 0 18px;
+  padding: 16px;
+  border: 1px dashed #c4cdd9;
+  border-radius: 12px;
+  background: #fafbfd;
+  text-align: left;
+}
+.save label { display: block; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+.save input {
+  width: 100%;
+  padding: 14px;
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  font-size: 1rem;
+  font-family: inherit;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+}
+.save input:focus { outline: none; border-color: var(--sky); }
+.save .btn { width: 100%; }
+.savemsg { margin: 10px 0 0; font-weight: 700; font-size: 0.92rem; min-height: 1.2em; }
+.savemsg.ok { color: var(--green); }
+.savemsg.err { color: var(--red); }
+
 .footnote { text-align: center; color: var(--muted); font-size: 0.8rem; margin-top: 28px; }
 .error { text-align:center; padding: 40px 20px; color: var(--muted); }

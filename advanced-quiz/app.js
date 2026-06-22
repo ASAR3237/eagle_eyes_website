@@ -5,6 +5,11 @@
 //  index.html IS this engine:
 //    /advanced-quiz/            -> menu of all quizzes
 //    /advanced-quiz/?q=airlaw   -> runs that quiz
+//
+//  Optional results collection: if CONFIG.RESULTS_URL is set
+//  (a Google Apps Script web-app URL), the results screen shows
+//  a "Save your results" box that posts the submission to your
+//  Google Sheet. Leave it blank to keep everything anonymous.
 // ============================================================
 
 (function () {
@@ -31,6 +36,7 @@
   let current = 0;
   let score = 0;
   let answered = false;
+  let responses = [];        // one entry per answered question
   const total = quiz.questions.length;
 
   render();
@@ -109,6 +115,15 @@
     const isRight = chosen === correct;
     if (isRight) score++;
 
+    responses.push({
+      n: current + 1,
+      q: q.q,
+      chosen: String.fromCharCode(65 + chosen),
+      chosenText: q.options[chosen],
+      correct: String.fromCharCode(65 + correct),
+      right: isRight
+    });
+
     root.querySelectorAll(".opt").forEach(function (btn) {
       const i = parseInt(btn.getAttribute("data-i"), 10);
       btn.classList.add("locked");
@@ -152,6 +167,16 @@
     else if (pct >= 50)   msg = "Getting there — worth another look at this topic.";
     else                  msg = "Keep studying this one and try again.";
 
+    const saveBox = CONFIG.RESULTS_URL
+      ? '<div class="save" id="save">' +
+          '<label for="nm">Send your results to your instructor</label>' +
+          '<input id="nm" type="text" maxlength="40" ' +
+            'placeholder="Your name or initials" autocomplete="name">' +
+          '<button class="btn btn-primary" id="savebtn">Submit</button>' +
+          '<p class="savemsg" id="savemsg"></p>' +
+        '</div>'
+      : '';
+
     root.innerHTML =
       '<div class="topbar">' +
         '<p class="eyebrow">' + escapeHtml(quiz.title) + '</p>' +
@@ -166,6 +191,7 @@
         '</div>' +
         '<h2>' + pct + '% correct</h2>' +
         '<p class="msg">' + msg + '</p>' +
+        saveBox +
         '<div class="actions">' +
           '<button class="btn btn-ghost" id="retry">Try again</button>' +
           '<a class="btn btn-primary" href="./" ' +
@@ -174,8 +200,58 @@
       '</div>';
 
     document.getElementById("retry").addEventListener("click", function () {
-      current = 0; score = 0; render();
+      current = 0; score = 0; responses = []; render();
       window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    if (CONFIG.RESULTS_URL) {
+      document.getElementById("savebtn")
+        .addEventListener("click", function () { submitResults(pct); });
+    }
+  }
+
+  // ----------------------------------------------------------
+  function submitResults(pct) {
+    const input = document.getElementById("nm");
+    const btn = document.getElementById("savebtn");
+    const out = document.getElementById("savemsg");
+    const name = (input.value || "").trim();
+
+    if (!name) {
+      out.className = "savemsg err";
+      out.textContent = "Please enter your name or initials first.";
+      input.focus();
+      return;
+    }
+
+    btn.disabled = true;
+    input.disabled = true;
+    out.className = "savemsg";
+    out.textContent = "Sending…";
+
+    const payload = {
+      quiz: quizId,
+      title: quiz.title,
+      name: name,
+      score: score,
+      total: total,
+      pct: pct,
+      answers: responses
+    };
+
+    fetch(CONFIG.RESULTS_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    }).then(function () {
+      out.className = "savemsg ok";
+      out.textContent = "Saved ✓ Thanks, " + name + "!";
+    }).catch(function () {
+      out.className = "savemsg err";
+      out.textContent = "Couldn't send — check your connection and try again.";
+      btn.disabled = false;
+      input.disabled = false;
     });
   }
 

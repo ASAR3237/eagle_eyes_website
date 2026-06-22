@@ -47,6 +47,21 @@ Edit `quizzes.js`. Each quiz is keyed by its URL tag:
 A new quiz appears on the menu automatically. Content is aligned to the
 8 Transport Canada exam sections taught in the course deck.
 
+## Collecting results (optional)
+
+By default quizzes are **self-graded and anonymous** — nothing leaves the
+student's phone. To instead collect submissions in a Google Sheet:
+
+1. Create a Google Sheet, then **Extensions ▸ Apps Script** and paste the
+   `google-apps-script.gs` collector (kept in the authoring workspace).
+2. **Deploy ▸ New deployment ▸ Web app** (Execute as *Me*, access
+   *Anyone*) and copy the `/exec` URL.
+3. Put that URL in `config.js` → `RESULTS_URL`.
+
+A "Submit" box then appears on the results screen; each submission adds a
+row (one tab per quiz, a column per question). Leave `RESULTS_URL` blank
+to keep everything anonymous.
+
 ## QR codes
 
 The QR-code generator (`generate_qr.py`) and printable sheet live in the
