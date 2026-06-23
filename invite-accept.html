@@ -23,7 +23,9 @@ noindex: true
     justify-content: center;
     align-items: center;
   }
-  .invite-card { width: 100%; max-width: 520px; border: 1px solid #e5e7eb; border-radius: 12px; padding: 28px; background: #fff; box-shadow: 0 4px 18px rgba(0,0,0,0.06); }
+  .invite-card { width: 100%; max-width: 460px; border: 1px solid #e5e7eb; border-radius: 14px; padding: 36px 32px; background: #fff; box-shadow: 0 6px 24px rgba(0,0,0,0.07); }
+  .invite-logo { text-align: center; margin-bottom: 22px; }
+  .invite-logo img { height: 30px; width: auto; }
   .invite-lede { font-size: 18px; line-height: 1.5; margin: 0 0 8px; }
   .invite-lede strong { color: #1a1a2e; }
   .invite-sub { color: #6b7280; font-size: 14px; margin: 0 0 20px; }
@@ -44,6 +46,7 @@ noindex: true
 
 <div class="invite-wrap">
   <div class="invite-card">
+    <div class="invite-logo"><img src="{{ '/images/eagle_eyes_flat_logo_2.png' | relative_url }}" alt="Eagle Eyes"></div>
     <div id="invite-loading" class="invite-muted">Loading your invitation…</div>
 
     <div id="invite-error" hidden>
@@ -53,7 +56,7 @@ noindex: true
     </div>
 
     <div id="invite-body" hidden>
-      <p class="invite-lede"><strong id="inv-inviter"></strong> invited you to join <strong id="inv-org"></strong> on Eagle Eyes<span id="inv-role-wrap"> as <strong id="inv-role"></strong></span>.</p>
+      <p class="invite-lede"><strong id="inv-inviter"></strong> invited you to join <strong id="inv-org"></strong><span id="inv-role-wrap"> as <strong id="inv-role"></strong></span>.</p>
       <p class="invite-sub">Sign in to accept. You can use any Eagle Eyes account (it doesn't have to match the email this was sent to).</p>
 
       <div id="signin-section">
