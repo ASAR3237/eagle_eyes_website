@@ -15,9 +15,14 @@
   // can be the same URL or a separate deployment — both read the same Sheet.
   var STATS_URL = "https://script.google.com/macros/s/AKfycbzIuDZzjfJY-8vC9OyOfUKEs0g7-LktXMoe4mPHi5vTj00nC42QJDLJfPuDK_5YVzjN/exec";
 
-  // title -> quiz definition (to map letters back to option text + answer key)
+  // title -> quiz definition (to map letters back to option text + answer key).
+  // Sheet tab names have ":" etc. stripped (Google rule), so normalise both
+  // sides before matching, e.g. "Section 4: Meteorology" == "Section 4  Meteorology".
+  function normTitle(s) {
+    return String(s).replace(/[:\\\/?*\[\]]/g, " ").replace(/\s+/g, " ").trim().toLowerCase();
+  }
   var byTitle = {};
-  Object.keys(QUIZZES).forEach(function (id) { byTitle[QUIZZES[id].title] = QUIZZES[id]; });
+  Object.keys(QUIZZES).forEach(function (id) { byTitle[normTitle(QUIZZES[id].title)] = QUIZZES[id]; });
 
   if (!STATS_URL) {
     root.innerHTML = '<div class="topbar"><h1>Dashboard unavailable</h1></div>' +
@@ -96,7 +101,7 @@
     }
 
     quizzes.forEach(function (qz) {
-      var meta = byTitle[qz.title];
+      var meta = byTitle[normTitle(qz.title)];
       html += '<div class="card dash">' +
         '<div class="dash-head"><h2>' + esc(qz.title) + '</h2>' +
         '<span class="resp">' + qz.responses + ' response' + (qz.responses === 1 ? '' : 's') + '</span></div>';
