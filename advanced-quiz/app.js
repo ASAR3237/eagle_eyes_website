@@ -35,6 +35,13 @@
     catch (e) { /* private mode / storage full — non-fatal */ }
   }
   function validEmail(s) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s); }
+  function hasStudent() {
+    var s = loadStudent();
+    return !!(s && s.name && validEmail(s.email || ""));
+  }
+  function forgetStudent() {
+    try { localStorage.removeItem(STUDENT_KEY); } catch (e) { /* non-fatal */ }
+  }
 
   if (!quizId) { renderMenu(); return; }
 
@@ -57,7 +64,55 @@
   // dashboard stay aligned across students.
   let order = shuffle(quiz.questions.map(function (_, i) { return i; }));
 
-  render();
+  start();
+
+  // ----------------------------------------------------------
+  // If results are being collected and this phone doesn't know the student
+  // yet, ask for name + email ONCE up front. After that (stored locally),
+  // every quiz scanned on this phone skips straight to the questions.
+  function start() {
+    if (CONFIG.RESULTS_URL && !hasStudent()) { renderStartGate(); }
+    else { render(); }
+  }
+
+  // ----------------------------------------------------------
+  function renderStartGate() {
+    root.innerHTML =
+      '<div class="topbar">' +
+        '<p class="eyebrow">' + escapeHtml(quiz.title) + '</p>' +
+        '<h1>' + escapeHtml(CONFIG.COURSE_NAME) + '</h1>' +
+      '</div>' +
+      '<div class="card">' +
+        '<p class="question">Before you start</p>' +
+        '<p class="msg" style="margin:-8px 0 16px;">Enter your name and email so your ' +
+          'instructor can send your certificate. You only need to do this once on this phone.</p>' +
+        '<div class="save" style="border:none;background:none;padding:0;margin:0;">' +
+          '<input id="nm" type="text" maxlength="60" placeholder="Your full name" ' +
+            'autocomplete="name">' +
+          '<input id="em" type="email" maxlength="80" placeholder="Your email (for your certificate)" ' +
+            'autocomplete="email" inputmode="email">' +
+          '<button class="btn btn-primary" id="startbtn">Start quiz &rarr;</button>' +
+          '<p class="savemsg err" id="startmsg"></p>' +
+        '</div>' +
+      '</div>';
+
+    var nm = document.getElementById("nm");
+    document.getElementById("startbtn").addEventListener("click", function () {
+      var name = (nm.value || "").trim();
+      var email = (document.getElementById("em").value || "").trim();
+      var msg = document.getElementById("startmsg");
+      if (!name) { msg.textContent = "Please enter your full name."; nm.focus(); return; }
+      if (!validEmail(email)) {
+        msg.textContent = "Please enter a valid email so we can send your certificate.";
+        document.getElementById("em").focus();
+        return;
+      }
+      saveStudent(name, email);
+      render();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+    nm.focus();
+  }
 
   // ----------------------------------------------------------
   function renderMenu() {
@@ -187,8 +242,21 @@
     else                  msg = "Keep studying this one and try again.";
 
     const stored = loadStudent();
-    const saveBox = CONFIG.RESULTS_URL
-      ? '<div class="save" id="save">' +
+    const known = !!(CONFIG.RESULTS_URL && hasStudent());
+
+    var saveBox = '';
+    if (known) {
+      // We already know who this is — send automatically, no second prompt.
+      saveBox =
+        '<div class="save" id="save">' +
+          '<p class="sentas">Submitting your results as <b>' + escapeHtml(stored.name) + '</b></p>' +
+          '<p class="savemsg" id="savemsg">Sending…</p>' +
+          '<p class="notme"><a href="#" id="notme">Not you?</a></p>' +
+        '</div>';
+    } else if (CONFIG.RESULTS_URL) {
+      // Fallback (e.g. storage blocked) — ask here as before.
+      saveBox =
+        '<div class="save" id="save">' +
           '<label for="nm">Send your results to your instructor</label>' +
           '<input id="nm" type="text" maxlength="60" ' +
             'placeholder="Your full name" autocomplete="name" ' +
@@ -198,8 +266,8 @@
             'inputmode="email" value="' + escapeHtml(stored.email || "") + '">' +
           '<button class="btn btn-primary" id="savebtn">Submit</button>' +
           '<p class="savemsg" id="savemsg"></p>' +
-        '</div>'
-      : '';
+        '</div>';
+    }
 
     root.innerHTML =
       '<div class="topbar">' +
@@ -230,10 +298,51 @@
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
 
-    if (CONFIG.RESULTS_URL) {
+    if (known) {
+      document.getElementById("notme").addEventListener("click", function (e) {
+        e.preventDefault();
+        forgetStudent();
+        location.reload();   // re-runs the up-front name/email gate
+      });
+      submitAuto(pct);       // fire-and-update: send right away
+    } else if (CONFIG.RESULTS_URL) {
       document.getElementById("savebtn")
         .addEventListener("click", function () { submitResults(pct); });
     }
+  }
+
+  // ----------------------------------------------------------
+  // Auto-send for a known student (identity already captured up front).
+  function submitAuto(pct) {
+    const out = document.getElementById("savemsg");
+    const stored = loadStudent();
+    const payload = {
+      quiz: quizId,
+      title: quiz.title,
+      name: stored.name,
+      email: stored.email,
+      score: score,
+      total: total,
+      pct: pct,
+      answers: responses
+    };
+    out.className = "savemsg";
+    out.textContent = "Sending…";
+    fetch(CONFIG.RESULTS_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    }).then(function () {
+      out.className = "savemsg ok";
+      out.textContent = "Results sent ✓ Thanks, " + stored.name + "!";
+    }).catch(function () {
+      out.className = "savemsg err";
+      out.innerHTML = "Couldn't send — check your connection. " +
+        '<a href="#" id="retrysend">Try again</a>';
+      var rs = document.getElementById("retrysend");
+      if (rs) rs.addEventListener("click", function (e) { e.preventDefault(); submitAuto(pct); });
+    });
   }
 
   // ----------------------------------------------------------
