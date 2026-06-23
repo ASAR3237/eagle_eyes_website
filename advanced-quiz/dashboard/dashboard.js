@@ -15,9 +15,14 @@
   // can be the same URL or a separate deployment — both read the same Sheet.
   var STATS_URL = "https://script.google.com/macros/s/AKfycbzIuDZzjfJY-8vC9OyOfUKEs0g7-LktXMoe4mPHi5vTj00nC42QJDLJfPuDK_5YVzjN/exec";
 
-  // title -> quiz definition (to map letters back to option text + answer key)
+  // title -> quiz definition (to map letters back to option text + answer key).
+  // Sheet tab names have ":" etc. stripped (Google rule), so normalise both
+  // sides before matching, e.g. "Section 4: Meteorology" == "Section 4  Meteorology".
+  function normTitle(s) {
+    return String(s).replace(/[:\\\/?*\[\]]/g, " ").replace(/\s+/g, " ").trim().toLowerCase();
+  }
   var byTitle = {};
-  Object.keys(QUIZZES).forEach(function (id) { byTitle[QUIZZES[id].title] = QUIZZES[id]; });
+  Object.keys(QUIZZES).forEach(function (id) { byTitle[normTitle(QUIZZES[id].title)] = QUIZZES[id]; });
 
   if (!STATS_URL) {
     root.innerHTML = '<div class="topbar"><h1>Dashboard unavailable</h1></div>' +
@@ -96,10 +101,13 @@
     }
 
     quizzes.forEach(function (qz) {
-      var meta = byTitle[qz.title];
+      var meta = byTitle[normTitle(qz.title)];
+      var niceTitle = meta ? meta.title : qz.title;
       html += '<div class="card dash">' +
-        '<div class="dash-head"><h2>' + esc(qz.title) + '</h2>' +
-        '<span class="resp">' + qz.responses + ' response' + (qz.responses === 1 ? '' : 's') + '</span></div>';
+        '<div class="dash-head"><h2>' + esc(niceTitle) + '</h2>' +
+        '<span class="resp">' + qz.responses + ' response' + (qz.responses === 1 ? '' : 's') + '</span></div>' +
+        '<div class="chart-scale"><span>0%</span><span>25%</span><span>50%</span>' +
+        '<span>75%</span><span>100%</span></div>';
 
       var items = (qz.qs || []).map(function (q, idx) {
         var question = meta && meta.questions[idx];
@@ -137,18 +145,20 @@
         html += '<div class="qrow">' +
           '<div class="qtop">' +
             '<span class="qn">Q' + (it.idx + 1) + '</span>' +
-            '<span class="qpct ' + sev + '">' +
-              (it.pctWrong == null ? '—' : it.pctWrong + '% wrong') +
-            '</span>' +
+            '<span class="qtext">' + esc(it.question) + '</span>' +
           '</div>' +
-          '<div class="qtext">' + esc(it.question) + '</div>' +
-          '<div class="bar"><span class="' + sev + '" style="width:' + pct + '%"></span></div>' +
+          '<div class="barrow">' +
+            '<div class="bar"><span class="' + sev + '" style="width:' + pct + '%"></span></div>' +
+            '<div class="barpct ' + sev + '">' +
+              (it.pctWrong == null ? '—' : it.pctWrong + '%') +
+            '</div>' +
+          '</div>' +
           (it.pctWrong == null
             ? '<div class="mw">' + it.n + ' responses (answer key not found for this question)</div>'
             : (it.mwLetter && it.pctWrong > 0
-                ? '<div class="mw">Most-picked wrong: <b>' + esc(it.mwLetter) +
-                  (it.mwText ? '. ' + esc(it.mwText) : '') + '</b> &middot; ' + it.mwCount +
-                  ' of ' + it.n + '</div>'
+                ? '<div class="mw">' + it.pctWrong + '% wrong &middot; most-picked wrong: <b>' +
+                  esc(it.mwLetter) + (it.mwText ? '. ' + esc(it.mwText) : '') + '</b> (' +
+                  it.mwCount + ' of ' + it.n + ')</div>'
                 : '<div class="mw good">Everyone got this one right ✓</div>')) +
         '</div>';
       });

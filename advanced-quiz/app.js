@@ -36,8 +36,12 @@
   let current = 0;
   let score = 0;
   let answered = false;
-  let responses = [];        // one entry per answered question
+  let responses = [];        // indexed by ORIGINAL question position (canonical order)
   const total = quiz.questions.length;
+  // Display order is shuffled each attempt (anti-copying in a room of phones),
+  // but results are recorded in the original order so the Sheet columns and
+  // dashboard stay aligned across students.
+  let order = shuffle(quiz.questions.map(function (_, i) { return i; }));
 
   render();
 
@@ -66,7 +70,7 @@
 
   // ----------------------------------------------------------
   function render() {
-    const q = quiz.questions[current];
+    const q = quiz.questions[order[current]];
 
     const optsHtml = q.options.map(function (text, i) {
       const letter = String.fromCharCode(65 + i);
@@ -109,20 +113,21 @@
     if (answered) return;
     answered = true;
 
-    const q = quiz.questions[current];
+    const origIndex = order[current];
+    const q = quiz.questions[origIndex];
     const chosen = parseInt(e.currentTarget.getAttribute("data-i"), 10);
     const correct = q.answer;
     const isRight = chosen === correct;
     if (isRight) score++;
 
-    responses.push({
-      n: current + 1,
+    responses[origIndex] = {
+      n: origIndex + 1,
       q: q.q,
       chosen: String.fromCharCode(65 + chosen),
       chosenText: q.options[chosen],
       correct: String.fromCharCode(65 + correct),
       right: isRight
-    });
+    };
 
     root.querySelectorAll(".opt").forEach(function (btn) {
       const i = parseInt(btn.getAttribute("data-i"), 10);
@@ -200,7 +205,9 @@
       '</div>';
 
     document.getElementById("retry").addEventListener("click", function () {
-      current = 0; score = 0; responses = []; render();
+      current = 0; score = 0; responses = [];
+      order = shuffle(quiz.questions.map(function (_, i) { return i; }));
+      render();
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
 
@@ -253,6 +260,15 @@
       btn.disabled = false;
       input.disabled = false;
     });
+  }
+
+  // ----------------------------------------------------------
+  function shuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
   }
 
   // ----------------------------------------------------------
