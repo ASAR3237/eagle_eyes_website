@@ -44,6 +44,18 @@
 .mw.good { color: var(--green); font-weight: 600; }
 .mw b { color: var(--ink); }
 
+/* ---- Reset / archive for next class ---- */
+.resetbox {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  text-align: center;
+}
+.resetbox .btn { width: 100%; }
+.btn-danger { background: var(--red); color: #fff; }
+.btn-danger:hover { filter: brightness(1.06); }
+.resetnote { color: var(--muted); font-size: 0.82rem; margin: 10px 0 0; }
+
 /* ---- Projector / big-screen view ----
    The shared layout is mobile-first (640px column). On wider screens the
    dashboard widens and scales up so it's readable across a room. */

@@ -58,9 +58,19 @@ student's phone. To instead collect submissions in a Google Sheet:
    *Anyone*) and copy the `/exec` URL.
 3. Put that URL in `quiz-config.js` → `RESULTS_URL`.
 
-A "Submit" box then appears on the results screen; each submission adds a
-row (one tab per quiz, a column per question). Leave `RESULTS_URL` blank
-to keep everything anonymous.
+A "Submit" box then appears on the results screen asking for the student's
+**name and email** (the email lets you send a certificate later). The name +
+email are remembered on the device, so students only type them once. Each
+submission adds a row (one tab per quiz: Timestamp, Name, Email, Score,
+Percent, then a column per question). Leave `RESULTS_URL` blank to keep
+everything anonymous.
+
+### Starting a new class
+
+The instructor dashboard (`/advanced-quiz/dashboard/`) has a **Reset for next
+class** button. It archives every current quiz tab (renames it with a date
+stamp — nothing is deleted) so the next class's results start from a clean
+dashboard. Old results stay in the Sheet as dated `[archived …]` tabs.
 
 ## QR codes
 
