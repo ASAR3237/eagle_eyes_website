@@ -22,6 +22,20 @@
   const all = (typeof QUIZZES !== "undefined") ? QUIZZES : {};
   const quiz = quizId ? all[quizId] : null;
 
+  // Remember the student's name + email across quizzes (one device = one
+  // student), so they only type it once. Used to prefill the Submit box and
+  // sent with each result so the instructor can email a certificate.
+  const STUDENT_KEY = "ee_student_v1";
+  function loadStudent() {
+    try { return JSON.parse(localStorage.getItem(STUDENT_KEY)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveStudent(name, email) {
+    try { localStorage.setItem(STUDENT_KEY, JSON.stringify({ name: name, email: email })); }
+    catch (e) { /* private mode / storage full — non-fatal */ }
+  }
+  function validEmail(s) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s); }
+
   if (!quizId) { renderMenu(); return; }
 
   if (!quiz) {
@@ -172,11 +186,16 @@
     else if (pct >= 50)   msg = "Getting there — worth another look at this topic.";
     else                  msg = "Keep studying this one and try again.";
 
+    const stored = loadStudent();
     const saveBox = CONFIG.RESULTS_URL
       ? '<div class="save" id="save">' +
           '<label for="nm">Send your results to your instructor</label>' +
-          '<input id="nm" type="text" maxlength="40" ' +
-            'placeholder="Your name or initials" autocomplete="name">' +
+          '<input id="nm" type="text" maxlength="60" ' +
+            'placeholder="Your full name" autocomplete="name" ' +
+            'value="' + escapeHtml(stored.name || "") + '">' +
+          '<input id="em" type="email" maxlength="80" ' +
+            'placeholder="Your email (for your certificate)" autocomplete="email" ' +
+            'inputmode="email" value="' + escapeHtml(stored.email || "") + '">' +
           '<button class="btn btn-primary" id="savebtn">Submit</button>' +
           '<p class="savemsg" id="savemsg"></p>' +
         '</div>'
@@ -220,19 +239,30 @@
   // ----------------------------------------------------------
   function submitResults(pct) {
     const input = document.getElementById("nm");
+    const emailInput = document.getElementById("em");
     const btn = document.getElementById("savebtn");
     const out = document.getElementById("savemsg");
     const name = (input.value || "").trim();
+    const email = (emailInput.value || "").trim();
 
     if (!name) {
       out.className = "savemsg err";
-      out.textContent = "Please enter your name or initials first.";
+      out.textContent = "Please enter your full name first.";
       input.focus();
       return;
     }
+    if (!validEmail(email)) {
+      out.className = "savemsg err";
+      out.textContent = "Please enter a valid email so we can send your certificate.";
+      emailInput.focus();
+      return;
+    }
+
+    saveStudent(name, email);
 
     btn.disabled = true;
     input.disabled = true;
+    emailInput.disabled = true;
     out.className = "savemsg";
     out.textContent = "Sending…";
 
@@ -240,6 +270,7 @@
       quiz: quizId,
       title: quiz.title,
       name: name,
+      email: email,
       score: score,
       total: total,
       pct: pct,
@@ -259,6 +290,7 @@
       out.textContent = "Couldn't send — check your connection and try again.";
       btn.disabled = false;
       input.disabled = false;
+      emailInput.disabled = false;
     });
   }
 

@@ -67,21 +67,25 @@
 
   // ----------------------------------------------------------
   // JSONP — lets this static page read the Apps Script cross-origin.
-  function loadStats(key, done) {
+  function jsonp(query, done) {
     var cbName = "eeqd_" + Date.now();
     var s = document.createElement("script");
     var t = setTimeout(function () { cleanup(); done(new Error("timeout")); }, 15000);
     window[cbName] = function (data) { cleanup(); done(null, data); };
     s.onerror = function () { cleanup(); done(new Error("neterr")); };
-    s.src = STATS_URL +
-      "?stats=1&key=" + encodeURIComponent(key) +
-      "&callback=" + cbName + "&_=" + Date.now();
+    s.src = STATS_URL + "?" + query + "&callback=" + cbName + "&_=" + Date.now();
     document.body.appendChild(s);
     function cleanup() {
       clearTimeout(t);
       try { delete window[cbName]; } catch (e) { window[cbName] = undefined; }
       if (s.parentNode) s.parentNode.removeChild(s);
     }
+  }
+  function loadStats(key, done) {
+    jsonp("stats=1&key=" + encodeURIComponent(key), done);
+  }
+  function archiveData(key, done) {
+    jsonp("archive=1&key=" + encodeURIComponent(key), done);
   }
 
   // ----------------------------------------------------------
@@ -178,6 +182,13 @@
     html += '<div class="actions"><button class="btn btn-ghost" id="refresh">Refresh</button>' +
             '<button class="btn btn-primary" id="lock">Lock</button></div>';
 
+    html += '<div class="resetbox">' +
+              '<button class="btn btn-danger" id="reset">Reset for next class</button>' +
+              '<p class="resetnote">Archives every current response into dated tabs in the Sheet ' +
+                '(nothing is deleted) and clears the dashboard so the next class starts fresh.</p>' +
+              '<p class="savemsg" id="resetmsg"></p>' +
+            '</div>';
+
     root.innerHTML = html;
 
     document.getElementById("refresh").addEventListener("click", function () {
@@ -188,6 +199,24 @@
       });
     });
     document.getElementById("lock").addEventListener("click", function () { renderGate(); });
+
+    document.getElementById("reset").addEventListener("click", function () {
+      if (!window.confirm("Archive all current responses and start fresh for the next class?\n\n" +
+          "Nothing is deleted — the current results are moved into dated archive tabs in the Sheet.")) return;
+      var b = this; b.disabled = true; b.textContent = "Archiving…";
+      var m = document.getElementById("resetmsg"); m.className = "savemsg";
+      archiveData(key, function (err, d) {
+        if (err || !d || d.error) {
+          b.disabled = false; b.textContent = "Reset for next class";
+          m.className = "savemsg err"; m.textContent = "Couldn't archive — check your connection and try again.";
+          return;
+        }
+        m.className = "savemsg ok";
+        m.textContent = "Archived " + d.archived + " quiz tab" + (d.archived === 1 ? "" : "s") +
+          ". Dashboard is now clear for the next class.";
+        loadStats(key, function (e2, d2) { if (!e2 && d2 && !d2.error) render(d2, key); });
+      });
+    });
   }
 
   // ----------------------------------------------------------
