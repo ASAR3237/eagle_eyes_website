@@ -713,6 +713,7 @@ active: purchase
         pickerError: null,
         licenseHint: null,          // raw 5-char prefix from URL
         hintBannerDismissed: false,
+        hintBlocked: false,         // hint resolved to 'none' -> block checkout until account switch/dismiss
         urlAddsApplied: false,      // applied URL deep-links once at init
         deepLinkBlocked: null       // {reason, license} when a ?add=... refused to add (e.g. cap exceeded)
     };
@@ -1244,6 +1245,8 @@ active: purchase
         var banner = $('hintBanner');
         var body = $('hintBannerBody');
         banner.classList.remove('is-warn', 'is-error');
+        // Cleared each pass; only the unresolved-license ('none') path re-arms it.
+        state.hintBlocked = false;
 
         // Deep-link blocked (e.g. ?add=devices:<id> for a license already at
         // the cap) takes priority over the license_hint banner, it's the
@@ -1315,10 +1318,14 @@ active: purchase
             banner.style.display = '';
             return null;
         }
-        // none
-        body.innerHTML = 'This top-up link references a license we don\'t see on your accounts. '
-            + 'The email was sent to the account that owns it, sign out and sign in with that email, '
-            + 'or contact <a href="mailto:' + SALES_EMAIL + '">' + SALES_EMAIL + '</a>.';
+        // none — block checkout so nobody pays before we've matched the license
+        // to one of their accounts. Dismissing the banner clears the block (an
+        // explicit "buy for my current account instead" override).
+        state.hintBlocked = true;
+        body.innerHTML = 'This top-up link references a license we don\'t see on your accounts, '
+            + 'so checkout is paused. The email was sent to the account that owns it, sign out and '
+            + 'sign in with that email, or contact <a href="mailto:' + SALES_EMAIL + '">' + SALES_EMAIL + '</a>. '
+            + 'To buy for your current account anyway, dismiss this notice.';
         banner.classList.add('is-error');
         banner.style.display = '';
         return null;
@@ -2063,8 +2070,12 @@ active: purchase
         var items = state.cart.items || [];
         var hasItems = items.length > 0;
         var anyError = items.some(function(it) { return !!errorMessageForItem(it); });
-        var disabled = !hasItems || anyError || state.submitting;
-        $('ctaPayNow').disabled = disabled;
+        var disabled = !hasItems || anyError || state.submitting || state.hintBlocked;
+        var btn = $('ctaPayNow');
+        btn.disabled = disabled;
+        btn.title = state.hintBlocked
+            ? "We can't match the license from your top-up link to your accounts. Switch to the account it was sent to, or dismiss the notice above to buy for your current account."
+            : '';
     }
 
     // ===== Endpoints =====
@@ -2158,6 +2169,9 @@ active: purchase
     }
 
     async function onPayNow() {
+        // Safety net: never reach Stripe while the top-up link's license is
+        // unmatched to one of the user's accounts (button is also disabled).
+        if (state.hintBlocked) { applyLicenseHintResolution(); return; }
         await withCtaInflight($('ctaPayNow'), 'Redirecting…', async function() {
             try {
                 var payload = buildCartPayload('checkout');
@@ -2281,6 +2295,9 @@ active: purchase
         renderCart();
         renderCatalog();
         applyLicenseHintResolution();
+        // Re-evaluate the Pay button after resolution (it may set hintBlocked
+        // or switch the active account), so an unmatched top-up link can't reach Stripe.
+        updateCtaState();
     }
     async function initSignedIn(user) {
         $('purchaseLoading').style.display = '';
