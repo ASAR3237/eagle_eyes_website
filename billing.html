@@ -194,6 +194,9 @@ active: billing
         box-sizing: border-box;
     }
     .billing-item-link:hover { background: #e8f3ff; text-decoration: none; }
+    /* Same pill styling for the auth-fetch download (a <button>, not an <a>). */
+    button.billing-item-link { background: transparent; font-family: inherit; line-height: normal; cursor: pointer; }
+    button.billing-item-link[disabled] { opacity: 0.6; cursor: default; }
 </style>
 
 <div class="billing-page">
@@ -283,6 +286,53 @@ active: billing
             throw err;
         }
         return data;
+    }
+
+    // Download a token-protected PDF (receipt_pdf_url is a relative endpoint, not
+    // a public URL) via an authenticated fetch -> blob, then trigger a save.
+    async function downloadReceiptPdf(endpoint, chargeId, btn) {
+        if (!endpoint) return;
+        var prevLabel = btn ? btn.textContent : null;
+        try {
+            if (btn) { btn.textContent = 'Downloading...'; btn.disabled = true; }
+            var user = firebase.auth().currentUser;
+            if (!user) throw new Error('Not signed in');
+            var idToken = await user.getIdToken();
+            var res = await fetch(getHostUrl() + '/' + String(endpoint).replace(/^\//, ''), {
+                headers: { 'Authorization': 'Bearer ' + idToken }
+            });
+            if (!res.ok) {
+                var msg = res.statusText;
+                try { var j = await res.json(); msg = (j && j.message) || msg; } catch (e) {}
+                throw new Error(msg);
+            }
+            var blobUrl = URL.createObjectURL(await res.blob());
+            var a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = 'eagle-eyes-receipt-' + (chargeId || 'payment') + '.pdf';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(blobUrl);
+        } catch (e) {
+            alert("Couldn't download receipt: " + (e.message || e));
+        } finally {
+            if (btn) { btn.textContent = prevLabel; btn.disabled = false; }
+        }
+    }
+
+    // The timeline list is re-rendered via innerHTML, so wire one delegated
+    // click handler on the (persistent) container for the PDF buttons.
+    function ensurePdfDownloadHandler() {
+        var list = $('billingTimelineList');
+        if (!list || list.dataset.pdfHandlerBound) return;
+        list.dataset.pdfHandlerBound = '1';
+        list.addEventListener('click', function(ev) {
+            var btn = ev.target.closest ? ev.target.closest('.billing-pdf-btn') : null;
+            if (!btn) return;
+            ev.preventDefault();
+            downloadReceiptPdf(btn.getAttribute('data-endpoint'), btn.getAttribute('data-charge-id'), btn);
+        });
     }
 
     // Shared sessionStorage key for the user's selected active account, so the
@@ -440,6 +490,7 @@ active: billing
                 return;
             }
             list.innerHTML = items.map(renderBillingItem).filter(Boolean).join('');
+            ensurePdfDownloadHandler();
         } catch (e) {
             console.error('list_account_billing failed:', e);
             loading.style.display = 'none';
@@ -481,14 +532,22 @@ active: billing
             pill = item.status === 'succeeded' ? 'paid' : (item.status || 'charge');
             title = escapeHtml(item.description || 'Card payment');
             sub = dateStr + (item.refunded ? ' · refunded' : '');
-            // A charge only carries Stripe's hosted HTML receipt page. If the
-            // backend resolves the charge's invoice and attaches its PDF, show a
-            // download for it too (forward-compatible; no-op until then).
+            // Two actions:
+            //  - "View receipt": Stripe's own hosted HTML page (receipt_url) -
+            //    a public URL, so a plain link is fine.
+            //  - "Download PDF": our branded PDF (receipt_pdf_url) is a relative,
+            //    token-protected endpoint, so it must be an authenticated fetch ->
+            //    blob download, not an <a href>. Falls back to a direct pdf_url
+            //    link (the Stripe invoice PDF) for invoice-backed charges.
             if (item.receipt_url) {
                 actions.push('<a class="billing-item-link" href="' + escapeHtml(item.receipt_url)
                     + '" target="_blank" rel="noopener">View receipt</a>');
             }
-            if (item.pdf_url) {
+            if (item.receipt_pdf_url) {
+                actions.push('<button type="button" class="billing-item-link billing-pdf-btn"'
+                    + ' data-endpoint="' + escapeHtml(item.receipt_pdf_url) + '"'
+                    + ' data-charge-id="' + escapeHtml(item.id || '') + '">Download PDF</button>');
+            } else if (item.pdf_url) {
                 actions.push('<a class="billing-item-link" href="' + escapeHtml(item.pdf_url)
                     + '" target="_blank" rel="noopener" download>Download PDF</a>');
             }
