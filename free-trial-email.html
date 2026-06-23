@@ -1,6 +1,6 @@
 ---
 layout: main
-permalink: /free-trial/
+permalink: /free-trial/email/
 ---
 
 <style>
@@ -153,29 +153,13 @@ permalink: /free-trial/
         box-sizing: border-box;
     }
 
-    /* Secondary email-capture block (below primary form-request button) */
-    .trial-email-alt {
-        margin-top: 3em;
-        max-width: 560px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-
-    .trial-email-alt-label {
-        font-size: 1em;
-        color: #666;
-        line-height: 1.5;
-        margin-bottom: 1.2em;
-    }
-
     .trial-account-link {
         margin-top: 2.5em;
         font-size: 1em;
         color: #666;
     }
 
-    .trial-account-link .trial-button-secondary,
-    .trial-email-alt .trial-button-secondary {
+    .trial-account-link .trial-button-secondary {
         display: inline-block;
         margin-top: 0.8em;
         font-size: 1em;
@@ -186,25 +170,10 @@ permalink: /free-trial/
         min-width: unset;
     }
 
-    .trial-account-link .trial-button-secondary:hover,
-    .trial-email-alt .trial-button-secondary:hover {
+    .trial-account-link .trial-button-secondary:hover {
         background-color: #1e90ff;
         border-color: #1e90ff;
         color: #fff;
-    }
-
-    /* In the email-alt flex row, override the stacked-link margin/padding/display
-       from .trial-button-secondary so it picks up the .trial-email-form .trial-button
-       sizing above and lines up with the input. Higher specificity than the rule above. */
-    .trial-email-alt .trial-email-form .trial-button-secondary {
-        margin-top: 0;
-        margin-bottom: 0;
-        padding-top: 0;
-        padding-bottom: 0;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        box-sizing: border-box;
     }
 
     @keyframes trial-email-spinner {
@@ -633,23 +602,22 @@ permalink: /free-trial/
 </style>
 
 <div class="content">
-
     <!-- Trial CTA Section at the Top -->
     <div class="trial-cta-top">
         <div>
             <h2>Try Eagle Eyes yourself</h2>
-            <a href="{{ '/account/?reason=trial' | relative_url }}" class="trial-button">Fill in the trial request form now</a>
+            <div id="trial-email-container">
+                <form id="trial-email-form" class="trial-email-form" onsubmit="submitTrialEmailRequest(event)">
+                    <input type="email" name="email" class="trial-email-input" placeholder="Your email address" required>
+                    <!-- Honeypot field: hidden from humans, bots tend to fill it in -->
+                    <input type="text" name="honeypot" value="" style="display:none" tabindex="-1" autocomplete="off">
+                    <button type="submit" id="trial-email-btn" class="trial-button">Request Free Trial</button>
+                </form>
+            </div>
             <div style="margin-top: 1em; font-size: 0.9em; color: #666;">(no credit card required)</div>
-            <div class="trial-email-alt">
-                <div class="trial-email-alt-label">Or just enter your email and we'll send you everything you need to activate your free trial whenever it's convenient.</div>
-                <div id="trial-email-container">
-                    <form id="trial-email-form" class="trial-email-form" onsubmit="submitTrialEmailRequest(event)">
-                        <input type="email" name="email" class="trial-email-input" placeholder="Your email address" required>
-                        <!-- Honeypot field: hidden from humans, bots tend to fill it in -->
-                        <input type="text" name="honeypot" value="" style="display:none" tabindex="-1" autocomplete="off">
-                        <button type="submit" id="trial-email-btn" class="trial-button trial-button-secondary">Email me the details</button>
-                    </form>
-                </div>
+            <div class="trial-account-link">
+                <div>Want to get started right away?</div>
+                <a href="{{ '/account/?reason=trial' | relative_url }}" class="trial-button trial-button-secondary">Fill in the trial request form now</a>
             </div>
         </div>
         <div class="trial-contact-info">

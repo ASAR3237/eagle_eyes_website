@@ -969,8 +969,11 @@ noindex: true
     function populateDeviceSummary(deviceIdentifier, machineId) {
         const user = firebase.auth().currentUser;
         const userEmail = user ? user.email : '';
-        $('#deviceName').text(deviceIdentifier);
-        $('#machineId').text(machineId);
+        $('#deviceName').text(deviceIdentifier || '');
+        // Only show normalized real machine IDs. Without this, an
+        // undefined/null backend value becomes the literal string "undefined"
+        // and gets sent to the API as ?machine_id=undefined.
+        $('#machineId').text(isRealMachineId(machineId) ? String(machineId).trim().toUpperCase() : '');
         $('#device-section-user-email').text(userEmail);
         $('#deviceSummary').show();
     }
@@ -1018,8 +1021,15 @@ noindex: true
             return;
         }
 
+        const machineIdForRequest = $('#machineId').text();
+        if (!isRealMachineId(machineIdForRequest)) {
+            $('#licensesLoading').hide();
+            $('#licensesContainer').show();
+            $('#primaryLicense').html('<p>Activation lost its device context. ' + MACHINE_ID_INSTRUCTION + '</p>');
+            return;
+        }
         globalUser.getIdToken(true).then(function(idToken) {
-            var fetch_url = hostURL + '/check_available_licenses_and_tokens?machine_id=' + $('#machineId').text();
+            var fetch_url = hostURL + '/check_available_licenses_and_tokens?machine_id=' + encodeURIComponent(machineIdForRequest);
             $.ajax({
                 url: fetch_url,
                 method: 'GET',
@@ -1234,60 +1244,6 @@ noindex: true
             section.slideDown(200);
             link.text('Hide');
         }
-    }
-
-    function addLicenseToAccount(licenseId) {
-        const globalUser = firebase.auth().currentUser;
-        if (!globalUser) return;
-
-        $('#addLicenseBtn').text('Adding...').prop('disabled', true);
-        $('#addLicenseBtn').siblings('.success-message, .error-message-inline').remove();
-
-        globalUser.getIdToken(true).then(function(idToken) {
-            var fetch_url = hostURL + '/check_available_licenses_and_tokens?machine_id=' + $('#machineId').text() + '&license_id=' + licenseId;
-            $.ajax({
-                url: fetch_url,
-                method: 'GET',
-                headers: { 'Authorization': 'Bearer ' + idToken },
-                success: function(response) {
-                    let responseData;
-                    try {
-                        if (typeof response === 'string') {
-                            responseData = sanitizeAndParseResponse(response);
-                        } else {
-                            responseData = response;
-                        }
-                    } catch (e) {
-                        console.error('Error parsing add license response:', e);
-                    }
-
-                    $('#manualLicenseId').val('');
-                    $('#addLicenseBtn').text('Add License').prop('disabled', false);
-                    processLicenseResponse(responseData);
-
-                    const successMsg = $('<div class="success-message" style="margin-top: 8px; font-size: 13px; padding: 8px;">License added!</div>');
-                    $('#addLicenseBtn').after(successMsg);
-                    setTimeout(() => successMsg.fadeOut(), 3000);
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error adding license:', error);
-                    $('#addLicenseBtn').text('Add License').prop('disabled', false);
-
-                    let errorMessage = 'Failed to add license. ';
-                    if (xhr.status === 500 && xhr.responseText && xhr.responseText.includes("'NoneType' object has no attribute 'expiry_timestamp'")) {
-                        errorMessage = `License ID "${licenseId}" was not found.`;
-                    } else if (xhr.responseText) {
-                        errorMessage += xhr.responseText;
-                    } else {
-                        errorMessage += 'Please check the ID and try again.';
-                    }
-
-                    const errorMsg = $(`<div class="error-message-inline" style="margin-top: 8px; font-size: 13px; padding: 8px;">${errorMessage}</div>`);
-                    $('#addLicenseBtn').after(errorMsg);
-                    setTimeout(() => errorMsg.fadeOut(), 5000);
-                }
-            });
-        });
     }
 
     function toggleLicenseHelp() {
@@ -1616,6 +1572,66 @@ noindex: true
 
     function showError(message) {
         $('#errorMessage').text(message).show();
+    }
+
+    function addLicenseToAccount(licenseId) {
+        const globalUser = firebase.auth().currentUser;
+        if (!globalUser) return;
+
+        $('#addLicenseBtn').text('Adding...').prop('disabled', true);
+        $('#addLicenseBtn').siblings('.success-message, .error-message-inline').remove();
+
+        const machineIdForRequest = $('#machineId').text();
+        if (!isRealMachineId(machineIdForRequest)) {
+            $('#addLicenseBtn').text('Add License').prop('disabled', false);
+            $('#addLicenseBtn').after('<div class="error-message-inline" style="margin-top: 8px; font-size: 13px; padding: 8px;">Activation lost its device context. ' + MACHINE_ID_INSTRUCTION + '</div>');
+            return;
+        }
+        globalUser.getIdToken(true).then(function(idToken) {
+            var fetch_url = hostURL + '/check_available_licenses_and_tokens?machine_id=' + encodeURIComponent(machineIdForRequest) + '&license_id=' + encodeURIComponent(licenseId);
+            $.ajax({
+                url: fetch_url,
+                method: 'GET',
+                headers: { 'Authorization': 'Bearer ' + idToken },
+                success: function(response) {
+                    let responseData;
+                    try {
+                        if (typeof response === 'string') {
+                            responseData = sanitizeAndParseResponse(response);
+                        } else {
+                            responseData = response;
+                        }
+                    } catch (e) {
+                        console.error('Error parsing add license response:', e);
+                    }
+
+                    $('#manualLicenseId').val('');
+                    $('#addLicenseBtn').text('Add License').prop('disabled', false);
+                    processLicenseResponse(responseData);
+
+                    const successMsg = $('<div class="success-message" style="margin-top: 8px; font-size: 13px; padding: 8px;">License added!</div>');
+                    $('#addLicenseBtn').after(successMsg);
+                    setTimeout(() => successMsg.fadeOut(), 3000);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error adding license:', error);
+                    $('#addLicenseBtn').text('Add License').prop('disabled', false);
+
+                    let errorMessage = 'Failed to add license. ';
+                    if (xhr.status === 500 && xhr.responseText && xhr.responseText.includes("'NoneType' object has no attribute 'expiry_timestamp'")) {
+                        errorMessage = `License ID "${licenseId}" was not found.`;
+                    } else if (xhr.responseText) {
+                        errorMessage += xhr.responseText;
+                    } else {
+                        errorMessage += 'Please check the ID and try again.';
+                    }
+
+                    const errorMsg = $(`<div class="error-message-inline" style="margin-top: 8px; font-size: 13px; padding: 8px;">${errorMessage}</div>`);
+                    $('#addLicenseBtn').after(errorMsg);
+                    setTimeout(() => errorMsg.fadeOut(), 5000);
+                }
+            });
+        });
     }
 
     function processLicenseResponse(responseData) {
