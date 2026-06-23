@@ -18,7 +18,7 @@
 .chart-scale { display: flex; justify-content: space-between; padding: 4px 52px 6px 0;
   font-size: 0.68rem; color: var(--muted); font-weight: 700; }
 
-.qrow { padding: 18px 0; border-bottom: 1px solid #eef2f7; }
+.qrow { padding: 18px 0; border-bottom: 1px solid #d3dbe6; }
 .qrow:last-child { border-bottom: none; }
 .qtop { display: flex; align-items: baseline; gap: 8px; margin-bottom: 7px; }
 .qtop .qn { font-weight: 800; color: var(--muted); font-size: 0.78rem; flex: 0 0 auto; }
