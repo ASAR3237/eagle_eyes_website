@@ -13,7 +13,7 @@
   // Apps Script web-app URL that serves the dashboard stats (the deployment
   // that has the ?stats endpoint). Submissions use CONFIG.RESULTS_URL; this
   // can be the same URL or a separate deployment — both read the same Sheet.
-  var STATS_URL = "https://script.google.com/macros/s/AKfycbyGSgt6DJPDwNyK33WGUraewnxJU263fUVi7nXwtdvyvgODCnYwB3DKYgo468Qtbyst/exec";
+  var STATS_URL = "https://script.google.com/macros/s/AKfycbzsHaKCxUgTsPklL57i_-118F8JkxyxrzWkMEtjsOjocUan47qMsjBBPho4MlSQ0_Dr/exec";
 
   // title -> quiz definition (to map letters back to option text + answer key).
   // Sheet tab names have ":" etc. stripped (Google rule), so normalise both
