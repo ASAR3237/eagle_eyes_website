@@ -10,11 +10,16 @@
 
   var root = document.getElementById("app");
 
+  // Apps Script web-app URL that serves the dashboard stats (the deployment
+  // that has the ?stats endpoint). Submissions use CONFIG.RESULTS_URL; this
+  // can be the same URL or a separate deployment — both read the same Sheet.
+  var STATS_URL = "https://script.google.com/macros/s/AKfycbzIuDZzjfJY-8vC9OyOfUKEs0g7-LktXMoe4mPHi5vTj00nC42QJDLJfPuDK_5YVzjN/exec";
+
   // title -> quiz definition (to map letters back to option text + answer key)
   var byTitle = {};
   Object.keys(QUIZZES).forEach(function (id) { byTitle[QUIZZES[id].title] = QUIZZES[id]; });
 
-  if (!CONFIG.RESULTS_URL) {
+  if (!STATS_URL) {
     root.innerHTML = '<div class="topbar"><h1>Dashboard unavailable</h1></div>' +
       '<div class="error">No results endpoint configured.</div>';
     return;
@@ -63,7 +68,7 @@
     var t = setTimeout(function () { cleanup(); done(new Error("timeout")); }, 15000);
     window[cbName] = function (data) { cleanup(); done(null, data); };
     s.onerror = function () { cleanup(); done(new Error("neterr")); };
-    s.src = CONFIG.RESULTS_URL +
+    s.src = STATS_URL +
       "?stats=1&key=" + encodeURIComponent(key) +
       "&callback=" + cbName + "&_=" + Date.now();
     document.body.appendChild(s);
