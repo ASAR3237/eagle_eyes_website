@@ -1,0 +1,33 @@
+/* Dashboard-specific styles (loaded in addition to ../style.css). */
+
+.gate label { display: block; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+.gate input {
+  width: 100%; padding: 14px; border: 2px solid var(--line); border-radius: 10px;
+  font-size: 1rem; font-family: inherit; margin-bottom: 12px; box-sizing: border-box;
+}
+.gate input:focus { outline: none; border-color: var(--sky); }
+.gate .btn { width: 100%; }
+
+.card.dash { padding: 18px 20px; margin-bottom: 16px; }
+.dash-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+  border-bottom: 2px solid var(--line); padding-bottom: 10px; margin-bottom: 6px; }
+.dash-head h2 { margin: 0; font-size: 1.15rem; color: var(--navy); }
+.dash-head .resp { color: var(--muted); font-size: 0.85rem; font-weight: 700; white-space: nowrap; }
+
+.qrow { padding: 12px 0; border-bottom: 1px solid #eef2f7; }
+.qrow:last-child { border-bottom: none; }
+.qtop { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.qtop .qn { font-weight: 800; color: var(--muted); font-size: 0.8rem; }
+.qpct { font-weight: 800; font-size: 0.9rem; }
+.qpct.hot { color: var(--red); }
+.qpct.warm { color: var(--amber); }
+.qpct.ok { color: var(--green); }
+.qtext { font-size: 0.96rem; margin-bottom: 8px; }
+.bar { height: 8px; background: #eef2f7; border-radius: 99px; overflow: hidden; margin-bottom: 6px; }
+.bar > span { display: block; height: 100%; border-radius: 99px; }
+.bar > span.hot { background: var(--red); }
+.bar > span.warm { background: var(--amber); }
+.bar > span.ok { background: var(--green); }
+.mw { font-size: 0.85rem; color: var(--muted); }
+.mw.good { color: var(--green); font-weight: 600; }
+.mw b { color: var(--ink); }
