@@ -33,10 +33,15 @@ noindex: true
   .invite-row > div { flex: 1; }
   .invite-wrap label.fld { display:block; font-weight:600; font-size:13px; margin:14px 0 4px; }
   .invite-wrap input[type=text] { width:100%; box-sizing:border-box; padding:9px 11px; border:1px solid #d1d5db; border-radius:7px; }
-  /* Tighten the consent checkboxes so they read as a close group, matching
-     the sign-up form. */
+  /* Consent checkboxes. The shared form CSS boxes each label (border, grey
+     background, fixed 200px width) and floats the checkbox far left; reset all
+     of that so it reads as a normal inline "[x] label" row inside this card. */
   .invite-wrap .checkboxes { margin-top: 14px; }
-  .invite-wrap .checkbox-container { margin-bottom: 6px; }
+  .invite-wrap .checkbox-container { display: flex; align-items: flex-start; gap: 9px; margin-bottom: 10px; }
+  .invite-wrap .checkbox-container input[type="checkbox"] { flex: 0 0 auto; width: 16px; height: 16px; margin: 2px 0 0; }
+  .invite-wrap .checkbox-container label { width: auto; margin: 0; }
+  .invite-wrap .checkbox-label { display: inline; width: auto; margin: 0; padding: 0; border: none; background: none; font-size: 14px; line-height: 1.45; color: #374151; }
+  .invite-switch { display: inline-block; margin-top: 4px; background: none; border: none; padding: 0; color: #1e90ff; font-size: 13px; cursor: pointer; text-decoration: underline; }
   .invite-mismatch { background:#fff7ed; border:1px solid #fed7aa; color:#9a3412; border-radius:8px; padding:10px 12px; font-size:13px; margin:16px 0; }
   .invite-btn { margin-top:20px; width:100%; padding:11px; background:#1e90ff; color:#fff; border:none; border-radius:8px; font-weight:700; font-size:15px; cursor:pointer; }
   .invite-btn:disabled { background:#9cc7f0; cursor:not-allowed; }
@@ -66,7 +71,8 @@ noindex: true
       <div id="accept-section" hidden>
         <div id="invite-mismatch" class="invite-mismatch" hidden></div>
         <label class="fld">Signed in as</label>
-        <div id="signed-as" class="invite-muted" style="margin-bottom:6px;"></div>
+        <div id="signed-as" class="invite-muted" style="margin-bottom:2px;"></div>
+        <button type="button" class="invite-switch" onclick="switchAccount()">Sign in with a different email</button>
         <div class="invite-row">
           <div>
             <label class="fld" for="inv-first">First name</label>
@@ -172,6 +178,16 @@ noindex: true
       show('signin-section', true); show('accept-section', false);
     }
   }
+
+  // Sign out, then return to this same invite URL (the token stays in the query
+  // string) so the sign-in widget reappears and the user can accept under a
+  // different account.
+  window.switchAccount = function () {
+    var back = window.location.pathname + window.location.search;
+    var go = function () { window.location.href = back; };
+    if (window.firebase && firebase.auth) { firebase.auth().signOut().then(go, go); }
+    else { go(); }
+  };
 
   window.submitAccept = function () {
     var statusEl = document.getElementById('invite-status');
