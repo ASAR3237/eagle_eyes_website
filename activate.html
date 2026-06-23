@@ -621,12 +621,23 @@ noindex: true
                     <div id="otherLicensesList" style="display: none;"></div>
                 </div>
 
+                <!-- Manual entry (collapsed) -->
+                <div>
+                    <a href="#" class="expand-toggle" onclick="toggleManualEntry(); return false;" id="manualEntryLink">Have a license ID?</a>
+                    <div id="manualEntrySection" style="display: none;">
+                        <div class="manual-entry-section">
+                            <input type="text" id="manualLicenseId" placeholder="Enter license ID">
+                            <button id="addLicenseBtn" class="btn-select-license" style="width: 100%;">Add License</button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- "License not visible?". Explanation expander -->
                 <div>
                     <a href="#" class="expand-toggle" onclick="toggleLicenseHelp(); return false;" id="licenseHelpLink">License not visible?</a>
                     <div id="licenseHelpSection" class="license-help" style="display: none;">
-                        <p>If a license isn't showing up here, your account isn't authorized to use it yet.</p>
-                        <p><strong>Team license:</strong> ask a team admin to add <strong id="licenseHelpEmail">your email</strong> to the team. The license will appear here automatically once they do.</p>
+                        <p>If a license isn't showing up here, your account may not be added to the team that owns it yet.</p>
+                        <p><strong>Soon, licenses will only be activatable by accounts that have been added to their organization.</strong> If your team already has a license, ask a teammate to add <strong id="licenseHelpEmail">your email</strong> so it appears here automatically. Anyone already on the team can do this at EagleEyesSearch.com &rarr; Account &rarr; People &rarr; "Invite someone to this team".</p>
                         <p><strong>Don't have a license yet?</strong> <a href="{{ '/pricing/' | relative_url }}" target="_blank">Get one here &rarr;</a></p>
                     </div>
                 </div>
@@ -783,6 +794,19 @@ noindex: true
             if (e.which === 13) {
                 handleActivation();
             }
+        });
+
+        // Manual license addition
+        $(document).on('click', '#addLicenseBtn', function() {
+            const licenseId = $('#manualLicenseId').val().trim();
+            if (!licenseId) {
+                const errorMsg = $('<div class="error-message-inline" style="margin-top: 8px; font-size: 13px; padding: 8px;">Please enter a license ID</div>');
+                $('#addLicenseBtn').after(errorMsg);
+                setTimeout(() => errorMsg.fadeOut(), 3000);
+                return;
+            }
+            $('#addLicenseBtn').siblings('.success-message, .error-message-inline').remove();
+            addLicenseToAccount(licenseId);
         });
 
     });
@@ -1200,6 +1224,72 @@ noindex: true
         }
     }
 
+    function toggleManualEntry() {
+        const section = $('#manualEntrySection');
+        const link = $('#manualEntryLink');
+        if (section.is(':visible')) {
+            section.slideUp(200);
+            link.text('Have a license ID?');
+        } else {
+            section.slideDown(200);
+            link.text('Hide');
+        }
+    }
+
+    function addLicenseToAccount(licenseId) {
+        const globalUser = firebase.auth().currentUser;
+        if (!globalUser) return;
+
+        $('#addLicenseBtn').text('Adding...').prop('disabled', true);
+        $('#addLicenseBtn').siblings('.success-message, .error-message-inline').remove();
+
+        globalUser.getIdToken(true).then(function(idToken) {
+            var fetch_url = hostURL + '/check_available_licenses_and_tokens?machine_id=' + $('#machineId').text() + '&license_id=' + licenseId;
+            $.ajax({
+                url: fetch_url,
+                method: 'GET',
+                headers: { 'Authorization': 'Bearer ' + idToken },
+                success: function(response) {
+                    let responseData;
+                    try {
+                        if (typeof response === 'string') {
+                            responseData = sanitizeAndParseResponse(response);
+                        } else {
+                            responseData = response;
+                        }
+                    } catch (e) {
+                        console.error('Error parsing add license response:', e);
+                    }
+
+                    $('#manualLicenseId').val('');
+                    $('#addLicenseBtn').text('Add License').prop('disabled', false);
+                    processLicenseResponse(responseData);
+
+                    const successMsg = $('<div class="success-message" style="margin-top: 8px; font-size: 13px; padding: 8px;">License added!</div>');
+                    $('#addLicenseBtn').after(successMsg);
+                    setTimeout(() => successMsg.fadeOut(), 3000);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error adding license:', error);
+                    $('#addLicenseBtn').text('Add License').prop('disabled', false);
+
+                    let errorMessage = 'Failed to add license. ';
+                    if (xhr.status === 500 && xhr.responseText && xhr.responseText.includes("'NoneType' object has no attribute 'expiry_timestamp'")) {
+                        errorMessage = `License ID "${licenseId}" was not found.`;
+                    } else if (xhr.responseText) {
+                        errorMessage += xhr.responseText;
+                    } else {
+                        errorMessage += 'Please check the ID and try again.';
+                    }
+
+                    const errorMsg = $(`<div class="error-message-inline" style="margin-top: 8px; font-size: 13px; padding: 8px;">${errorMessage}</div>`);
+                    $('#addLicenseBtn').after(errorMsg);
+                    setTimeout(() => errorMsg.fadeOut(), 5000);
+                }
+            });
+        });
+    }
+
     function toggleLicenseHelp() {
         const section = $('#licenseHelpSection');
         const link = $('#licenseHelpLink');
@@ -1264,6 +1354,7 @@ noindex: true
         $('#primaryLicense button').prop('disabled', true).css('opacity', '0.5');
         $('.other-license-row button').prop('disabled', true).css('opacity', '0.5');
         $('#otherLicensesToggle').hide();
+        $('#manualEntryLink').parent().hide();
         $('#licenseHelpLink').parent().hide();
 
         // Scroll to confirmation
@@ -1282,6 +1373,7 @@ noindex: true
         if ($('#otherLicensesCount').text() !== '0') {
             $('#otherLicensesToggle').show();
         }
+        $('#manualEntryLink').parent().show();
         $('#licenseHelpLink').parent().show();
     }
 

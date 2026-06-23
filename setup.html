@@ -1323,15 +1323,24 @@ noindex: true
                 </a>
                 <div id="lpOtherList" style="display: none;"></div>
             </div>
-            <!-- "License not visible?". Explanation expander. With backend
-                 filtering on the listing endpoint, manual ID entry can't
-                 surface a license the user isn't already authorized for, so
-                 the section is informational rather than an input. -->
+            <!-- Manual entry (collapsed). Team-membership gating on the listing
+                 endpoint is not enforced yet, so manual ID entry stays available
+                 for adding a license directly. -->
+            <div>
+                <a href="#" class="lp-expand" onclick="lpToggleManual(); return false;" id="lpManualLink">Have a license ID?</a>
+                <div id="lpManualSection" style="display: none;">
+                    <div class="lp-manual">
+                        <input type="text" id="lpManualInput" placeholder="Enter license ID">
+                        <button class="lp-btn" id="lpAddBtn" style="width: 100%;" onclick="lpAddLicense()">Add License</button>
+                    </div>
+                </div>
+            </div>
+            <!-- "License not visible?". Explanation expander -->
             <div>
                 <a href="#" class="lp-expand" onclick="lpToggleHelp(); return false;" id="lpHelpLink">License not visible?</a>
                 <div id="lpHelpSection" class="lp-help" style="display: none;">
-                    <p style="margin: 0 0 0.6rem;">If a license isn't showing up here, your account isn't authorized to use it yet.</p>
-                    <p style="margin: 0 0 0.6rem;"><strong>Team license:</strong> ask a team admin to add <strong id="lpHelpEmail">your email</strong> to the team. The license will appear here automatically once they do.</p>
+                    <p style="margin: 0 0 0.6rem;">If a license isn't showing up here, your account may not be added to the team that owns it yet.</p>
+                    <p style="margin: 0 0 0.6rem;"><strong>Soon, licenses will only be activatable by accounts that have been added to their organization.</strong> If your team already has a license, ask a teammate to add <strong id="lpHelpEmail">your email</strong> so it appears here automatically. Anyone already on the team can do this at EagleEyesSearch.com &rarr; Account &rarr; People &rarr; "Invite someone to this team".</p>
                     <p style="margin: 0;"><strong>Don't have a license yet?</strong> <a href="{{ '/pricing/' | relative_url }}" target="_blank" style="color: #1e90ff;">Get one here &rarr;</a></p>
                 </div>
             </div>
@@ -2470,6 +2479,66 @@ function lpToggleOthers() {
     } else {
         list.style.display = 'none';
         link.innerHTML = 'Show other licenses (<span id="lpOtherCount">' + (lpUserLicenses.length - 1) + '</span>)';
+    }
+}
+
+function lpToggleManual() {
+    var section = document.getElementById('lpManualSection');
+    var link = document.getElementById('lpManualLink');
+    if (section.style.display === 'none') {
+        section.style.display = 'block';
+        link.textContent = 'Hide';
+    } else {
+        section.style.display = 'none';
+        link.textContent = 'Have a license ID?';
+    }
+}
+
+async function lpAddLicense() {
+    var licenseId = document.getElementById('lpManualInput').value.trim();
+    if (!licenseId) return;
+    var btn = document.getElementById('lpAddBtn');
+    btn.textContent = 'Adding...';
+    btn.disabled = true;
+    try {
+        var token = await getIdToken();
+        var machineId = document.getElementById('setupMachineId').textContent || '';
+        var resp = await fetch(API_BASE + 'check_available_licenses_and_tokens?machine_id=' + encodeURIComponent(machineId) + '&license_id=' + encodeURIComponent(licenseId), {
+            method: 'GET',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!resp.ok) throw new Error('License not found');
+        var data = await resp.json();
+
+        // Re-parse all licenses from response
+        lpUserLicenses = [];
+        var existingKeys = [];
+        if (data.tokens_and_codes) {
+            for (var tid in data.tokens_and_codes) {
+                var tc = data.tokens_and_codes[tid];
+                if (tc && tc.token && tc.token.license_id) existingKeys.push(tc.token.license_id);
+            }
+        }
+        if (data.licenses_and_dispensed) {
+            for (var lid in data.licenses_and_dispensed) {
+                var info = data.licenses_and_dispensed[lid];
+                if (!info || !info.license) continue;
+                var lic = info.license;
+                lic.license_id = lid;
+                lic.remaining_keys = Math.max(0, (lic.n_tokens || 0) - (info.n_tokens_dispensed || 0));
+                lic.has_existing_key = existingKeys.indexOf(lid) !== -1;
+                if (lic.expiry_timestamp === null) continue;
+                lpUserLicenses.push(lic);
+            }
+        }
+
+        document.getElementById('lpManualInput').value = '';
+        lpDisplayLicenses();
+    } catch (err) {
+        showStatus('lpStatus', 'Error adding license: ' + err.message, 'error');
+    } finally {
+        btn.textContent = 'Add License';
+        btn.disabled = false;
     }
 }
 
