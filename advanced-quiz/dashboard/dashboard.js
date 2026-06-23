@@ -86,7 +86,16 @@
 
   // ----------------------------------------------------------
   function render(data, key) {
-    var quizzes = data.quizzes || [];
+    var quizzes = (data.quizzes || []).slice();
+
+    // Show sections in course order (1..8), not Sheet-tab creation order.
+    var qIndex = {};
+    Object.keys(QUIZZES).forEach(function (id, i) { qIndex[normTitle(QUIZZES[id].title)] = i; });
+    quizzes.sort(function (a, b) {
+      var ai = qIndex[normTitle(a.title)]; if (ai == null) ai = 999;
+      var bi = qIndex[normTitle(b.title)]; if (bi == null) bi = 999;
+      return ai - bi;
+    });
 
     var html =
       '<div class="topbar">' +
