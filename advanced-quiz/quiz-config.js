@@ -19,7 +19,7 @@ const CONFIG = {
   // Optional — paste your Google Apps Script web-app URL here to collect
   // results in a Google Sheet. Leave "" to keep quizzes fully anonymous
   // (no "Save your results" box appears). See google-apps-script.gs.
-  RESULTS_URL: "https://script.google.com/macros/s/AKfycbxE1FdOYYYYhHPVNqfRlG3wShSu9kYCN0ELdmm4sAkXnF3FHTxevUdUhtfBgaD7vW6t/exec",
+  RESULTS_URL: "https://script.google.com/macros/s/AKfycbyGSgt6DJPDwNyK33WGUraewnxJU263fUVi7nXwtdvyvgODCnYwB3DKYgo468Qtbyst/exec",
 };
 
 // Make available to both the browser and Node (for the QR script).
