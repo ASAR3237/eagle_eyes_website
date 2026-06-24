@@ -532,22 +532,14 @@ active: billing
             pill = item.status === 'succeeded' ? 'paid' : (item.status || 'charge');
             title = escapeHtml(item.description || 'Card payment');
             sub = dateStr + (item.refunded ? ' · refunded' : '');
-            // Two actions:
-            //  - "View receipt": Stripe's own hosted HTML page (receipt_url) -
-            //    a public URL, so a plain link is fine.
-            //  - "Download PDF": our branded, PAID receipt (receipt_pdf_url) is a
-            //    relative, token-protected endpoint, so it must be an authenticated
-            //    fetch -> blob download, not an <a href>.
-            // pdf_url / hosted_url are deprecated on charges (always null); the
-            // real download is always receipt_pdf_url.
+            // "View receipt" opens Stripe's hosted HTML receipt page.
+            // NOTE: the branded "Download PDF" (receipt_pdf_url) is intentionally
+            // disabled for now - the rendered receipt isn't finalized yet. The
+            // downloadReceiptPdf() helper + delegated handler are left in place so
+            // it can be re-enabled by restoring the receipt_pdf_url button below.
             if (item.receipt_url) {
                 actions.push('<a class="billing-item-link" href="' + escapeHtml(item.receipt_url)
                     + '" target="_blank" rel="noopener">View receipt</a>');
-            }
-            if (item.receipt_pdf_url) {
-                actions.push('<button type="button" class="billing-item-link billing-pdf-btn"'
-                    + ' data-endpoint="' + escapeHtml(item.receipt_pdf_url) + '"'
-                    + ' data-charge-id="' + escapeHtml(item.id || '') + '">Download PDF</button>');
             }
         } else if (item.type === 'quote') {
             pill = item.status || 'quote';
