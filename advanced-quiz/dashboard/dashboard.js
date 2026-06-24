@@ -125,8 +125,8 @@
     quizzes.forEach(function (qz) {
       var meta = byTitle[normTitle(qz.title)];
       var niceTitle = meta ? meta.title : qz.title;
-      html += '<div class="card dash">' +
-        '<div class="dash-head" role="button" tabindex="0" aria-expanded="true">' +
+      html += '<div class="card dash collapsed">' +
+        '<div class="dash-head" role="button" tabindex="0" aria-expanded="false">' +
           '<span class="dash-title"><span class="dash-chevron" aria-hidden="true"></span>' +
           '<h2>' + esc(niceTitle) + '</h2></span>' +
           '<span class="resp">' + qz.responses + ' response' + (qz.responses === 1 ? '' : 's') + '</span>' +
@@ -238,15 +238,15 @@
       });
     });
 
-    // When a new section just showed up, collapse the older ones so the
-    // freshly-populated section is what's on screen.
+    // Sections are collapsed by default. When a brand-new section shows up,
+    // auto-expand just that one so the latest results are on screen.
     if (freshTitles.length) {
       var cards = root.querySelectorAll(".card.dash");
       Array.prototype.forEach.call(cards, function (card, i) {
-        if (freshTitles.indexOf(curTitles[i]) === -1) {
-          card.classList.add("collapsed");
+        if (freshTitles.indexOf(curTitles[i]) !== -1) {
+          card.classList.remove("collapsed");
           var h = card.querySelector(".dash-head");
-          if (h) h.setAttribute("aria-expanded", "false");
+          if (h) h.setAttribute("aria-expanded", "true");
         }
       });
     }
