@@ -8377,34 +8377,45 @@ active: account
                 return;
             }
 
-            user.getIdToken(true).then(function(idToken) {
-        const hostURL = window.getHostUrl ? window.getHostUrl() : 'https://us-central1-eagleeyessearch.cloudfunctions.net';
-                const fetch_url = hostURL + '/get_user_account_info';
-        
-                console.log("Checking user account status at:", fetch_url);
-                
-            $.ajax({
-                url: fetch_url,
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + idToken
-                },
-                success: function(data) {
-                        console.log("User account status response:", data);
-                        // If data comes as a string, parse it; otherwise, assume it's already JSON.
-                    const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
-                        resolve(parsedData);
-                },
-                error: function(jqXHR, textStatus, errorThrown) {
-                        console.error("Error getting account status:", textStatus, errorThrown);
-                        console.error("Response:", jqXHR.responseText);
-                        reject(errorThrown);
-                }
-            });
-        }).catch(function(error) {
-            console.error("Error getting ID token:", error);
-                reject(error);
-            });
+            // Source { userStatus, form_data } from the bundled get_account_dashboard
+            // (its user_account_info field is the same payload). This avoids a
+            // redundant separate get_user_account_info round-trip to a
+            // cold-startable function; eeDashboard.fetch dedupes the in-flight
+            // request shared with the rest of the page load.
+            function fromDash(dash) {
+                var uai = (dash && dash.user_account_info) || {};
+                return { userStatus: uai.userStatus, form_data: uai.form_data };
+            }
+
+            // Legacy direct call, kept only as a fallback if the dashboard helper
+            // is unavailable or the dashboard fetch fails.
+            function legacy() {
+                user.getIdToken(true).then(function(idToken) {
+                    const hostURL = window.getHostUrl ? window.getHostUrl() : 'https://us-central1-eagleeyessearch.cloudfunctions.net';
+                    $.ajax({
+                        url: hostURL + '/get_user_account_info',
+                        type: 'GET',
+                        headers: { 'Authorization': 'Bearer ' + idToken },
+                        success: function(data) {
+                            resolve(typeof data === 'string' ? JSON.parse(data) : data);
+                        },
+                        error: function(jqXHR, textStatus, errorThrown) {
+                            console.error("Error getting account status:", textStatus, errorThrown);
+                            reject(errorThrown);
+                        }
+                    });
+                }).catch(reject);
+            }
+
+            if (window.eeDashboard) {
+                const cached = window.eeDashboard.read(user.uid);
+                if (cached) { resolve(fromDash(cached)); return; }
+                window.eeDashboard.fetch(user)
+                    .then(function(dash) { resolve(fromDash(dash)); })
+                    .catch(function() { legacy(); });
+                return;
+            }
+            legacy();
         });
     }
 
@@ -8662,6 +8673,7 @@ active: account
     let cachedConfigsByOrg = {};
     let cachedPersonalConfigs = [];   // the caller's own (private) configs
     let configsLoaded = false;        // true once personal + all org fetches settle
+    let configsFetchStarted = false;  // lazy: configs fetched only when the Configurations view is first opened
     let cachedLicenseOverview = [];
     let cachedTokens = [];
     let cachedSources = [];
@@ -8728,7 +8740,9 @@ active: account
     // get_streaming_credits) if the bundled endpoint is unreachable.
     function applyDashboardData(data) {
         cachedOrganizations = (data && data.organizations) || [];
-        kickOffConfigurationsFetches(cachedOrganizations);
+        // Configurations are loaded lazily (only when the Configurations view is
+        // opened) to keep the per-org get_team_configurations calls off the
+        // dashboard's critical load path. See renderActiveConfigurations.
         cachedLicenseOverview = (data && data.license_overview) || [];
         licensesLoaded = true;
         cachedAccounts = (data && data.accounts) || [];
@@ -9229,7 +9243,8 @@ active: account
             const data = await orgApiCall('get_my_organization', null, false, 'GET');
             const orgs = (data && data.organizations) || [];
             cachedOrganizations = orgs;
-            kickOffConfigurationsFetches(orgs);
+            // Configs load lazily when the Configurations view opens (see
+            // renderActiveConfigurations).
         } catch (err) {
             console.error('Error in fetchMyOrganizationLegacy:', err);
             cachedOrganizations = [];
@@ -11166,6 +11181,13 @@ active: account
         if (!source || source.kind !== 'org') {
             container.innerHTML = '';
             return;
+        }
+        // Lazy load: only fetch configurations (personal + per-org team configs)
+        // the first time the user actually opens the Configurations view, so
+        // those cold-start-prone calls stay off the dashboard load path.
+        if (activeView === 'configurations' && !configsFetchStarted) {
+            configsFetchStarted = true;
+            kickOffConfigurationsFetches(cachedOrganizations);
         }
         // Unified list: personal + all orgs' team configs, merged. Show the
         // spinner only while nothing has loaded yet (we re-render as each
