@@ -493,7 +493,7 @@ active: purchase
     }
     .cta-btn.secondary:hover { background: #f3f9ff; border-color: #1e90ff; }
     .cta-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
-    .checkout-invoice-note { margin-top: 12px; font-size: 13px; color: #777; }
+    .checkout-invoice-note { margin-top: 14px; font-size: 15px; color: #777; text-align: center; }
     .checkout-invoice-note a { color: #1077dc; }
 
     .purchase-loading { color: #777; font-size: 14px; padding: 30px 0; }
@@ -1488,9 +1488,9 @@ active: purchase
                     ? '<span class="catalog-admin-badge">Admins only</span>'
                     : '<span class="catalog-row-arrow">▸</span>')
                 + '</button>';
-            if (adminLocked) {
-                html += '<div class="catalog-already" style="font-style:normal;">Only Admins can renew licenses or add devices.</div>';
-            } else if (disabled && s.unavailableReason) {
+            // (Admin-locked rows already show the "Admins only" pill above and
+            // explain on click via the modal, so no extra line is needed here.)
+            if (!adminLocked && disabled && s.unavailableReason) {
                 html += '<div class="catalog-already" style="font-style:normal;">' + esc(s.unavailableReason) + '</div>';
             }
             if (open) {
