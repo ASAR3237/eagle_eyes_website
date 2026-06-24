@@ -1323,7 +1323,7 @@ active: purchase
         // to one of their accounts. Dismissing the banner clears the block (an
         // explicit "buy for my current account instead" override).
         state.hintBlocked = true;
-        body.innerHTML = 'This top-up link references a license ID (<strong>' + esc(state.licenseHint)
+        body.innerHTML = 'This top-up link references a license ID (starting with <strong>' + esc(state.licenseHint)
             + '</strong>) we don\'t see on your accounts, so checkout is paused. '
             + 'Sign in with the account that owns this license, or contact '
             + '<a href="mailto:' + SALES_EMAIL + '">' + SALES_EMAIL + '</a>. '
