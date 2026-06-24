@@ -4105,7 +4105,15 @@ active: account
                     // sign-in) so the org tab's visibility is decided before
                     // we reveal the content. fetchMyOrganization swallows
                     // its own errors, so this is safe to await.
-                    Promise.resolve(window._orgFetchPromise).finally(() => {
+                    // Cap the wait: if the dashboard fetch is slow/stalled (e.g.
+                    // a Firebase cold start), reveal the content anyway after a
+                    // few seconds so the page never hangs on "Loading your
+                    // account…"; sections show their own spinners and fill in
+                    // when the data lands.
+                    Promise.race([
+                        Promise.resolve(window._orgFetchPromise),
+                        new Promise(function(res) { setTimeout(res, 8000); })
+                    ]).finally(() => {
                         document.getElementById('loading-overlay').style.display = 'none';
                         if (window.hideAccountAuthChecking) window.hideAccountAuthChecking();
                         $("#accountContent").show();

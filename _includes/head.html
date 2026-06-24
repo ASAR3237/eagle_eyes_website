@@ -412,18 +412,24 @@
 					if (this._inflight) return this._inflight;
 					var self = this;
 					this._inflight = (async function() {
+						// Bound the request so a stalled Firebase cold start can't hang
+						// the account page forever (the UI reveal gates on this promise).
+						var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+						var to = ctrl ? setTimeout(function() { ctrl.abort(); }, 20000) : null;
 						try {
 							var idToken = await user.getIdToken();
 							var host = window.getHostUrl ? window.getHostUrl() : 'https://us-central1-eagleeyessearch.cloudfunctions.net';
 							var r = await fetch(host + '/get_account_dashboard', {
 								method: 'GET',
-								headers: { 'Authorization': 'Bearer ' + idToken, 'Accept': 'application/json' }
+								headers: { 'Authorization': 'Bearer ' + idToken, 'Accept': 'application/json' },
+								signal: ctrl ? ctrl.signal : undefined
 							});
 							if (!r.ok) throw new Error('get_account_dashboard failed (' + r.status + ')');
 							var data = await r.json();
 							self.write(user.uid, data);
 							return data;
 						} finally {
+							if (to) clearTimeout(to);
 							self._inflight = null;
 						}
 					})();
