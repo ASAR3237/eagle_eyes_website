@@ -2329,15 +2329,22 @@ active: account
     .people-add-card .org-add-role-label { font-size: 13px; font-weight: 600; color: #555; }
     /* Match the role control (select / static pill) and the Invite button to
        the same height so they line up on the row. */
+    /* Force a single shared height and kill the theme/bootstrap form-control
+       margins that were pushing the role dropdown out of line with the Invite
+       button (!important needed to beat the global select/button rules). */
     .people-add-card .org-add-row .org-add-role,
     .people-add-card .org-add-row .org-add-role-static,
     .people-add-card .org-add-row .org-btn {
-        height: 38px;
-        box-sizing: border-box;
-        padding-top: 0;
-        padding-bottom: 0;
+        height: 38px !important;
+        min-height: 38px !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
         font-size: 14px;
-        line-height: normal;
+        line-height: normal !important;
+        vertical-align: middle;
+        align-self: center;
     }
     .people-add-card .org-add-row .org-add-role { flex: 0 0 auto; width: 170px; }
     .people-add-card .org-add-role-static { flex: 0 0 auto; width: 170px; color: #2a3442; padding-left: 12px; padding-right: 12px; border: 1px solid #e6e9ee; border-radius: 4px; background: #f7f8fa; display: inline-flex; align-items: center; }

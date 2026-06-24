@@ -505,15 +505,31 @@ heading: Profile
             try {
                 var user = firebase.auth().currentUser;
                 if (!user) return;
-                var idToken = await user.getIdToken();
-                var hostURL = window.getHostUrl ? window.getHostUrl() : 'https://us-central1-eagleeyessearch.cloudfunctions.net';
-                var r = await fetch(hostURL + '/get_my_organization', {
-                    method: 'GET',
-                    headers: { 'Authorization': 'Bearer ' + idToken, 'Content-Type': 'application/json' }
-                });
-                if (!r.ok) throw new Error('Request failed: ' + r.status);
-                var data = await r.json();
-                renderProfileOrgs((data && data.organizations) || []);
+                // Source orgs from the bundled account dashboard (the same data
+                // the People page uses) so this list includes orgs you're tied to
+                // via the account that funds them - not only orgs you're a direct
+                // member of. get_my_organization alone misses funded orgs, which
+                // made this read "not a member of any organization" for billing
+                // admins. Fall back to get_my_organization if the dashboard
+                // helper isn't available.
+                var orgs = null;
+                if (window.eeDashboard) {
+                    var dash = window.eeDashboard.read(user.uid);
+                    if (!dash) { try { dash = await window.eeDashboard.fetch(user); } catch (e) {} }
+                    if (dash) orgs = dash.organizations || [];
+                }
+                if (orgs === null) {
+                    var idToken = await user.getIdToken();
+                    var hostURL = window.getHostUrl ? window.getHostUrl() : 'https://us-central1-eagleeyessearch.cloudfunctions.net';
+                    var r = await fetch(hostURL + '/get_my_organization', {
+                        method: 'GET',
+                        headers: { 'Authorization': 'Bearer ' + idToken, 'Content-Type': 'application/json' }
+                    });
+                    if (!r.ok) throw new Error('Request failed: ' + r.status);
+                    var data = await r.json();
+                    orgs = (data && data.organizations) || [];
+                }
+                renderProfileOrgs(orgs);
             } catch (err) {
                 console.error('Error loading orgs for profile:', err);
                 container.innerHTML = '<div class="profile-orgs-empty">Couldn\'t load organizations right now.</div>';
