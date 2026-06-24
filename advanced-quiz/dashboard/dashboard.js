@@ -125,15 +125,13 @@
     quizzes.forEach(function (qz) {
       var meta = byTitle[normTitle(qz.title)];
       var niceTitle = meta ? meta.title : qz.title;
-      html += '<div class="card dash">' +
-        '<div class="dash-head" role="button" tabindex="0" aria-expanded="true">' +
+      html += '<div class="card dash collapsed">' +
+        '<div class="dash-head" role="button" tabindex="0" aria-expanded="false">' +
           '<span class="dash-title"><span class="dash-chevron" aria-hidden="true"></span>' +
           '<h2>' + esc(niceTitle) + '</h2></span>' +
           '<span class="resp">' + qz.responses + ' response' + (qz.responses === 1 ? '' : 's') + '</span>' +
         '</div>' +
-        '<div class="dash-body">' +
-        '<div class="chart-scale"><span>0%</span><span>25%</span><span>50%</span>' +
-        '<span>75%</span><span>100%</span></div>';
+        '<div class="dash-body">';
 
       var items = (qz.qs || []).map(function (q, idx) {
         var question = meta && meta.questions[idx];
@@ -174,24 +172,22 @@
         // green = most got it right, red = most got it wrong
         var sev = it.pctCorrect == null ? "ok"
           : (pct >= 75 ? "ok" : (pct >= 50 ? "warm" : "hot"));
+        var countLabel = it.pctCorrect == null
+          ? (it.n + ' resp')
+          : (it.correctCount + '/' + it.n);
+        // One compact, clickable row per question so a whole section fits on
+        // screen at a glance; clicking it reveals the per-option breakdown.
         html += '<div class="qrow">' +
-          '<div class="qtop">' +
+          '<div class="qhead" role="button" tabindex="0" aria-expanded="false">' +
+            '<span class="qchevron" aria-hidden="true"></span>' +
             '<span class="qn">Q' + (it.idx + 1) + '</span>' +
             '<span class="qtext">' + esc(it.question) + '</span>' +
-          '</div>' +
-          '<div class="barrow">' +
+            '<span class="qcount" title="correct / responses">' + countLabel + '</span>' +
             '<div class="bar"><span class="' + sev + '" style="width:' + pct + '%"></span></div>' +
-            '<div class="barpct ' + sev + '">' +
+            '<span class="barpct ' + sev + '">' +
               (it.pctCorrect == null ? '—' : it.pctCorrect + '%') +
-            '</div>' +
+            '</span>' +
           '</div>' +
-          (it.pctWrong == null
-            ? '<div class="mw">' + it.n + ' responses (answer key not found for this question)</div>'
-            : (it.pctWrong > 0
-                ? '<div class="mw"><b>' + it.correctCount + '</b> correct of ' + it.n +
-                  ' response' + (it.n === 1 ? '' : 's') + '</div>'
-                : '<div class="mw good">All ' + it.n + ' correct ✓</div>')) +
-          '<button type="button" class="view-choices" aria-expanded="false">View choices</button>' +
           choicesHtml(it) +
         '</div>';
       });
@@ -199,15 +195,23 @@
       html += '</div></div>';
     });
 
-    html += '<div class="actions"><button class="btn btn-ghost" id="refresh">Refresh</button>' +
-            '<button class="btn btn-primary" id="lock">Lock</button></div>';
+    // Refresh stays out in the open — it's the everyday "load new responses"
+    // action. Lock / Reset live behind the Settings disclosure.
+    html += '<div class="actions"><button class="btn btn-primary" id="refresh">Refresh</button></div>';
 
-    html += '<div class="resetbox">' +
-              '<button class="btn btn-danger" id="reset">Reset for next class</button>' +
-              '<p class="resetnote">Archives every current response into dated tabs in the Sheet ' +
-                '(nothing is deleted) and clears the dashboard so the next class starts fresh.</p>' +
-              '<p class="savemsg" id="resetmsg"></p>' +
-            '</div>';
+    html += '<div class="settings">' +
+      '<button type="button" class="settings-toggle" id="settingsToggle" aria-expanded="false">' +
+        '<span class="dash-chevron" aria-hidden="true"></span>⚙ Settings</button>' +
+      '<div class="settings-body" id="settingsBody" hidden>' +
+        '<div class="actions"><button class="btn btn-ghost" id="lock">Lock</button></div>' +
+        '<div class="resetbox">' +
+          '<button class="btn btn-danger" id="reset">Reset for next class</button>' +
+          '<p class="resetnote">Archives every current response into dated tabs in the Sheet ' +
+            '(nothing is deleted) and clears the dashboard so the next class starts fresh.</p>' +
+          '<p class="savemsg" id="resetmsg"></p>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
 
     root.innerHTML = html;
 
@@ -226,27 +230,30 @@
       });
     });
 
-    // "View choices" — reveal the per-option breakdown for a single question.
-    Array.prototype.forEach.call(root.querySelectorAll(".view-choices"), function (btn) {
-      btn.addEventListener("click", function () {
-        var panel = btn.nextElementSibling; // the .choices div
+    // Click a question row to reveal/hide its per-option breakdown.
+    Array.prototype.forEach.call(root.querySelectorAll(".qhead"), function (head) {
+      function toggle() {
+        var panel = head.nextElementSibling; // the .choices div
         if (!panel) return;
         var open = panel.hasAttribute("hidden");
         if (open) panel.removeAttribute("hidden"); else panel.setAttribute("hidden", "");
-        btn.setAttribute("aria-expanded", open ? "true" : "false");
-        btn.textContent = open ? "Hide choices" : "View choices";
+        head.setAttribute("aria-expanded", open ? "true" : "false");
+      }
+      head.addEventListener("click", toggle);
+      head.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); }
       });
     });
 
-    // When a new section just showed up, collapse the older ones so the
-    // freshly-populated section is what's on screen.
+    // Sections are collapsed by default. When a brand-new section shows up,
+    // auto-expand just that one so the latest results are on screen.
     if (freshTitles.length) {
       var cards = root.querySelectorAll(".card.dash");
       Array.prototype.forEach.call(cards, function (card, i) {
-        if (freshTitles.indexOf(curTitles[i]) === -1) {
-          card.classList.add("collapsed");
+        if (freshTitles.indexOf(curTitles[i]) !== -1) {
+          card.classList.remove("collapsed");
           var h = card.querySelector(".dash-head");
-          if (h) h.setAttribute("aria-expanded", "false");
+          if (h) h.setAttribute("aria-expanded", "true");
         }
       });
     }
@@ -260,6 +267,13 @@
       });
     });
     document.getElementById("lock").addEventListener("click", function () { renderGate(); });
+
+    document.getElementById("settingsToggle").addEventListener("click", function () {
+      var body = document.getElementById("settingsBody");
+      var open = body.hasAttribute("hidden");
+      if (open) body.removeAttribute("hidden"); else body.setAttribute("hidden", "");
+      this.setAttribute("aria-expanded", open ? "true" : "false");
+    });
 
     document.getElementById("reset").addEventListener("click", function () {
       if (!window.confirm("Archive all current responses and start fresh for the next class?\n\n" +

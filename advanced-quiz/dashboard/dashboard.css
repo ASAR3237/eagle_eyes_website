@@ -28,19 +28,30 @@
 .card.dash.collapsed .dash-body { display: none; }
 .card.dash.collapsed .dash-head { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
 
-/* % scale across the top of each quiz's chart (aligns over the bar track) */
-.chart-scale { display: flex; justify-content: space-between; padding: 4px 52px 6px 0;
-  font-size: 0.68rem; color: var(--muted); font-weight: 700; }
-
-.qrow { padding: 18px 0; border-bottom: 1px solid #9aa7bb; }
+/* ---- Compact question rows: one per line, click to expand the breakdown.
+   The whole section fits on screen for a projector overview. ---- */
+.qrow { border-bottom: 1px solid #d7deea; }
 .qrow:last-child { border-bottom: none; }
-.qtop { display: flex; align-items: baseline; gap: 8px; margin-bottom: 7px; }
-.qtop .qn { font-weight: 800; color: var(--muted); font-size: 0.78rem; flex: 0 0 auto; }
-.qtop .qtext { font-size: 0.92rem; color: var(--ink); }
+.qhead {
+  display: flex; align-items: center; gap: 14px; padding: 9px 0;
+  cursor: pointer; user-select: none; -webkit-user-select: none;
+}
+.qhead:hover { background: rgba(11, 37, 69, 0.03); }
+.qhead:focus-visible { outline: 2px solid var(--sky); outline-offset: -2px; border-radius: 4px; }
 
-/* horizontal bar chart row: track grows, % label fixed on the right */
-.barrow { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
-.bar { flex: 1 1 auto; height: 16px; border-radius: 6px; overflow: hidden;
+.qchevron { flex: 0 0 auto; width: 0; height: 0;
+  border-left: 6px solid var(--muted);
+  border-top: 4px solid transparent; border-bottom: 4px solid transparent;
+  transition: transform 0.2s ease; }
+.qhead[aria-expanded="true"] .qchevron { transform: rotate(90deg); }
+
+.qn { flex: 0 0 auto; min-width: 26px; font-weight: 800; color: var(--muted); font-size: 0.8rem; }
+.qtext { flex: 1 1 auto; min-width: 0; font-size: 0.92rem; color: var(--ink); line-height: 1.3; }
+.qcount { flex: 0 0 auto; min-width: 46px; text-align: right; white-space: nowrap;
+  font-size: 0.82rem; font-weight: 700; color: var(--muted); }
+
+/* compact score bar pinned to the right of each row */
+.bar { flex: 0 0 150px; height: 12px; border-radius: 6px; overflow: hidden;
   background-color: #eef2f7;
   background-image: linear-gradient(90deg, #d7deea 1px, transparent 1px);
   background-size: 25% 100%; }
@@ -49,25 +60,18 @@
 .bar > span.hot { background: var(--red); }
 .bar > span.warm { background: var(--amber); }
 .bar > span.ok { background: var(--green); }
-.barpct { flex: 0 0 42px; text-align: right; font-weight: 800; font-size: 0.9rem; }
+.barpct { flex: 0 0 46px; text-align: right; font-weight: 800; font-size: 0.95rem; }
 .barpct.hot { color: var(--red); }
 .barpct.warm { color: var(--amber); }
 .barpct.ok { color: var(--green); }
 
-.mw { font-size: 0.84rem; color: var(--muted); }
-.mw.good { color: var(--green); font-weight: 600; }
-.mw b { color: var(--ink); }
-
-/* ---- "View choices" per-question breakdown ---- */
-.view-choices {
-  margin-top: 10px; padding: 5px 12px; font: inherit; font-size: 0.8rem; font-weight: 700;
-  color: var(--navy); background: #eef2f7; border: 1px solid var(--line);
-  border-radius: 999px; cursor: pointer;
+@media (max-width: 520px) {
+  .qhead { gap: 9px; }
+  .bar { flex-basis: 80px; }
+  .qcount { min-width: 36px; font-size: 0.74rem; }
 }
-.view-choices:hover { background: #e3e9f1; }
-.view-choices[aria-expanded="true"] { background: var(--navy); color: #fff; border-color: var(--navy); }
 
-.choices { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.choices { margin: 4px 0 14px; padding-left: 28px; display: flex; flex-direction: column; gap: 8px; }
 /* keep the hidden attribute working despite the display:flex above */
 .choices[hidden] { display: none; }
 
@@ -107,6 +111,19 @@
   .choice-count { order: 1; margin-left: auto; }
 }
 
+/* ---- Settings disclosure (hides Refresh / Lock / Reset until opened) ---- */
+.settings { margin-top: 18px; text-align: center; }
+.settings-toggle {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 16px; font: inherit; font-size: 0.85rem; font-weight: 700;
+  color: var(--muted); background: none; border: none; cursor: pointer;
+}
+.settings-toggle:hover { color: var(--navy); }
+.settings-toggle .dash-chevron { border-left-color: currentColor; }
+.settings-toggle[aria-expanded="true"] .dash-chevron { transform: rotate(90deg); }
+.settings-body { margin-top: 10px; text-align: left; }
+.settings-body[hidden] { display: none; }
+
 /* ---- Reset / archive for next class ---- */
 .resetbox {
   margin-top: 18px;
@@ -127,28 +144,31 @@
   .topbar { padding: 28px 28px; }
   .topbar h1 { font-size: 2rem; }
   .topbar p { font-size: 1.05rem; }
-  .card.dash { padding: 26px 32px; margin-bottom: 22px; }
+  .card.dash { padding: 22px 32px; margin-bottom: 22px; }
   .dash-head h2 { font-size: 1.6rem; }
   .dash-head .resp { font-size: 1rem; }
-  .chart-scale { font-size: 0.85rem; padding-right: 76px; }
-  .qrow { padding: 28px 0; }
-  .qtop { gap: 12px; margin-bottom: 12px; }
-  .qtop .qn { font-size: 1rem; }
-  .qtop .qtext { font-size: 1.18rem; }
-  .barrow { gap: 14px; margin-bottom: 8px; }
-  .bar { height: 24px; border-radius: 8px; }
+  .qhead { gap: 20px; padding: 11px 0; }
+  .qchevron { border-left-width: 8px; border-top-width: 5px; border-bottom-width: 5px; }
+  .qn { min-width: 42px; font-size: 1.1rem; }
+  .qtext { font-size: 1.25rem; }
+  .qcount { min-width: 72px; font-size: 1.05rem; }
+  .bar { flex-basis: 280px; height: 18px; border-radius: 8px; }
   .bar > span { border-radius: 8px 0 0 8px; }
-  .barpct { flex-basis: 62px; font-size: 1.25rem; }
-  .mw { font-size: 1.02rem; }
+  .barpct { flex-basis: 78px; font-size: 1.45rem; }
+  .choices { padding-left: 62px; }
+  .choice-text { font-size: 1.05rem; }
+  .choice-letter { width: 28px; height: 28px; line-height: 28px; font-size: 0.82rem; }
+  .choice-count { font-size: 0.95rem; }
 }
 
 @media (min-width: 1300px) {
   .wrap { max-width: 1320px; }
   .topbar h1 { font-size: 2.3rem; }
-  .dash-head h2 { font-size: 1.85rem; }
-  .qtop .qtext { font-size: 1.35rem; }
-  .bar { height: 28px; }
-  .barpct { flex-basis: 72px; font-size: 1.45rem; }
-  .mw { font-size: 1.12rem; }
-  .qrow { padding: 36px 0; }
+  .dash-head h2 { font-size: 1.95rem; }
+  .qhead { padding: 13px 0; }
+  .qn { font-size: 1.2rem; }
+  .qtext { font-size: 1.45rem; }
+  .qcount { font-size: 1.15rem; }
+  .bar { flex-basis: 340px; height: 22px; }
+  .barpct { flex-basis: 90px; font-size: 1.6rem; }
 }
