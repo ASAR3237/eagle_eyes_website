@@ -107,6 +107,19 @@
   .choice-count { order: 1; margin-left: auto; }
 }
 
+/* ---- Settings disclosure (hides Refresh / Lock / Reset until opened) ---- */
+.settings { margin-top: 18px; text-align: center; }
+.settings-toggle {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 16px; font: inherit; font-size: 0.85rem; font-weight: 700;
+  color: var(--muted); background: none; border: none; cursor: pointer;
+}
+.settings-toggle:hover { color: var(--navy); }
+.settings-toggle .dash-chevron { border-left-color: currentColor; }
+.settings-toggle[aria-expanded="true"] .dash-chevron { transform: rotate(90deg); }
+.settings-body { margin-top: 10px; text-align: left; }
+.settings-body[hidden] { display: none; }
+
 /* ---- Reset / archive for next class ---- */
 .resetbox {
   margin-top: 18px;

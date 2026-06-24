@@ -199,15 +199,22 @@
       html += '</div></div>';
     });
 
-    html += '<div class="actions"><button class="btn btn-ghost" id="refresh">Refresh</button>' +
-            '<button class="btn btn-primary" id="lock">Lock</button></div>';
-
-    html += '<div class="resetbox">' +
-              '<button class="btn btn-danger" id="reset">Reset for next class</button>' +
-              '<p class="resetnote">Archives every current response into dated tabs in the Sheet ' +
-                '(nothing is deleted) and clears the dashboard so the next class starts fresh.</p>' +
-              '<p class="savemsg" id="resetmsg"></p>' +
-            '</div>';
+    // Operational controls (Refresh / Lock / Reset) tucked behind a Settings
+    // disclosure so they're out of the way until explicitly opened.
+    html += '<div class="settings">' +
+      '<button type="button" class="settings-toggle" id="settingsToggle" aria-expanded="false">' +
+        '<span class="dash-chevron" aria-hidden="true"></span>⚙ Settings</button>' +
+      '<div class="settings-body" id="settingsBody" hidden>' +
+        '<div class="actions"><button class="btn btn-ghost" id="refresh">Refresh</button>' +
+          '<button class="btn btn-primary" id="lock">Lock</button></div>' +
+        '<div class="resetbox">' +
+          '<button class="btn btn-danger" id="reset">Reset for next class</button>' +
+          '<p class="resetnote">Archives every current response into dated tabs in the Sheet ' +
+            '(nothing is deleted) and clears the dashboard so the next class starts fresh.</p>' +
+          '<p class="savemsg" id="resetmsg"></p>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
 
     root.innerHTML = html;
 
@@ -260,6 +267,13 @@
       });
     });
     document.getElementById("lock").addEventListener("click", function () { renderGate(); });
+
+    document.getElementById("settingsToggle").addEventListener("click", function () {
+      var body = document.getElementById("settingsBody");
+      var open = body.hasAttribute("hidden");
+      if (open) body.removeAttribute("hidden"); else body.setAttribute("hidden", "");
+      this.setAttribute("aria-expanded", open ? "true" : "false");
+    });
 
     document.getElementById("reset").addEventListener("click", function () {
       if (!window.confirm("Archive all current responses and start fresh for the next class?\n\n" +
