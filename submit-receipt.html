@@ -8,8 +8,9 @@ title: Submit a Receipt
     body { font-family: 'Inter', 'Source Sans 3', sans-serif; }
 
     .receipt-wrap {
-        max-width: 620px;
-        margin: 60px auto 100px;
+        max-width: 640px;
+        /* clear the fixed site header so the card doesn't tuck under it */
+        margin: 140px auto 100px;
         padding: 0 20px;
     }
     .receipt-card {
@@ -28,33 +29,34 @@ title: Submit a Receipt
         margin: 0 0 10px;
     }
     .receipt-card h1 {
-        font-size: 1.9rem;
+        font-size: 3rem !important;
+        font-weight: 800;
         color: #0b2545;
-        margin: 0 0 12px;
-        line-height: 1.15;
+        margin: 0 0 16px;
+        line-height: 1.1;
     }
     .receipt-intro {
         color: #51607a;
-        font-size: 1.02rem;
-        line-height: 1.5;
-        margin: 0 0 26px;
+        font-size: 1.15rem;
+        line-height: 1.55;
+        margin: 0 0 30px;
     }
 
     .receipt-form label {
         display: block;
         font-weight: 700;
         color: #0b2545;
-        font-size: 0.92rem;
-        margin: 0 0 6px;
+        font-size: 1.1rem;
+        margin: 0 0 8px;
     }
-    .receipt-field { margin-bottom: 18px; }
+    .receipt-field { margin-bottom: 22px; }
     .receipt-form input[type="text"],
     .receipt-form input[type="email"] {
         width: 100%;
-        padding: 13px 14px;
+        padding: 16px 18px;
         border: 2px solid #e3e9f1;
         border-radius: 10px;
-        font-size: 1rem;
+        font-size: 1.25rem;
         font-family: inherit;
         box-sizing: border-box;
         color: #0b2545;
@@ -77,10 +79,10 @@ title: Submit a Receipt
     .receipt-file-zone:hover { border-color: #2f6fed; background: #f3f7ff; }
     .receipt-file-zone.has-file { border-color: #2e8b57; background: rgba(46, 139, 87, 0.06); border-style: solid; }
     .receipt-file-zone input[type="file"] { display: none; }
-    .receipt-file-icon { font-size: 1.6rem; display: block; margin-bottom: 6px; }
-    .receipt-file-text { color: #51607a; font-size: 0.92rem; }
+    .receipt-file-icon { font-size: 1.9rem; display: block; margin-bottom: 8px; }
+    .receipt-file-text { color: #51607a; font-size: 1.15rem; }
     .receipt-file-text b { color: #0b2545; }
-    .receipt-file-hint { color: #8a97ab; font-size: 0.8rem; margin-top: 4px; }
+    .receipt-file-hint { color: #8a97ab; font-size: 0.92rem; margin-top: 6px; }
 
     .receipt-button {
         width: 100%;
@@ -212,8 +214,24 @@ title: Submit a Receipt
         var errEl = document.getElementById('receipt-error');
         errEl.textContent = '';
 
-        if (!name || !email || !organization || !file) {
-            errEl.textContent = 'Please fill in every field and choose a file.';
+        // Require every field individually, with a clear message for each.
+        if (!name) { errEl.textContent = 'Please enter your full name.'; form.name.focus(); return; }
+        if (!email) { errEl.textContent = 'Please enter your email.'; form.email.focus(); return; }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            errEl.textContent = 'Please enter a valid email address.'; form.email.focus(); return;
+        }
+        if (!organization) { errEl.textContent = 'Please enter your organization.'; form.organization.focus(); return; }
+        if (!file) { errEl.textContent = 'Please choose a receipt file (PDF or image) to upload.'; fileInput.focus(); return; }
+
+        // Only allow PDFs or images.
+        var isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+        var isImage = /^image\//.test(file.type) || /\.(jpe?g|png|heic|heif|webp|gif|tiff?)$/i.test(file.name);
+        if (!isPdf && !isImage) {
+            errEl.textContent = 'That file type isn’t supported. Please upload a PDF or an image (JPG, PNG, HEIC).';
+            return;
+        }
+        if (file.size === 0) {
+            errEl.textContent = 'That file appears to be empty. Please choose a different file.';
             return;
         }
         if (file.size > RECEIPT_MAX_BYTES) {
