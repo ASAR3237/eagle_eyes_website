@@ -10,9 +10,23 @@
 
 .card.dash { padding: 18px 20px; margin-bottom: 16px; }
 .dash-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
-  border-bottom: 2px solid var(--line); padding-bottom: 10px; margin-bottom: 6px; }
+  border-bottom: 2px solid var(--line); padding-bottom: 10px; margin-bottom: 6px;
+  cursor: pointer; user-select: none; -webkit-user-select: none; }
+.dash-head:focus-visible { outline: 2px solid var(--sky); outline-offset: 3px; border-radius: 4px; }
 .dash-head h2 { margin: 0; font-size: 1.15rem; color: var(--navy); }
 .dash-head .resp { color: var(--muted); font-size: 0.85rem; font-weight: 700; white-space: nowrap; }
+
+/* left group: chevron + section title */
+.dash-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.dash-chevron { flex: 0 0 auto; width: 0; height: 0;
+  border-left: 7px solid var(--muted);
+  border-top: 5px solid transparent; border-bottom: 5px solid transparent;
+  transition: transform 0.2s ease; }
+.dash-head[aria-expanded="true"] .dash-chevron { transform: rotate(90deg); }
+
+/* collapsed: hide the questions, tighten the header so it reads as a folded row */
+.card.dash.collapsed .dash-body { display: none; }
+.card.dash.collapsed .dash-head { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
 
 /* % scale across the top of each quiz's chart (aligns over the bar track) */
 .chart-scale { display: flex; justify-content: space-between; padding: 4px 52px 6px 0;
