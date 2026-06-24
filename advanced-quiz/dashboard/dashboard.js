@@ -131,9 +131,7 @@
           '<h2>' + esc(niceTitle) + '</h2></span>' +
           '<span class="resp">' + qz.responses + ' response' + (qz.responses === 1 ? '' : 's') + '</span>' +
         '</div>' +
-        '<div class="dash-body">' +
-        '<div class="chart-scale"><span>0%</span><span>25%</span><span>50%</span>' +
-        '<span>75%</span><span>100%</span></div>';
+        '<div class="dash-body">';
 
       var items = (qz.qs || []).map(function (q, idx) {
         var question = meta && meta.questions[idx];
@@ -174,24 +172,22 @@
         // green = most got it right, red = most got it wrong
         var sev = it.pctCorrect == null ? "ok"
           : (pct >= 75 ? "ok" : (pct >= 50 ? "warm" : "hot"));
+        var countLabel = it.pctCorrect == null
+          ? (it.n + ' resp')
+          : (it.correctCount + '/' + it.n);
+        // One compact, clickable row per question so a whole section fits on
+        // screen at a glance; clicking it reveals the per-option breakdown.
         html += '<div class="qrow">' +
-          '<div class="qtop">' +
+          '<div class="qhead" role="button" tabindex="0" aria-expanded="false">' +
+            '<span class="qchevron" aria-hidden="true"></span>' +
             '<span class="qn">Q' + (it.idx + 1) + '</span>' +
             '<span class="qtext">' + esc(it.question) + '</span>' +
-          '</div>' +
-          '<div class="barrow">' +
+            '<span class="qcount" title="correct / responses">' + countLabel + '</span>' +
             '<div class="bar"><span class="' + sev + '" style="width:' + pct + '%"></span></div>' +
-            '<div class="barpct ' + sev + '">' +
+            '<span class="barpct ' + sev + '">' +
               (it.pctCorrect == null ? '—' : it.pctCorrect + '%') +
-            '</div>' +
+            '</span>' +
           '</div>' +
-          (it.pctWrong == null
-            ? '<div class="mw">' + it.n + ' responses (answer key not found for this question)</div>'
-            : (it.pctWrong > 0
-                ? '<div class="mw"><b>' + it.correctCount + '</b> correct of ' + it.n +
-                  ' response' + (it.n === 1 ? '' : 's') + '</div>'
-                : '<div class="mw good">All ' + it.n + ' correct ✓</div>')) +
-          '<button type="button" class="view-choices" aria-expanded="false">View choices</button>' +
           choicesHtml(it) +
         '</div>';
       });
@@ -234,15 +230,18 @@
       });
     });
 
-    // "View choices" — reveal the per-option breakdown for a single question.
-    Array.prototype.forEach.call(root.querySelectorAll(".view-choices"), function (btn) {
-      btn.addEventListener("click", function () {
-        var panel = btn.nextElementSibling; // the .choices div
+    // Click a question row to reveal/hide its per-option breakdown.
+    Array.prototype.forEach.call(root.querySelectorAll(".qhead"), function (head) {
+      function toggle() {
+        var panel = head.nextElementSibling; // the .choices div
         if (!panel) return;
         var open = panel.hasAttribute("hidden");
         if (open) panel.removeAttribute("hidden"); else panel.setAttribute("hidden", "");
-        btn.setAttribute("aria-expanded", open ? "true" : "false");
-        btn.textContent = open ? "Hide choices" : "View choices";
+        head.setAttribute("aria-expanded", open ? "true" : "false");
+      }
+      head.addEventListener("click", toggle);
+      head.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); }
       });
     });
 
