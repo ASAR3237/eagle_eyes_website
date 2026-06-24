@@ -199,14 +199,15 @@
       html += '</div></div>';
     });
 
-    // Operational controls (Refresh / Lock / Reset) tucked behind a Settings
-    // disclosure so they're out of the way until explicitly opened.
+    // Refresh stays out in the open — it's the everyday "load new responses"
+    // action. Lock / Reset live behind the Settings disclosure.
+    html += '<div class="actions"><button class="btn btn-primary" id="refresh">Refresh</button></div>';
+
     html += '<div class="settings">' +
       '<button type="button" class="settings-toggle" id="settingsToggle" aria-expanded="false">' +
         '<span class="dash-chevron" aria-hidden="true"></span>⚙ Settings</button>' +
       '<div class="settings-body" id="settingsBody" hidden>' +
-        '<div class="actions"><button class="btn btn-ghost" id="refresh">Refresh</button>' +
-          '<button class="btn btn-primary" id="lock">Lock</button></div>' +
+        '<div class="actions"><button class="btn btn-ghost" id="lock">Lock</button></div>' +
         '<div class="resetbox">' +
           '<button class="btn btn-danger" id="reset">Reset for next class</button>' +
           '<p class="resetnote">Archives every current response into dated tabs in the Sheet ' +
