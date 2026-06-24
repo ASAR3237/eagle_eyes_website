@@ -529,7 +529,7 @@ heading: Profile
                     var data = await r.json();
                     orgs = (data && data.organizations) || [];
                 }
-                renderProfileOrgs(orgs);
+                renderProfileOrgs(orgs, dash);
             } catch (err) {
                 console.error('Error loading orgs for profile:', err);
                 container.innerHTML = '<div class="profile-orgs-empty">Couldn\'t load organizations right now.</div>';
@@ -543,16 +543,34 @@ heading: Profile
                 .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         }
 
-        function renderProfileOrgs(orgs) {
+        function renderProfileOrgs(orgs, dash) {
             var container = document.getElementById('profileOrgs');
             if (!orgs.length) {
                 container.innerHTML = '<div class="profile-orgs-empty">You\'re not a member of any organization.</div>';
                 return;
             }
+            var user = firebase.auth().currentUser;
+            var callerEmail = ((user && user.email) || '').toLowerCase();
+            var accounts = (dash && dash.accounts) || [];
+            // Match the People page's notion of "Admin": an org-level admin, OR a
+            // billing admin of an account that funds the org. An org appears in
+            // your list because you're a member OR because your account funds it;
+            // so if you're not a member of it, you're here as the funding admin.
+            function isAdminOfOrg(o) {
+                if (o.is_admin) return true;
+                var isMember = (o.emails || []).some(function(e) { return String(e).toLowerCase() === callerEmail; });
+                if (!isMember) return true; // listed only because you fund it
+                return accounts.some(function(a) {
+                    var billingAdmin = !!(a.is_admin || a.is_owner);
+                    var funds = (a.organization_ids || []).map(String).indexOf(String(o.org_id)) !== -1;
+                    return billingAdmin && funds;
+                });
+            }
             var html = '<ul class="profile-orgs-list">';
             orgs.forEach(function(o) {
-                var roleClass = o.is_admin ? 'admin' : '';
-                var roleLabel = o.is_admin ? 'Admin' : 'Member';
+                var admin = isAdminOfOrg(o);
+                var roleClass = admin ? 'admin' : '';
+                var roleLabel = admin ? 'Admin' : 'Member';
                 html += '<li>'
                     + '<span class="profile-orgs-name">' + escapeHtml(o.name || 'Organization') + '</span>'
                     + '<span class="profile-orgs-role-badge ' + roleClass + '">' + roleLabel + '</span>'
