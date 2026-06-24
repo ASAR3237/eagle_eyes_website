@@ -10,6 +10,10 @@
 
   var root = document.getElementById("app");
 
+  // Section titles present in the last render, so we can tell when a brand-new
+  // section appears and auto-fold the older ones to surface the latest one.
+  var prevTitles = null;
+
   // Apps Script web-app URL that serves the dashboard stats (the deployment
   // that has the ?stats endpoint). Submissions use CONFIG.RESULTS_URL; this
   // can be the same URL or a separate deployment — both read the same Sheet.
@@ -36,8 +40,8 @@
   function renderGate(msg) {
     root.innerHTML =
       '<div class="topbar">' +
-        '<p class="eyebrow">Instructor Dashboard</p>' +
-        '<h1>' + esc(CONFIG.COURSE_NAME) + '</h1>' +
+        '<p class="eyebrow">Dashboard</p>' +
+        '<h1>Advanced RPAS Course Quiz Results</h1>' +
         '<p>Aggregate results — where the class struggled most.</p>' +
       '</div>' +
       '<div class="card gate">' +
@@ -101,11 +105,16 @@
       return ai - bi;
     });
 
+    // Titles in current render order (matches the .card.dash DOM order below).
+    var curTitles = quizzes.map(function (qz) { return normTitle(qz.title); });
+    var freshTitles = prevTitles
+      ? curTitles.filter(function (t) { return prevTitles.indexOf(t) === -1; })
+      : [];
+
     var html =
       '<div class="topbar">' +
-        '<p class="eyebrow">Instructor Dashboard</p>' +
-        '<h1>' + esc(CONFIG.COURSE_NAME) + '</h1>' +
-        '<p>Hardest questions first · aggregate only, no individual names.</p>' +
+        '<p class="eyebrow">Dashboard</p>' +
+        '<h1>Advanced RPAS Course Quiz Results</h1>' +
       '</div>';
 
     if (!quizzes.length) {
@@ -117,8 +126,12 @@
       var meta = byTitle[normTitle(qz.title)];
       var niceTitle = meta ? meta.title : qz.title;
       html += '<div class="card dash">' +
-        '<div class="dash-head"><h2>' + esc(niceTitle) + '</h2>' +
-        '<span class="resp">' + qz.responses + ' response' + (qz.responses === 1 ? '' : 's') + '</span></div>' +
+        '<div class="dash-head" role="button" tabindex="0" aria-expanded="true">' +
+          '<span class="dash-title"><span class="dash-chevron" aria-hidden="true"></span>' +
+          '<h2>' + esc(niceTitle) + '</h2></span>' +
+          '<span class="resp">' + qz.responses + ' response' + (qz.responses === 1 ? '' : 's') + '</span>' +
+        '</div>' +
+        '<div class="dash-body">' +
         '<div class="chart-scale"><span>0%</span><span>25%</span><span>50%</span>' +
         '<span>75%</span><span>100%</span></div>';
 
@@ -129,6 +142,7 @@
         var n = q.n || 0;
         var correctCount = correctLetter ? (q.picks[correctLetter] || 0) : 0;
         var pctWrong = (hasKey && n) ? Math.round((n - correctCount) / n * 100) : null;
+        var pctCorrect = (hasKey && n) ? Math.round(correctCount / n * 100) : null;
 
         var mwLetter = null, mwCount = -1;
         Object.keys(q.picks || {}).forEach(function (L) {
@@ -141,7 +155,8 @@
           if (question.options[oi] != null) mwText = question.options[oi];
         }
         return {
-          idx: idx, n: n, pctWrong: pctWrong, hasKey: hasKey,
+          idx: idx, n: n, pctWrong: pctWrong, pctCorrect: pctCorrect, hasKey: hasKey,
+          correctCount: correctCount,
           question: question ? question.q : ("Question " + (idx + 1)),
           mwLetter: mwLetter, mwText: mwText, mwCount: mwCount
         };
@@ -153,8 +168,10 @@
       });
 
       items.forEach(function (it) {
-        var pct = it.pctWrong == null ? 0 : it.pctWrong;
-        var sev = pct >= 50 ? "hot" : (pct >= 25 ? "warm" : "ok");
+        var pct = it.pctCorrect == null ? 0 : it.pctCorrect;
+        // green = most got it right, red = most got it wrong
+        var sev = it.pctCorrect == null ? "ok"
+          : (pct >= 75 ? "ok" : (pct >= 50 ? "warm" : "hot"));
         html += '<div class="qrow">' +
           '<div class="qtop">' +
             '<span class="qn">Q' + (it.idx + 1) + '</span>' +
@@ -163,20 +180,19 @@
           '<div class="barrow">' +
             '<div class="bar"><span class="' + sev + '" style="width:' + pct + '%"></span></div>' +
             '<div class="barpct ' + sev + '">' +
-              (it.pctWrong == null ? '—' : it.pctWrong + '%') +
+              (it.pctCorrect == null ? '—' : it.pctCorrect + '%') +
             '</div>' +
           '</div>' +
           (it.pctWrong == null
             ? '<div class="mw">' + it.n + ' responses (answer key not found for this question)</div>'
-            : (it.mwLetter && it.pctWrong > 0
-                ? '<div class="mw">' + it.pctWrong + '% wrong &middot; most-picked wrong: <b>' +
-                  esc(it.mwLetter) + (it.mwText ? '. ' + esc(it.mwText) : '') + '</b> (' +
-                  it.mwCount + ' of ' + it.n + ')</div>'
-                : '<div class="mw good">Everyone got this one right ✓</div>')) +
+            : (it.pctWrong > 0
+                ? '<div class="mw"><b>' + it.correctCount + '</b> correct of ' + it.n +
+                  ' response' + (it.n === 1 ? '' : 's') + '</div>'
+                : '<div class="mw good">All ' + it.n + ' correct ✓</div>')) +
         '</div>';
       });
 
-      html += '</div>';
+      html += '</div></div>';
     });
 
     html += '<div class="actions"><button class="btn btn-ghost" id="refresh">Refresh</button>' +
@@ -190,6 +206,35 @@
             '</div>';
 
     root.innerHTML = html;
+
+    // Collapsible sections — click (or Enter/Space) on a section header to
+    // fold its questions away, so you can focus on one section at a time.
+    Array.prototype.forEach.call(root.querySelectorAll(".dash-head"), function (head) {
+      function toggle() {
+        var card = head.parentNode;
+        var open = head.getAttribute("aria-expanded") !== "false";
+        head.setAttribute("aria-expanded", open ? "false" : "true");
+        card.classList.toggle("collapsed", open);
+      }
+      head.addEventListener("click", toggle);
+      head.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); }
+      });
+    });
+
+    // When a new section just showed up, collapse the older ones so the
+    // freshly-populated section is what's on screen.
+    if (freshTitles.length) {
+      var cards = root.querySelectorAll(".card.dash");
+      Array.prototype.forEach.call(cards, function (card, i) {
+        if (freshTitles.indexOf(curTitles[i]) === -1) {
+          card.classList.add("collapsed");
+          var h = card.querySelector(".dash-head");
+          if (h) h.setAttribute("aria-expanded", "false");
+        }
+      });
+    }
+    prevTitles = curTitles;
 
     document.getElementById("refresh").addEventListener("click", function () {
       var b = document.getElementById("refresh"); b.disabled = true; b.textContent = "Refreshing…";
