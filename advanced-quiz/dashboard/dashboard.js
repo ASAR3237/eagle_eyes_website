@@ -158,6 +158,8 @@
           idx: idx, n: n, pctWrong: pctWrong, pctCorrect: pctCorrect, hasKey: hasKey,
           correctCount: correctCount,
           question: question ? question.q : ("Question " + (idx + 1)),
+          options: question ? question.options : null,
+          correctLetter: correctLetter, picks: q.picks || {},
           mwLetter: mwLetter, mwText: mwText, mwCount: mwCount
         };
       });
@@ -189,6 +191,8 @@
                 ? '<div class="mw"><b>' + it.correctCount + '</b> correct of ' + it.n +
                   ' response' + (it.n === 1 ? '' : 's') + '</div>'
                 : '<div class="mw good">All ' + it.n + ' correct ✓</div>')) +
+          '<button type="button" class="view-choices" aria-expanded="false">View choices</button>' +
+          choicesHtml(it) +
         '</div>';
       });
 
@@ -219,6 +223,18 @@
       head.addEventListener("click", toggle);
       head.addEventListener("keydown", function (e) {
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); }
+      });
+    });
+
+    // "View choices" — reveal the per-option breakdown for a single question.
+    Array.prototype.forEach.call(root.querySelectorAll(".view-choices"), function (btn) {
+      btn.addEventListener("click", function () {
+        var panel = btn.nextElementSibling; // the .choices div
+        if (!panel) return;
+        var open = panel.hasAttribute("hidden");
+        if (open) panel.removeAttribute("hidden"); else panel.setAttribute("hidden", "");
+        btn.setAttribute("aria-expanded", open ? "true" : "false");
+        btn.textContent = open ? "Hide choices" : "View choices";
       });
     });
 
@@ -262,6 +278,36 @@
         loadStats(key, function (e2, d2) { if (!e2 && d2 && !d2.error) render(d2, key); });
       });
     });
+  }
+
+  // ----------------------------------------------------------
+  // Per-question breakdown: every option with how many of the current
+  // session picked it, the correct answer flagged. Hidden until the
+  // "View choices" button on that row is clicked.
+  function choicesHtml(it) {
+    var letters;
+    if (it.options && it.options.length) {
+      letters = it.options.map(function (_, i) { return String.fromCharCode(65 + i); });
+    } else {
+      letters = Object.keys(it.picks).sort();
+    }
+    var rows = letters.map(function (L) {
+      var oi = L.charCodeAt(0) - 65;
+      var text = (it.options && it.options[oi] != null) ? it.options[oi] : "";
+      var count = it.picks[L] || 0;
+      var pct = it.n ? Math.round(count / it.n * 100) : 0;
+      var isCorrect = L === it.correctLetter;
+      return '<div class="choice' + (isCorrect ? ' correct' : '') + '">' +
+        '<span class="choice-fill" style="width:' + pct + '%"></span>' +
+        '<span class="choice-letter">' + esc(L) + '</span>' +
+        '<span class="choice-text">' +
+          (text ? esc(text) : 'Option ' + esc(L)) +
+          (isCorrect ? '<span class="choice-tag">✓ correct answer</span>' : '') +
+        '</span>' +
+        '<span class="choice-count"><b>' + count + '</b> of ' + it.n + '</span>' +
+      '</div>';
+    }).join("");
+    return '<div class="choices" hidden>' + rows + '</div>';
   }
 
   // ----------------------------------------------------------
