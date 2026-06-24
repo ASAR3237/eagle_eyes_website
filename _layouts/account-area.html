@@ -1,0 +1,506 @@
+---
+layout: main
+---
+<style>
+    .account-area {
+        min-height: calc(100vh - 80px);
+        display: flex;
+        background: #fafbfc;
+        padding-top: 80px;
+    }
+    .account-sidebar {
+        flex: 0 0 240px;
+        background: #fff;
+        border-right: 1px solid #ececec;
+        padding: 28px 16px;
+        position: sticky;
+        top: 80px;
+        align-self: flex-start;
+        height: calc(100vh - 80px);
+        overflow-y: auto;
+    }
+    .account-sidebar-close {
+        display: none;
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        background: none;
+        border: none;
+        color: #555;
+        cursor: pointer;
+        padding: 6px;
+        border-radius: 6px;
+    }
+    .account-sidebar-close:hover { background: #f3f4f6; }
+    .account-sidebar-nav {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+    .account-sidebar-nav li { margin: 4px 0; }
+    .account-sidebar-link {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #333;
+        text-decoration: none;
+        transition: background-color 0.15s, color 0.15s;
+    }
+    .account-sidebar-link svg {
+        flex: 0 0 auto;
+        color: #888;
+        transition: color 0.15s;
+    }
+    .account-sidebar-link:hover {
+        background: #f4f6f8;
+        color: #1e90ff;
+        text-decoration: none;
+    }
+    .account-sidebar-link:hover svg { color: #1e90ff; }
+    .account-sidebar-link.active {
+        background: #e8f3ff;
+        color: #1e90ff;
+    }
+    .account-sidebar-link.active svg { color: #1e90ff; }
+
+    /* Account + Organization scoped groups. Each is a label row (styled
+       like Profile/Downloads/Support) followed by its sub-items. */
+    .account-scope-group {
+        margin: 14px 0 6px 0;
+    }
+    .account-scope-sublist {
+        list-style: none;
+        margin: 2px 0 0 14px;
+        padding: 0;
+        border-left: 1px solid #ececec;
+    }
+    .account-scope-sublist li { margin: 2px 0; }
+    .account-scope-sublist .account-sidebar-link {
+        padding: 7px 12px 7px 14px;
+        font-size: 13px;
+        font-weight: 400;
+        border-radius: 6px;
+    }
+
+    /* Customer view: flatten the Billing + Organization groups so their items
+       read as top-level siblings of Profile / Downloads / Support — drop the
+       group header, the indent, the left rule, and match the top-level link
+       sizing. (In customer view the Organization group shows People + Devices
+       + Configurations; the other org items + owner-gated billing items are
+       hidden via head.html.) */
+    html.ee-view-customer #sidebarAccountSection,
+    html.ee-view-customer #sidebarOrgSection { margin: 4px 0; }
+    html.ee-view-customer #sidebarAccountSection > .account-scope-label,
+    html.ee-view-customer #sidebarOrgSection > .account-scope-label { display: none; }
+    html.ee-view-customer #sidebarAccountSection .account-scope-sublist,
+    html.ee-view-customer #sidebarOrgSection .account-scope-sublist {
+        margin-left: 0;
+        border-left: none;
+    }
+    html.ee-view-customer #sidebarAccountSection .account-scope-sublist .account-sidebar-link,
+    html.ee-view-customer #sidebarOrgSection .account-scope-sublist .account-sidebar-link {
+        padding: 10px 14px;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .account-content {
+        flex: 1 1 auto;
+        min-width: 0;
+        padding: 32px 40px;
+        max-width: 1100px;
+    }
+    .account-content-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 4px;
+    }
+    .account-menu-toggle {
+        display: none;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 8px 10px;
+        cursor: pointer;
+        color: #333;
+    }
+    .account-menu-toggle:hover { background: #f4f6f8; }
+    /* Section heading. On pages where the page-title (account/org name)
+       is visible, this acts as a subtitle below it (smaller, lighter).
+       On scope-less pages (Profile, Downloads, Support) it IS the main
+       heading (28px, dark). */
+    .account-content h1.account-subtitle {
+        font-size: 28px;
+        font-weight: 600;
+        margin: 0 0 24px 0;
+        color: #222;
+    }
+    /* When the page-title is visible the scope caption now reads
+       "[SCOPE] - [TOPIC]" (e.g. "BILLING ACCOUNT - Licenses & credits"),
+       which makes the layout-level h1 redundant. Hide it. Pages
+       without the page-title (Profile / Downloads / Support) still
+       fall through to the default rule below and render their h1
+       normally. */
+    .account-content.has-page-title h1.account-subtitle {
+        display: none;
+    }
+    /* Same goes for the inner section h2 - the caption already says
+       "Licenses & credits" or "Devices", repeating it inside the
+       section is just visual noise. Section-hint paragraphs and the
+       Rename / inline actions stay visible because they're useful
+       per-section context. */
+    .account-content.has-page-title .account-section-title { display: none; }
+
+    /* Mobile: sidebar becomes a slide-out drawer */
+    @media (max-width: 768px) {
+        .account-area {
+            display: block;
+            padding-top: 70px;
+        }
+        .account-menu-toggle { display: inline-flex; align-items: center; justify-content: center; }
+        .account-sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 260px;
+            transform: translateX(-100%);
+            transition: transform 0.25s ease;
+            z-index: 1400;
+            padding-top: 60px;
+            border-right: none;
+            box-shadow: 4px 0 16px rgba(0,0,0,0.12);
+        }
+        .account-sidebar.open { transform: translateX(0); }
+        .account-sidebar-close { display: inline-flex; align-items: center; justify-content: center; }
+        .account-sidebar-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 1300;
+        }
+        .account-sidebar-backdrop.open { display: block; }
+        .account-content { padding: 20px 18px; }
+        .account-content h1.account-subtitle { font-size: 15px; }
+    }
+</style>
+
+<div class="account-area">
+    <div class="account-sidebar-backdrop" id="accountSidebarBackdrop"></div>
+    {% include account-sidebar.html %}
+    <main class="account-content">
+        <div class="account-content-header">
+            <button type="button" class="account-menu-toggle" id="accountMenuToggle" aria-label="Open menu" aria-controls="accountSidebar" aria-expanded="false">
+                <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+                    <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+                </svg>
+            </button>
+        </div>
+        {% include account-renewal-banner.html %}
+        {% include account-page-title.html topic=page.heading %}
+        {% if page.heading %}<h1 class="account-subtitle">{{ page.heading }}</h1>{% endif %}
+        {{ content }}
+    </main>
+</div>
+
+{% include admin-action-modal.html %}
+
+<script>
+    (function() {
+        var sidebar = document.getElementById('accountSidebar');
+        var toggle = document.getElementById('accountMenuToggle');
+        var backdrop = document.getElementById('accountSidebarBackdrop');
+        var closeBtn = document.getElementById('accountSidebarClose');
+        if (!sidebar || !toggle || !backdrop) return;
+
+        function open() {
+            sidebar.classList.add('open');
+            backdrop.classList.add('open');
+            toggle.setAttribute('aria-expanded', 'true');
+        }
+        function close() {
+            sidebar.classList.remove('open');
+            backdrop.classList.remove('open');
+            toggle.setAttribute('aria-expanded', 'false');
+        }
+        toggle.addEventListener('click', function() {
+            sidebar.classList.contains('open') ? close() : open();
+        });
+        backdrop.addEventListener('click', close);
+        if (closeBtn) closeBtn.addEventListener('click', close);
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') close();
+        });
+    })();
+</script>
+
+<!--
+    Sidebar wiring for the Account / Organization scoped groups. Shows /
+    hides each group based on auth + whether the user has accounts / orgs.
+    Rewrites the org sub-item hrefs using the active org id from
+    sessionStorage so clicking "Members" / "Devices" / "Configurations" from
+    any account-area page navigates to the right org.
+
+    Active highlighting parses the URL hash + path.
+-->
+<script>
+(function() {
+    var ACCOUNT_PATH = '{{ "/account/" | relative_url }}';
+    var BILLING_PATH = '{{ "/account/billing/" | relative_url }}';
+    var PURCHASE_PATH = '{{ "/account/purchase/" | relative_url }}';
+
+    function $(id) { return document.getElementById(id); }
+    function pathMatches(path, target) {
+        return path.replace(/\/+$/, '') === target.replace(/\/+$/, '');
+    }
+    function parseHash() {
+        var raw = (window.location.hash || '').replace(/^#/, '');
+        var out = {};
+        if (!raw) return out;
+        raw.split('&').forEach(function(p) {
+            var i = p.indexOf('=');
+            if (i > 0) out[decodeURIComponent(p.slice(0, i))] = decodeURIComponent(p.slice(i + 1));
+        });
+        return out;
+    }
+    function readActiveOrgId(uid) {
+        try { return sessionStorage.getItem('ee-active-org:' + uid); } catch (e) { return null; }
+    }
+    function writeActiveOrgId(uid, id) {
+        try { sessionStorage.setItem('ee-active-org:' + uid, String(id)); } catch (e) {}
+    }
+
+    function expiryToTs(expiry) {
+        if (expiry == null || expiry === '') return null;
+        if (typeof expiry === 'number') return expiry < 1e12 ? expiry * 1000 : expiry;
+        var d = new Date(expiry);
+        var t = d.getTime();
+        return isNaN(t) ? null : t;
+    }
+    function pickDefaultOrgId(orgs, licenses) {
+        if (!orgs || !orgs.length) return null;
+        if (orgs.length === 1) return String(orgs[0].org_id);
+        var bestId = null, bestTs = null;
+        orgs.forEach(function(o) {
+            var maxTs = null;
+            (o.licenses || []).forEach(function(l) {
+                var lic = (licenses || []).find(function(x) { return x.license_id === l.license_id; });
+                if (!lic) return;
+                var t = expiryToTs(lic.expiry_date);
+                if (t != null && (maxTs == null || t > maxTs)) maxTs = t;
+            });
+            if (maxTs != null && (bestTs == null || maxTs > bestTs)) {
+                bestTs = maxTs;
+                bestId = o.org_id;
+            }
+        });
+        return String(bestId != null ? bestId : orgs[0].org_id);
+    }
+
+    function resolveActiveOrgId(user, orgs, licenses) {
+        if (!orgs || !orgs.length) return null;
+        var params = parseHash();
+        if (params.org && orgs.some(function(o) { return String(o.org_id) === String(params.org); })) {
+            writeActiveOrgId(user.uid, params.org);
+            return String(params.org);
+        }
+        var stored = readActiveOrgId(user.uid);
+        if (stored && orgs.some(function(o) { return String(o.org_id) === String(stored); })) {
+            return stored;
+        }
+        return pickDefaultOrgId(orgs, licenses);
+    }
+
+    // Rewrite the static "#" hrefs for org sub-items so they carry the
+    // active org id. Called on every render so sessionStorage changes are
+    // picked up.
+    function rewriteOrgHrefs(activeOrgId) {
+        document.querySelectorAll('[data-scope="org"][data-view]').forEach(function(a) {
+            var view = a.getAttribute('data-view');
+            a.href = ACCOUNT_PATH + '#org=' + encodeURIComponent(activeOrgId) + '&view=' + encodeURIComponent(view);
+        });
+        // Also wire the "Organization" scope label row to navigate to the
+        // default org view (Members) for the active org.
+        var scopeLink = $('sidebarOrgScopeLink');
+        if (scopeLink) scopeLink.href = ACCOUNT_PATH + '#org=' + encodeURIComponent(activeOrgId) + '&view=people';
+    }
+
+    // Highlight the matching sub-item based on the current URL.
+    function updateActiveHighlight() {
+        var path = window.location.pathname;
+        var params = parseHash();
+        var onAccount = pathMatches(path, ACCOUNT_PATH);
+        var onBilling = pathMatches(path, BILLING_PATH);
+        var onPurchase = pathMatches(path, PURCHASE_PATH);
+
+        document.querySelectorAll('.account-scope-sublist a.account-sidebar-link').forEach(function(a) {
+            var scope = a.getAttribute('data-scope');
+            var view = a.getAttribute('data-view');
+            var match = false;
+            if (scope === 'account') {
+                if (view === 'overview') {
+                    // Licenses & credits. Also the default landing on /account/
+                    // with no hash, and the canonical target for the legacy
+                    // #view=licenses fragment.
+                    match = onAccount && (!params.org)
+                        && (!params.view || params.view === 'overview' || params.view === 'licenses');
+                } else if (view === 'access') {
+                    match = onAccount && (!params.org) && params.view === 'access';
+                } else if (view === 'billing') {
+                    match = onBilling;
+                } else if (view === 'purchase') {
+                    match = onPurchase;
+                }
+            } else if (scope === 'org') {
+                match = onAccount && !!params.org && params.view === view;
+            }
+            a.classList.toggle('active', match);
+        });
+    }
+
+    function showAccountGroup(visible) {
+        var el = $('sidebarAccountSection');
+        if (el) el.style.display = visible ? '' : 'none';
+    }
+    function showOrgGroup(visible) {
+        var el = $('sidebarOrgSection');
+        if (el) el.style.display = visible ? '' : 'none';
+    }
+
+    function applyDashboard(user, dash) {
+        if (!dash) {
+            showAccountGroup(false);
+            showOrgGroup(false);
+            return;
+        }
+        var accounts = dash.accounts || [];
+        var orgs = dash.organizations || [];
+        var licenses = dash.license_overview || [];
+
+        // The Billing group is Admin-only (account owners). A team member who
+        // can see an account but doesn't own it gets no Billing group.
+        var isAccountAdmin = accounts.some(function(a) { return !!(a.is_admin || a.is_owner); });
+
+        // Resolve dev vs customer view (this also sets the .ee-view-customer
+        // class on <html> + persists the pre-paint hint).
+        var customer = (window.eeView && window.eeView.mode)
+            ? window.eeView.mode(user, dash) === 'customer' : false;
+
+        var purchaseItem = $('sidebarItemPurchase');
+        var billingItem = $('sidebarItemBilling');
+        if (customer) {
+            // Customer: no Organization group. Billing flattened to top level:
+            // Licenses & Credits and Purchase / Renew for everyone (members can
+            // top up streaming credits there); Purchase history (invoices) stays
+            // Admin-only.
+            showOrgGroup(false);
+            showAccountGroup(true);
+            if (purchaseItem) purchaseItem.style.display = '';
+            if (billingItem) billingItem.style.display = isAccountAdmin ? '' : 'none';
+        } else {
+            showAccountGroup(isAccountAdmin);
+            showOrgGroup(orgs.length > 0);
+            // Undo any customer-mode per-item hiding from a prior render.
+            if (purchaseItem) purchaseItem.style.display = '';
+            if (billingItem) billingItem.style.display = '';
+        }
+
+        // Account access (manage Admins) is folded into People; keep its
+        // sidebar item only as a fallback for an Admin who is on no team — and
+        // never in customer view.
+        var accessItem = $('sidebarAccountAccessItem');
+        if (accessItem) accessItem.style.display = (!customer && isAccountAdmin && orgs.length === 0) ? '' : 'none';
+
+        // Persist hints so the next page load can pre-paint the sidebar groups
+        // synchronously in <head> (read by _includes/head.html), eliminating
+        // the brief flash where a group reloads on navigation.
+        try {
+            if (orgs.length > 0) {
+                localStorage.setItem('eeHasOrgs', 'true');
+                document.documentElement.classList.add('ee-auth-hint-has-orgs');
+            } else {
+                localStorage.removeItem('eeHasOrgs');
+                document.documentElement.classList.remove('ee-auth-hint-has-orgs');
+            }
+            if (isAccountAdmin) {
+                localStorage.setItem('eeIsAccountAdmin', 'true');
+                document.documentElement.classList.add('ee-auth-hint-account-admin');
+            } else {
+                localStorage.removeItem('eeIsAccountAdmin');
+                document.documentElement.classList.remove('ee-auth-hint-account-admin');
+            }
+        } catch (e) { /* localStorage disabled */ }
+
+        // Rewrite org sub-item hrefs in BOTH dev and customer view — customer
+        // view now exposes People / Devices / Configurations, so their links
+        // must carry the active org id (otherwise they stay href="#" and a
+        // click just resets to the overview).
+        if (orgs.length > 0) {
+            var activeOrgId = resolveActiveOrgId(user, orgs, licenses);
+            if (activeOrgId) rewriteOrgHrefs(activeOrgId);
+        }
+
+        updateActiveHighlight();
+    }
+
+    function tryApply(user) {
+        if (!user) {
+            showAccountGroup(false);
+            showOrgGroup(false);
+            return;
+        }
+        if (!window.eeDashboard) return;
+        var cached = window.eeDashboard.read(user.uid);
+        if (cached) {
+            applyDashboard(user, cached);
+        }
+        // Always fetch fresh to revalidate. fetch() dedupes in-flight requests.
+        window.eeDashboard.fetch(user).then(function(fresh) {
+            applyDashboard(user, fresh);
+        }).catch(function(e) {
+            console.warn('account-area: dashboard fetch failed', e);
+        });
+    }
+
+    // Allow pages to force a re-render (e.g. after admin writes change org
+    // membership). Preserve the old event name for back-compat.
+    window.refreshAccountSidebar = function() {
+        try {
+            var u = firebase.auth().currentUser;
+            if (!u || !window.eeDashboard) return;
+            window.eeDashboard.invalidate(u.uid);
+            tryApply(u);
+        } catch (e) { console.warn('refreshAccountSidebar failed', e); }
+    };
+
+    document.addEventListener('authStateChanged', function(e) {
+        tryApply(e.detail && e.detail.user);
+    });
+    document.addEventListener('accountSidebarRefresh', function() {
+        if (typeof window.refreshAccountSidebar === 'function') window.refreshAccountSidebar();
+    });
+    document.addEventListener('accountScopeChanged', function(e) {
+        // Active org changed via the page-title dropdown. Rewrite hrefs.
+        try {
+            var u = firebase.auth().currentUser;
+            if (!u || !window.eeDashboard) return;
+            var dash = window.eeDashboard.read(u.uid);
+            if (dash) applyDashboard(u, dash);
+        } catch (err) { /* ignore */ }
+    });
+    window.addEventListener('hashchange', updateActiveHighlight);
+
+    if (typeof firebase !== 'undefined' && firebase.auth) {
+        try {
+            var current = firebase.auth().currentUser;
+            if (current) tryApply(current);
+        } catch (e) { /* ignore */ }
+    }
+})();
+</script>

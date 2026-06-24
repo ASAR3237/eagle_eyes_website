@@ -1,0 +1,27 @@
+---
+layout: account-area
+title: Downloads - Eagle Eyes
+permalink: /account/downloads/
+active: downloads
+heading: Downloads
+---
+<!--
+  /account/downloads/ embeds the same wizard as the public /download/ page
+  via _includes/downloads-content.html, so changes to the download flow
+  ripple to both surfaces.
+
+  Two overrides for the account-area context (scoped to .account-content):
+  1. Drop the wizard's huge 120px top padding. It exists for the
+     standalone /download/ page that has no layout above it; inside
+     /account/downloads/ the layout's heading is enough.
+  2. Hide the wizard's own "Download Eagle Eyes" title. The layout already
+     shows "Downloads" so the wizard's title would be duplicate.
+-->
+<style>
+    .account-content .wizard-container {
+        padding-top: 0 !important;
+    }
+    .account-content .page-title-mobile { display: none !important; }
+</style>
+
+{% include downloads-content.html %}

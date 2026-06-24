@@ -1,0 +1,742 @@
+---
+layout: account-area
+title: Profile - Eagle Eyes
+permalink: /account/profile/
+active: profile
+heading: Profile
+---
+<style>
+    .profile-card {
+        background: #fff;
+        border: 1px solid #ececec;
+        border-radius: 12px;
+        padding: 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    }
+    .profile-card h2 {
+        font-size: 16px;
+        font-weight: 600;
+        color: #222;
+        margin: 0 0 6px 0;
+    }
+    .profile-card .profile-card-hint {
+        font-size: 13px;
+        color: #777;
+        margin: 0 0 20px 0;
+    }
+    .profile-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 18px 24px;
+    }
+    .profile-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+    .profile-field label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+    .profile-field input[type="text"],
+    .profile-field input[type="email"],
+    .profile-field input[type="tel"] {
+        width: 100%;
+        padding: 10px 12px;
+        font-size: 15px;
+        border: 1px solid #d8dce0;
+        border-radius: 8px;
+        background: #fff;
+        color: #222;
+        transition: border-color 0.15s, box-shadow 0.15s;
+        box-sizing: border-box;
+    }
+    .profile-field input:focus {
+        outline: none;
+        border-color: #1e90ff;
+        box-shadow: 0 0 0 3px rgba(30,144,255,0.15);
+    }
+    .profile-field input:disabled,
+    .profile-field input[readonly] {
+        background: #f6f7f9;
+        color: #555;
+        cursor: not-allowed;
+    }
+    .profile-readonly-value {
+        font-size: 15px;
+        color: #222;
+        padding: 10px 0;
+    }
+    .profile-readonly-sub {
+        font-size: 12px;
+        color: #888;
+    }
+    .profile-actions {
+        margin-top: 20px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    .profile-btn {
+        background: #1e90ff;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 18px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.15s;
+    }
+    .profile-btn:hover:not(:disabled) { background: #1873cc; }
+    .profile-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .profile-btn.secondary {
+        background: #fff;
+        color: #333;
+        border: 1px solid #d8dce0;
+    }
+    .profile-btn.secondary:hover:not(:disabled) { background: #f4f6f8; }
+    .profile-status {
+        font-size: 13px;
+    }
+    .profile-status.success { color: #27ae60; }
+    .profile-status.error { color: #c0392b; }
+
+    .profile-orgs-empty {
+        font-size: 14px;
+        color: #777;
+        font-style: italic;
+    }
+    .profile-orgs-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+    .profile-orgs-list li {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #f0f0f0;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    .profile-orgs-list li:last-child { border-bottom: none; }
+    .profile-orgs-name { font-size: 14px; color: #222; font-weight: 500; }
+    .profile-orgs-role-badge {
+        font-size: 11px;
+        font-weight: 600;
+        padding: 3px 9px;
+        border-radius: 10px;
+        background: #e9ecef;
+        color: #495057;
+    }
+    .profile-orgs-role-badge.admin { background: #d4edda; color: #155724; }
+
+    .profile-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid #f0f0f0;
+        gap: 16px;
+    }
+    .profile-toggle:last-child { border-bottom: none; }
+    .profile-toggle-text { flex: 1 1 auto; min-width: 0; }
+    .profile-toggle-title { font-size: 14px; font-weight: 500; color: #222; margin: 0 0 2px 0; }
+    .profile-toggle-hint { font-size: 13px; color: #777; margin: 0; }
+    .profile-toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 42px;
+        height: 24px;
+        flex: 0 0 auto;
+    }
+    .profile-toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .profile-toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        inset: 0;
+        background: #ccc;
+        border-radius: 24px;
+        transition: background-color 0.15s;
+    }
+    .profile-toggle-slider:before {
+        content: '';
+        position: absolute;
+        height: 18px; width: 18px;
+        left: 3px; bottom: 3px;
+        background: #fff;
+        border-radius: 50%;
+        transition: transform 0.15s;
+    }
+    .profile-toggle-switch input:checked + .profile-toggle-slider { background: #1e90ff; }
+    .profile-toggle-switch input:checked + .profile-toggle-slider:before { transform: translateX(18px); }
+    .profile-toggle-switch input:disabled + .profile-toggle-slider { opacity: 0.6; cursor: not-allowed; }
+    .profile-toggle-switch input:disabled + .profile-toggle-slider:before { background: #f0f0f0; }
+
+    .profile-loading {
+        text-align: center;
+        padding: 40px 0;
+        color: #999;
+    }
+    .profile-signed-out {
+        text-align: center;
+        padding: 60px 20px;
+        background: #fff;
+        border: 1px solid #ececec;
+        border-radius: 12px;
+    }
+    .profile-signed-out p { color: #555; margin-bottom: 18px; }
+
+    @media (max-width: 600px) {
+        .profile-grid { grid-template-columns: 1fr; gap: 16px; }
+        .profile-card { padding: 20px; }
+    }
+
+    /* Hide the Notifications card in customer view for now (preferences not
+       fully wired up). Staff/dev view still sees it. */
+    html.ee-view-customer #profileNotificationsCard { display: none; }
+</style>
+
+<div id="profileContent" style="display: none;">
+    <!-- Personal info -->
+    <section class="profile-card">
+        <h2>Personal information</h2>
+        <p class="profile-card-hint">Your name and contact details.</p>
+
+        <form id="profileForm" onsubmit="return profileSave(event);">
+            <div class="profile-grid">
+                <div class="profile-field">
+                    <label for="profileFirstName">First name</label>
+                    <input type="text" id="profileFirstName" autocomplete="given-name" maxlength="80">
+                </div>
+                <div class="profile-field">
+                    <label for="profileLastName">Last name</label>
+                    <input type="text" id="profileLastName" autocomplete="family-name" maxlength="80">
+                </div>
+                <div class="profile-field">
+                    <label for="profileEmail">Email</label>
+                    <input type="email" id="profileEmail" readonly>
+                </div>
+                <div class="profile-field">
+                    <label for="profilePhone">Phone</label>
+                    <input type="tel" id="profilePhone" autocomplete="tel" maxlength="40" placeholder="Optional">
+                </div>
+            </div>
+
+            <div class="profile-actions">
+                <button type="submit" class="profile-btn" id="profileSaveBtn">Save changes</button>
+                <button type="button" class="profile-btn secondary" id="profileCancelBtn" style="display: none;">Cancel</button>
+                <span class="profile-status" id="profileSaveStatus"></span>
+            </div>
+        </form>
+    </section>
+
+    <!-- Organizations -->
+    <section class="profile-card">
+        <h2>Organization memberships</h2>
+        <p class="profile-card-hint">Teams you belong to. Manage members and configurations from <a href="{{ '/account/' | relative_url }}" style="color: #1e90ff;">Account</a>.</p>
+        <div id="profileOrgs">
+            <div class="profile-loading">Loading organizations…</div>
+        </div>
+    </section>
+
+    <!-- Notifications. Hidden in customer view for now (not fully wired up);
+         see the .ee-view-customer rule in the <style> block above. -->
+    <section class="profile-card" id="profileNotificationsCard">
+        <h2>Notifications</h2>
+        <div class="profile-toggle">
+            <div class="profile-toggle-text">
+                <p class="profile-toggle-title">Plan &amp; product information</p>
+                <p class="profile-toggle-hint">Critical messages about your plan, devices, and product updates. Always on.</p>
+            </div>
+            <label class="profile-toggle-switch">
+                <input type="checkbox" id="profileNotifyPlan" checked disabled>
+                <span class="profile-toggle-slider"></span>
+            </label>
+        </div>
+        <div class="profile-toggle">
+            <div class="profile-toggle-text">
+                <p class="profile-toggle-title">Newsletter</p>
+                <p class="profile-toggle-hint">Occasional product news, tips, and SAR community updates.</p>
+            </div>
+            <label class="profile-toggle-switch">
+                <input type="checkbox" id="profileNotifyNewsletter">
+                <span class="profile-toggle-slider"></span>
+            </label>
+        </div>
+        <div class="profile-actions">
+            <span class="profile-status" id="profileNotifyStatus"></span>
+        </div>
+    </section>
+
+    <!-- Sign-in info (kept at the bottom. It's reference data, not editable) -->
+    <section class="profile-card">
+        <h2>Sign-in</h2>
+        <div class="profile-grid">
+            <div class="profile-field">
+                <label>Sign-in method</label>
+                <div class="profile-readonly-value" id="profileSignInMethod">-</div>
+            </div>
+            <div class="profile-field">
+                <label>Account created at</label>
+                <div class="profile-readonly-value" id="profileMemberSince">-</div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<div id="profileSignedOut" class="profile-signed-out" style="display: none;">
+    <p>Sign in to view your profile.</p>
+    <a href="{{ '/account/' | relative_url }}" class="profile-btn" style="display: inline-block; text-decoration: none;">Sign In</a>
+</div>
+
+<div id="profileLoading" class="profile-loading" style="text-align: center; padding: 60px 20px; background: #fff; border: 1px solid #ececec; border-radius: 12px;">
+    <div class="spinner" style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #1e90ff; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+    <p style="margin-top: 16px; color: #888;">Loading your profile…</p>
+</div>
+
+<script>
+    (function() {
+        // Local-only draft for the in-flight profile edits. Now scoped
+        // per-uid (key = "profileDraft:<uid>") so impersonation and
+        // sign-in-as-different-user don't leak the previous identity's
+        // first-name into the new session's navbar trigger and profile
+        // form. Pre-2026-05-20 used a single global "profileDraft" key
+        // which is the bug we're fixing here.
+        function draftStorageKey() {
+            try {
+                var u = firebase.auth().currentUser;
+                if (u && u.uid) return 'profileDraft:' + u.uid;
+            } catch (e) {}
+            return 'profileDraft';
+        }
+
+        function setStatus(el, message, type) {
+            if (!el) return;
+            el.textContent = message || '';
+            el.className = 'profile-status' + (type ? ' ' + type : '');
+        }
+
+        function readDraft() {
+            try {
+                return JSON.parse(localStorage.getItem(draftStorageKey()) || '{}') || {};
+            } catch (e) { return {}; }
+        }
+        function writeDraft(patch) {
+            var current = readDraft();
+            Object.keys(patch).forEach(function(k) { current[k] = patch[k]; });
+            localStorage.setItem(draftStorageKey(), JSON.stringify(current));
+        }
+
+        function formatProvider(providerId) {
+            switch (providerId) {
+                case 'google.com': return 'Signed in via Google';
+                case 'apple.com': return 'Signed in via Apple';
+                case 'password': return 'Signed in with email & password';
+                case 'emailLink': return 'Signed in via email link';
+                default: return providerId ? 'Signed in via ' + providerId : 'Signed in';
+            }
+        }
+
+        function formatDate(iso) {
+            if (!iso) return '-';
+            try {
+                var d = new Date(iso);
+                if (isNaN(d.getTime())) return '-';
+                return d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+            } catch (e) { return '-'; }
+        }
+
+        // Snapshot of saved values; the Cancel button shows only when the form
+        // diverges from this and reverts to it on click.
+        var profileSavedSnapshot = { firstName: '', lastName: '', phone: '' };
+
+        function captureProfileSnapshot() {
+            profileSavedSnapshot = {
+                firstName: document.getElementById('profileFirstName').value,
+                lastName: document.getElementById('profileLastName').value,
+                phone: document.getElementById('profilePhone').value
+            };
+            updateProfileDirtyUI();
+        }
+
+        function profileIsDirty() {
+            return document.getElementById('profileFirstName').value !== profileSavedSnapshot.firstName
+                || document.getElementById('profileLastName').value !== profileSavedSnapshot.lastName
+                || document.getElementById('profilePhone').value !== profileSavedSnapshot.phone;
+        }
+
+        function updateProfileDirtyUI() {
+            var cancelBtn = document.getElementById('profileCancelBtn');
+            if (cancelBtn) cancelBtn.style.display = profileIsDirty() ? '' : 'none';
+        }
+
+        function renderProfileForUser(user) {
+            document.getElementById('profileLoading').style.display = 'none';
+            document.getElementById('profileContent').style.display = '';
+
+            // Email (read-only)
+            document.getElementById('profileEmail').value = user.email || '';
+
+            // Name + phone. Priority order, most-authoritative first:
+            //   1. localStorage draft (unsaved edits from this device)
+            //   2. dashboard form_data.first_name / .last_name (explicit
+            //      saves via update_user_profile)
+            //   3. firebase user.displayName (current OAuth identity -
+            //      regularly updated by the user via their identity provider)
+            //   4. dashboard form_data.name (legacy signup form value -
+            //      often years old; last resort)
+            // Bumping displayName above fd.name avoids regressing users
+            // whose signup said "David" but who have since updated their
+            // Google account to "Dave".
+            var draft = readDraft();
+            var first = draft.firstName || '';
+            var last = draft.lastName || '';
+            var phone = draft.phone || '';
+
+            if (!first && !last) {
+                try {
+                    var dash = window.eeDashboard && window.eeDashboard.read(user.uid);
+                    var fd = dash && dash.user_account_info && dash.user_account_info.form_data;
+                    if (fd && (fd.first_name || fd.last_name)) {
+                        first = (fd.first_name || '').trim();
+                        last = (fd.last_name || '').trim();
+                    }
+                    if (fd && !phone && fd.phone) phone = String(fd.phone);
+                } catch (e) { /* dashboard not cached. Fall through */ }
+            }
+
+            if (!first && !last && user.displayName) {
+                var parts = user.displayName.trim().split(/\s+/);
+                first = parts[0] || '';
+                last = parts.slice(1).join(' ') || '';
+            }
+
+            if (!first && !last) {
+                try {
+                    var dash2 = window.eeDashboard && window.eeDashboard.read(user.uid);
+                    var fd2 = dash2 && dash2.user_account_info && dash2.user_account_info.form_data;
+                    if (fd2 && fd2.name) {
+                        var fdParts = String(fd2.name).trim().split(/\s+/);
+                        first = fdParts[0] || '';
+                        last = fdParts.slice(1).join(' ') || '';
+                    }
+                } catch (e) { /* nothing to fall back to */ }
+            }
+
+            document.getElementById('profileFirstName').value = first;
+            document.getElementById('profileLastName').value = last;
+            document.getElementById('profilePhone').value = phone || (user.phoneNumber || '');
+
+            // If the dashboard wasn't cached, kick off a fetch and only
+            // upgrade the form when fresh form_data has an *explicit*
+            // first_name / last_name (set via update_user_profile). We
+            // never overwrite with fd.name here. DisplayName already
+            // beats it in the priority chain above, and overwriting with
+            // a stale legacy name is the regression we're avoiding.
+            if (!draft.firstName && !draft.lastName && window.eeDashboard) {
+                var hadCache = !!window.eeDashboard.read(user.uid);
+                if (!hadCache) {
+                    window.eeDashboard.fetch(user).then(function(fresh) {
+                        if (!fresh || !fresh.user_account_info) return;
+                        var fd2 = fresh.user_account_info.form_data;
+                        if (!fd2 || (!fd2.first_name && !fd2.last_name)) return;
+                        if (profileIsDirty()) return;
+                        var f = (fd2.first_name || '').trim();
+                        var l = (fd2.last_name || '').trim();
+                        if (f || l) {
+                            document.getElementById('profileFirstName').value = f;
+                            document.getElementById('profileLastName').value = l;
+                            captureProfileSnapshot();
+                        }
+                    }).catch(function() { /* keep current fallback */ });
+                }
+            }
+
+            // Sign-in method
+            var providerId = user.providerData && user.providerData[0] && user.providerData[0].providerId;
+            // Detect email link sign-in (provider is 'password' but no password set is hard to know;
+            // safest fallback is to show "via email" if the only provider is 'password').
+            document.getElementById('profileSignInMethod').textContent = formatProvider(providerId);
+
+            // Member since
+            var created = user.metadata && user.metadata.creationTime;
+            document.getElementById('profileMemberSince').textContent = formatDate(created);
+
+            // Notification preferences. Read order: localStorage draft
+            // (in-flight) → dashboard form_data.newsletter_subscribed
+            // (server truth) → default opt-in.
+            var newsletter;
+            if (Object.prototype.hasOwnProperty.call(draft, 'newsletter')) {
+                newsletter = draft.newsletter !== false;
+            } else {
+                try {
+                    var dashN = window.eeDashboard && window.eeDashboard.read(user.uid);
+                    var fdN = dashN && dashN.user_account_info && dashN.user_account_info.form_data;
+                    if (fdN && Object.prototype.hasOwnProperty.call(fdN, 'newsletter_subscribed')) {
+                        newsletter = fdN.newsletter_subscribed !== false;
+                    } else {
+                        newsletter = true; // default opt-in
+                    }
+                } catch (e) { newsletter = true; }
+            }
+            document.getElementById('profileNotifyNewsletter').checked = !!newsletter;
+
+            // Form is now in its saved state; snapshot it so dirty-tracking works.
+            captureProfileSnapshot();
+
+            loadProfileOrgs();
+        }
+
+        // Show / hide Cancel as the user edits.
+        ['profileFirstName', 'profileLastName', 'profilePhone'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.addEventListener('input', updateProfileDirtyUI);
+        });
+
+        async function loadProfileOrgs() {
+            var container = document.getElementById('profileOrgs');
+            try {
+                var user = firebase.auth().currentUser;
+                if (!user) return;
+                // Source orgs from the bundled account dashboard (the same data
+                // the People page uses) so this list includes orgs you're tied to
+                // via the account that funds them - not only orgs you're a direct
+                // member of. get_my_organization alone misses funded orgs, which
+                // made this read "not a member of any organization" for billing
+                // admins. Fall back to get_my_organization if the dashboard
+                // helper isn't available.
+                var orgs = null;
+                if (window.eeDashboard) {
+                    var dash = window.eeDashboard.read(user.uid);
+                    if (!dash) { try { dash = await window.eeDashboard.fetch(user); } catch (e) {} }
+                    if (dash) orgs = dash.organizations || [];
+                }
+                if (orgs === null) {
+                    var idToken = await user.getIdToken();
+                    var hostURL = window.getHostUrl ? window.getHostUrl() : 'https://us-central1-eagleeyessearch.cloudfunctions.net';
+                    var r = await fetch(hostURL + '/get_my_organization', {
+                        method: 'GET',
+                        headers: { 'Authorization': 'Bearer ' + idToken, 'Content-Type': 'application/json' }
+                    });
+                    if (!r.ok) throw new Error('Request failed: ' + r.status);
+                    var data = await r.json();
+                    orgs = (data && data.organizations) || [];
+                }
+                renderProfileOrgs(orgs, dash);
+            } catch (err) {
+                console.error('Error loading orgs for profile:', err);
+                container.innerHTML = '<div class="profile-orgs-empty">Couldn\'t load organizations right now.</div>';
+            }
+        }
+
+        function escapeHtml(s) {
+            if (s == null) return '';
+            return String(s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function renderProfileOrgs(orgs, dash) {
+            var container = document.getElementById('profileOrgs');
+            if (!orgs.length) {
+                container.innerHTML = '<div class="profile-orgs-empty">You\'re not a member of any organization.</div>';
+                return;
+            }
+            var user = firebase.auth().currentUser;
+            var callerEmail = ((user && user.email) || '').toLowerCase();
+            var accounts = (dash && dash.accounts) || [];
+            // Match the People page's notion of "Admin": an org-level admin, OR a
+            // billing admin of an account that funds the org. An org appears in
+            // your list because you're a member OR because your account funds it;
+            // so if you're not a member of it, you're here as the funding admin.
+            function isAdminOfOrg(o) {
+                if (o.is_admin) return true;
+                var isMember = (o.emails || []).some(function(e) { return String(e).toLowerCase() === callerEmail; });
+                if (!isMember) return true; // listed only because you fund it
+                return accounts.some(function(a) {
+                    var billingAdmin = !!(a.is_admin || a.is_owner);
+                    var funds = (a.organization_ids || []).map(String).indexOf(String(o.org_id)) !== -1;
+                    return billingAdmin && funds;
+                });
+            }
+            var html = '<ul class="profile-orgs-list">';
+            orgs.forEach(function(o) {
+                var admin = isAdminOfOrg(o);
+                var roleClass = admin ? 'admin' : '';
+                var roleLabel = admin ? 'Admin' : 'Member';
+                html += '<li>'
+                    + '<span class="profile-orgs-name">' + escapeHtml(o.name || 'Organization') + '</span>'
+                    + '<span class="profile-orgs-role-badge ' + roleClass + '">' + roleLabel + '</span>'
+                    + '</li>';
+            });
+            html += '</ul>';
+            container.innerHTML = html;
+        }
+
+        window.profileSave = async function(event) {
+            event.preventDefault();
+            var first = document.getElementById('profileFirstName').value.trim();
+            var last = document.getElementById('profileLastName').value.trim();
+            var phone = document.getElementById('profilePhone').value.trim();
+            var saveBtn = document.getElementById('profileSaveBtn');
+            var status = document.getElementById('profileSaveStatus');
+
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving…';
+            setStatus(status, '');
+
+            try {
+                var user = firebase.auth().currentUser;
+                if (!user) throw new Error('Not signed in');
+                var idToken = await user.getIdToken();
+                var hostURL = window.getHostUrl
+                    ? window.getHostUrl()
+                    : 'https://us-central1-eagleeyessearch.cloudfunctions.net';
+                // Backend update_user_profile allowlist: name, first_name,
+                // last_name, phone, newsletter_subscribed. We send the three
+                // fields the form owns; the backend merges into form_data.
+                // Also send `name` derived from first + last so old consumers
+                // that read form_data.name (the trigger label fallback,
+                // marketing emails, etc.) get a consistent value.
+                var body = {
+                    first_name: first,
+                    last_name: last,
+                    phone: phone,
+                    name: [first, last].filter(Boolean).join(' ')
+                };
+                var r = await fetch(hostURL + '/update_user_profile', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + idToken,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+                if (!r.ok) {
+                    var text = await r.text();
+                    throw new Error(text || 'Request failed (' + r.status + ')');
+                }
+
+                // Keep the localStorage draft in sync. PickTriggerLabel
+                // in the navbar reads it as a fast pre-paint hint before
+                // the dashboard re-fetches.
+                writeDraft({ firstName: first, lastName: last, phone: phone });
+
+                // Invalidate the dashboard cache so the navbar trigger,
+                // page-title, and every other consumer pick up the new
+                // first_name on next read. The shared eeDashboard helper
+                // re-fetches in the background.
+                try {
+                    if (window.eeDashboard) window.eeDashboard.invalidate(user.uid);
+                } catch (e) {}
+                // Also refresh the navbar's cached trigger label immediately
+                // so the user sees their new name without a page reload.
+                try { localStorage.setItem('eeTriggerName', first); } catch (e) {}
+                var nameEl = document.getElementById('navProfileTriggerName');
+                if (nameEl && first) nameEl.textContent = first;
+
+                setStatus(status, 'Saved.', 'success');
+                captureProfileSnapshot();
+            } catch (err) {
+                console.error('update_user_profile failed:', err);
+                setStatus(status, err.message || 'Could not save changes. Try again.', 'error');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save changes';
+            }
+            return false;
+        };
+
+        document.getElementById('profileCancelBtn').addEventListener('click', function() {
+            // Revert in-progress edits to the last saved snapshot.
+            document.getElementById('profileFirstName').value = profileSavedSnapshot.firstName;
+            document.getElementById('profileLastName').value = profileSavedSnapshot.lastName;
+            document.getElementById('profilePhone').value = profileSavedSnapshot.phone;
+            updateProfileDirtyUI();
+        });
+
+        document.getElementById('profileNotifyNewsletter').addEventListener('change', async function(e) {
+            var checked = !!e.target.checked;
+            var toggle = e.target;
+            var statusEl = document.getElementById('profileNotifyStatus');
+            // Optimistic local persistence; reconciled server-side below.
+            writeDraft({ newsletter: checked });
+            setStatus(statusEl, 'Saving…', '');
+            toggle.disabled = true;
+            try {
+                var user = firebase.auth().currentUser;
+                if (!user) throw new Error('Not signed in');
+                var idToken = await user.getIdToken();
+                var hostURL = window.getHostUrl
+                    ? window.getHostUrl()
+                    : 'https://us-central1-eagleeyessearch.cloudfunctions.net';
+                var r = await fetch(hostURL + '/update_user_profile', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + idToken,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ newsletter_subscribed: checked })
+                });
+                if (!r.ok) {
+                    var text = await r.text();
+                    throw new Error(text || 'Request failed (' + r.status + ')');
+                }
+                try {
+                    if (window.eeDashboard) window.eeDashboard.invalidate(user.uid);
+                } catch (e2) {}
+                setStatus(statusEl, checked ? 'Subscribed.' : 'Unsubscribed.', 'success');
+            } catch (err) {
+                console.error('newsletter update failed:', err);
+                // Revert the toggle so the UI reflects the actual server state.
+                toggle.checked = !checked;
+                writeDraft({ newsletter: !checked });
+                setStatus(statusEl, err.message || 'Could not save preference. Try again.', 'error');
+            } finally {
+                toggle.disabled = false;
+            }
+        });
+
+        // Auth gating: signed in → show the form; truly signed out → bounce to
+        // /account/ to sign in (no dead-end placeholder). We only redirect once
+        // auth has RESOLVED — a transient null before Firebase restores the
+        // session must not bounce a signed-in user.
+        function applyAuth(user, authResolved) {
+            var loading = document.getElementById('profileLoading');
+            var content = document.getElementById('profileContent');
+            var signedOut = document.getElementById('profileSignedOut');
+            if (user) {
+                signedOut.style.display = 'none';
+                loading.style.display = '';
+                renderProfileForUser(user);
+            } else if (authResolved) {
+                // Resolved + no user → not signed in. Go where you can sign in.
+                window.location.replace('{{ "/account/" | relative_url }}');
+            } else {
+                // Auth not resolved yet — keep the loading state and wait.
+                loading.style.display = '';
+                content.style.display = 'none';
+                signedOut.style.display = 'none';
+            }
+        }
+
+        // onAuthStateChanged fires once the initial auth state is determined
+        // (and on changes) — reliable whether it resolved before or after this
+        // runs. The custom event is kept as a secondary signal.
+        if (typeof firebase !== 'undefined' && firebase.auth) {
+            try { firebase.auth().onAuthStateChanged(function(user) { applyAuth(user, true); }); } catch (e) {}
+        }
+        document.addEventListener('authStateChanged', function(e) {
+            applyAuth(e.detail && e.detail.user, true);
+        });
+    })();
+</script>

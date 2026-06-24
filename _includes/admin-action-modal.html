@@ -1,0 +1,149 @@
+<!--
+  Shared "this is an Admin action" modal. Shown when a member (non-Admin of the
+  funding account) tries an owner-only purchase action (renew, add devices, buy a
+  new license) from anywhere in the account area: the license cards and renewal
+  banner on /account/, and the catalog rows on /account/purchase/.
+
+  Self-contained: carries its own (namespaced .eeaa-*) styles and exposes a
+  single global:
+
+    window.eeAdminActionModal.show({
+      action: 'renew' | 'add_devices' | 'purchase',  // default 'renew'
+      accountName: 'Eagle Eyes Search',              // optional
+      adminEmails: ['a@x.com', ...]                  // account Admins to contact
+    });
+
+  Included once by the account-area layout so every account-area page can call it.
+-->
+<style>
+    .eeaa-modal {
+        position: fixed; inset: 0; z-index: 9100;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .eeaa-backdrop {
+        position: absolute; inset: 0;
+        background: rgba(20, 30, 50, 0.55);
+        backdrop-filter: blur(2px);
+    }
+    .eeaa-dialog {
+        position: relative;
+        background: #fff;
+        border-radius: 12px;
+        width: 460px;
+        max-width: calc(100vw - 32px);
+        max-height: calc(100vh - 64px);
+        overflow-y: auto;
+        padding: 26px 28px;
+        box-shadow: 0 18px 48px rgba(0,0,0,0.18);
+        font-family: inherit;
+    }
+    .eeaa-close {
+        position: absolute; top: 12px; right: 12px;
+        background: transparent; border: none; color: #888;
+        cursor: pointer; padding: 6px; border-radius: 6px;
+        font-size: 20px; line-height: 1;
+    }
+    .eeaa-close:hover { background: #f3f4f6; color: #222; }
+    .eeaa-title {
+        font-size: 18px; font-weight: 600; color: #1a1a2e;
+        margin: 0 0 8px 0;
+    }
+    .eeaa-body {
+        font-size: 13px; color: #555; margin: 0 0 14px 0; line-height: 1.55;
+    }
+    .eeaa-body strong { color: #1a1a2e; }
+    .eeaa-section-title {
+        font-size: 12px; font-weight: 700; color: #1a1a2e;
+        text-transform: uppercase; letter-spacing: 0.03em;
+        margin: 18px 0 8px 0;
+    }
+    .eeaa-list {
+        list-style: none; padding: 0; margin: 0 0 8px 0;
+        display: flex; flex-direction: column; gap: 6px;
+    }
+    .eeaa-list li {
+        padding: 8px 12px;
+        border: 1px solid #cfd6dc;
+        border-radius: 7px;
+        font-size: 13px;
+        color: #1a1a2e;
+        word-break: break-all;
+        background: #fff;
+        user-select: all;
+    }
+</style>
+
+<script>
+(function () {
+    function esc(s) {
+        return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+        });
+    }
+
+    function titleFor(action) {
+        if (action === 'add_devices') return 'Adding devices is an Admin action';
+        if (action === 'purchase') return 'Buying licenses is an Admin action';
+        return 'Renewing is an Admin action';
+    }
+
+    function show(opts) {
+        opts = opts || {};
+        var action = opts.action || 'renew';
+        var accountName = opts.accountName || '';
+        var adminEmails = (opts.adminEmails || []).filter(Boolean);
+
+        var accountPhrase = accountName
+            ? 'the <strong>' + esc(accountName) + '</strong> account'
+            : 'the account that funds this license';
+        var adminsListHtml = adminEmails.length
+            ? adminEmails.map(function (e) { return '<li>' + esc(e) + '</li>'; }).join('')
+            : '<li>No Admins listed. Contact info@eagleeyessearch.com.</li>';
+
+        var overlay = document.createElement('div');
+        overlay.className = 'eeaa-modal';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.innerHTML =
+            '<div class="eeaa-backdrop"></div>'
+            + '<div class="eeaa-dialog">'
+            +   '<button type="button" class="eeaa-close" aria-label="Close">&times;</button>'
+            +   '<h3 class="eeaa-title">' + esc(titleFor(action)) + '</h3>'
+            +   '<p class="eeaa-body">'
+            +     'Renewing, adding devices, and buying licenses for ' + accountPhrase + ' are '
+            +     '<strong>Admin</strong> actions. You can use this account through your team, but '
+            +     'you\'re not an Admin. Reach out to one of the Admins below to do it for you, or '
+            +     'ask them to make you an Admin so you can handle purchases yourself.'
+            +   '</p>'
+            +   '<div class="eeaa-section-title">Admins</div>'
+            +   '<ul class="eeaa-list">' + adminsListHtml + '</ul>'
+            + '</div>';
+
+        function close() {
+            try { overlay.remove(); } catch (e) {}
+            document.removeEventListener('keydown', onKey);
+        }
+        function onKey(e) { if (e.key === 'Escape') close(); }
+
+        overlay.querySelector('.eeaa-backdrop').addEventListener('click', close);
+        overlay.querySelector('.eeaa-close').addEventListener('click', close);
+        document.addEventListener('keydown', onKey);
+        document.body.appendChild(overlay);
+        return overlay;
+    }
+
+    // Resolve the Admin emails for an account from its members map (prefers the
+    // user-facing members_display; falls back to raw members). Shared so callers
+    // don't reimplement the role check.
+    function adminEmailsForAccount(acc) {
+        if (!acc) return [];
+        var members = acc.members_display || acc.members || {};
+        return Object.keys(members).filter(function (email) {
+            var r = String(members[email] || '').toLowerCase();
+            return r === 'admin' || r === 'owner';
+        }).sort();
+    }
+
+    window.eeAdminActionModal = { show: show, adminEmailsForAccount: adminEmailsForAccount };
+})();
+</script>

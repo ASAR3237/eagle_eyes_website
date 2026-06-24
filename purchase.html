@@ -1,0 +1,2490 @@
+---
+layout: account-area
+title: Purchase or renew - Eagle Eyes
+permalink: /account/purchase/
+heading: Purchase or renew
+active: purchase
+---
+<style>
+    .purchase-page { max-width: 760px; }
+    .purchase-intro {
+        color: #555;
+        font-size: 14px;
+        line-height: 1.55;
+        margin: 0 0 24px 0;
+    }
+    .purchase-card {
+        background: #fff;
+        border: 1px solid #ececec;
+        border-radius: 12px;
+        padding: 22px 24px;
+        margin-bottom: 18px;
+    }
+    .purchase-card-title {
+        font-size: 14px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #666;
+        margin: 0 0 14px 0;
+    }
+    .purchase-card-title .cart-count {
+        color: #1e90ff;
+        margin-left: 4px;
+        font-weight: 700;
+    }
+
+    /* Hint banner, used to surface the partial-license-id resolver
+       outcome (came from a low-balance email, etc.). Lives at the top
+       of the page above the cart so it's hard to miss. */
+    .hint-banner {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        background: #f3f9ff;
+        border: 1px solid #c8e1ff;
+        margin: 0 0 16px 0;
+        font-size: 13px;
+        color: #1a3a5c;
+        line-height: 1.5;
+    }
+    .hint-banner.is-warn {
+        background: #fff8e6;
+        border-color: #f0d68a;
+        color: #5a4220;
+    }
+    .hint-banner.is-error {
+        background: #fff3f3;
+        border-color: #f0c0c0;
+        color: #7a2a2a;
+    }
+    .hint-banner-body { flex: 1 1 auto; }
+    .hint-banner-body strong { font-weight: 600; }
+    .hint-banner-dismiss {
+        flex: 0 0 auto;
+        background: transparent;
+        border: none;
+        color: inherit;
+        font-size: 18px;
+        line-height: 1;
+        padding: 0 4px;
+        cursor: pointer;
+        font-family: inherit;
+        opacity: 0.6;
+    }
+    .hint-banner-dismiss:hover { opacity: 1; }
+
+    /* Cart panel: each item is a row with an inline editable field
+       (where applicable), price on the right, × to remove. */
+    .cart-empty {
+        font-size: 14px;
+        color: #888;
+        padding: 8px 0 4px 0;
+    }
+    .cart-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .cart-item {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        gap: 12px;
+        align-items: center;
+        padding: 14px 16px;
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-left: 4px solid #1e90ff;
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+    .cart-item.has-error {
+        border-left-color: #c0392b;
+        background: #fffaf9;
+    }
+    .cart-item-body { min-width: 0; }
+    .cart-item-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: #1a1a2e;
+        margin-bottom: 4px;
+    }
+    .cart-item-meta {
+        font-size: 12px;
+        color: #777;
+        line-height: 1.5;
+    }
+    .cart-item-edit {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        margin-top: 8px;
+        font-size: 13px;
+        color: #444;
+    }
+    .cart-item-edit select,
+    .cart-item-edit input[type="number"] {
+        padding: 5px 8px !important;
+        border: 1px solid #cfd6dc !important;
+        border-radius: 5px !important;
+        font: inherit !important;
+        font-size: 13px !important;
+        background: #fff !important;
+        margin: 0 !important;
+        width: auto !important;
+        -webkit-appearance: auto !important;
+        -moz-appearance: auto !important;
+        appearance: auto !important;
+    }
+    .cart-item-edit input[type="number"] { width: 80px !important; }
+    .cart-item-error {
+        font-size: 12px;
+        color: #c0392b;
+        margin-top: 6px;
+        line-height: 1.4;
+    }
+    .cart-item-note {
+        font-size: 12px;
+        color: #1077dc;
+        margin-top: 6px;
+        font-style: italic;
+        line-height: 1.4;
+    }
+    /* Under-count heads-up on a downsized renewal. Red like an error, but
+       downsizing is allowed (not blocking), so it's a separate class. */
+    .cart-item-warn {
+        font-size: 12px;
+        color: #c0392b;
+        margin-top: 6px;
+        line-height: 1.4;
+    }
+    .cart-item-price {
+        font-size: 15px;
+        font-weight: 600;
+        color: #1a1a2e;
+        white-space: nowrap;
+    }
+    .cart-item-remove {
+        background: transparent;
+        border: none;
+        color: #999;
+        font-size: 22px;
+        line-height: 1;
+        padding: 4px 8px;
+        cursor: pointer;
+        font-family: inherit;
+        border-radius: 4px;
+    }
+    .cart-item-remove:hover { color: #c0392b; background: #fff3f3; }
+    .cart-subtotal {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-top: 14px;
+        padding-top: 14px;
+        border-top: 1px solid #ececec;
+        font-size: 14px;
+        color: #444;
+    }
+    .cart-subtotal-label { color: #555; }
+    .cart-subtotal-value { font-size: 16px; font-weight: 700; color: #1a1a2e; }
+    .cart-subtotal-note {
+        font-size: 12px;
+        color: #888;
+        margin-top: 6px;
+        text-align: right;
+    }
+
+    /* Catalog: 3 high-level buttons that expand inline into a picker. */
+    .catalog-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .catalog-row {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .catalog-row.is-disabled { opacity: 0.55; }
+    .catalog-row-trigger {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 16px;
+        background: transparent;
+        border: none;
+        width: 100%;
+        text-align: left;
+        font: inherit;
+        font-size: 15px;
+        font-weight: 600;
+        color: #1077dc;
+        cursor: pointer;
+    }
+    .catalog-row-trigger:hover { background: #f3f9ff; }
+    .catalog-row.is-disabled .catalog-row-trigger { cursor: not-allowed; color: #888; }
+    .catalog-row.is-disabled .catalog-row-trigger:hover { background: transparent; }
+    .catalog-row-arrow {
+        font-size: 18px;
+        color: #999;
+        transition: transform 0.15s;
+    }
+    .catalog-row.is-open .catalog-row-arrow { transform: rotate(90deg); color: #1077dc; }
+    /* "Admins only" pill shown in place of the arrow on owner-only catalog
+       rows (Renew / Add devices / Buy new license) when the viewer is a
+       member, not an account admin. */
+    .catalog-admin-badge {
+        flex: 0 0 auto;
+        font-size: 11px;
+        font-weight: 600;
+        color: #8a6d00;
+        background: #fff4d6;
+        border: 1px solid #f0dca3;
+        border-radius: 999px;
+        padding: 2px 9px;
+        white-space: nowrap;
+    }
+    .catalog-already {
+        padding: 12px 16px;
+        background: #f6f8fa;
+        font-size: 13px;
+        color: #666;
+        border-top: 1px solid #ececec;
+        font-style: italic;
+    }
+    .catalog-picker {
+        padding: 14px 16px 16px 16px;
+        background: #fbfcfd;
+        border-top: 1px solid #ececec;
+    }
+    .picker-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+        font-size: 13px;
+        color: #444;
+    }
+    .picker-row-label {
+        font-size: 13px;
+        color: #444;
+        flex: 0 0 110px;
+    }
+    .picker-row select,
+    .picker-row input[type="number"],
+    .picker-row input[type="text"] {
+        padding: 7px 10px !important;
+        border: 1px solid #cfd6dc !important;
+        border-radius: 6px !important;
+        font: inherit !important;
+        font-size: 13px !important;
+        background: #fff !important;
+        margin: 0 !important;
+        width: auto !important;
+        -webkit-appearance: auto !important;
+        -moz-appearance: auto !important;
+        appearance: auto !important;
+    }
+    .picker-row select { min-width: 260px; }
+    .picker-row input[type="number"] { width: 90px !important; }
+    .picker-row-hint { font-size: 12px; color: #777; }
+    .picker-row-warn {
+        flex-basis: 100%;
+        font-size: 12px;
+        color: #c0392b;
+        line-height: 1.45;
+    }
+    .picker-row-estimate {
+        font-size: 13px;
+        color: #1a1a2e;
+        font-weight: 600;
+    }
+    .picker-error {
+        font-size: 12px;
+        color: #c0392b;
+        margin: 6px 0 10px 0;
+    }
+    .picker-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 14px;
+    }
+    .picker-btn {
+        padding: 8px 16px;
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 6px;
+        border: 1px solid transparent;
+        cursor: pointer;
+        font-family: inherit;
+    }
+    .picker-btn.primary { background: #1e90ff; color: #fff; }
+    .picker-btn.primary:hover { background: #1077dc; }
+    .picker-btn.primary[disabled] { opacity: 0.5; cursor: not-allowed; }
+    .picker-btn.secondary {
+        background: #fff;
+        border-color: #cfd6dc;
+        color: #555;
+    }
+    .picker-btn.secondary:hover { background: #f6f8fa; }
+
+    /* Streaming sub-picker (package picker inside the credits picker). */
+    .pkg-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+    }
+    .pkg-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 6px;
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        cursor: pointer;
+    }
+    .pkg-row:hover { border-color: #cdd5dd; }
+    .pkg-row.is-active { border-color: #1e90ff; background: #f3f9ff; }
+    .pkg-row input[type="radio"] {
+        width: auto !important;
+        padding: 0 !important;
+        margin: 3px 0 0 0 !important;
+        flex: 0 0 auto;
+        appearance: auto !important;
+        -webkit-appearance: auto !important;
+        -moz-appearance: auto !important;
+    }
+    .pkg-row-body { flex: 1 1 auto; min-width: 0; }
+    .pkg-row-label { font-weight: 600; color: #222; font-size: 14px; margin-bottom: 2px; }
+    .pkg-row-desc { font-size: 12px; color: #666; line-height: 1.5; }
+    .pkg-row-inputs {
+        display: none;
+        margin-top: 8px;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .pkg-row.is-active .pkg-row-inputs { display: flex; }
+    .payg-minutes-display {
+        margin-left: 4px;
+        font-size: 12px;
+        color: #1077dc;
+        font-weight: 500;
+    }
+
+    /* Quantity stepper. Used wherever the user adjusts a small integer
+       (devices to add, etc.); the native number input arrows are too
+       small to click comfortably, so we wrap a styled input between
+       explicit − and + buttons. The buttons disable themselves at min
+       and max bounds. */
+    .qty-stepper {
+        display: inline-flex;
+        align-items: stretch;
+        border: 1px solid #cfd6dc;
+        border-radius: 6px;
+        overflow: hidden;
+        background: #fff;
+        height: 34px;
+        vertical-align: middle;
+    }
+    .qty-stepper button {
+        width: 34px !important;
+        border: none !important;
+        background: #f8f9fa !important;
+        color: #1a1a2e !important;
+        font-size: 18px !important;
+        font-weight: 700 !important;
+        line-height: 1 !important;
+        cursor: pointer;
+        font-family: inherit !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+    }
+    .qty-stepper button:hover:not([disabled]) {
+        background: #e8f0f7 !important;
+        color: #1077dc !important;
+    }
+    .qty-stepper button[disabled] { opacity: 0.35; cursor: not-allowed; }
+    .qty-stepper input[type="number"] {
+        width: 50px !important;
+        text-align: center;
+        border: none !important;
+        border-left: 1px solid #e9ecef !important;
+        border-right: 1px solid #e9ecef !important;
+        border-radius: 0 !important;
+        background: #fff !important;
+        -moz-appearance: textfield !important;
+        appearance: textfield !important;
+        margin: 0 !important;
+        padding: 0 6px !important;
+        font: inherit !important;
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        height: auto !important;
+        min-width: 0 !important;
+    }
+    .qty-stepper input[type="number"]::-webkit-outer-spin-button,
+    .qty-stepper input[type="number"]::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    .qty-stepper.is-wide input[type="number"] { width: 80px !important; }
+
+    /* Order summary line. */
+    .summary-line {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 8px 0;
+        font-size: 14px;
+        color: #444;
+    }
+    .summary-line.total {
+        font-size: 16px;
+        font-weight: 600;
+        color: #1a1a2e;
+        border-top: 1px solid #ececec;
+        padding-top: 14px;
+        margin-top: 8px;
+    }
+    .summary-note {
+        font-size: 12px;
+        color: #888;
+        margin-top: 6px;
+    }
+
+    /* Checkout footer: 3 CTAs. */
+    .checkout-cta-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 4px;
+    }
+    .cta-btn {
+        flex: 1 1 auto;
+        min-width: 160px;
+        padding: 14px 18px;
+        font-size: 15px;
+        font-weight: 600;
+        border-radius: 8px;
+        border: 1px solid transparent;
+        cursor: pointer;
+        text-decoration: none;
+        text-align: center;
+        font-family: inherit;
+    }
+    .cta-btn.primary { background: #1e90ff; color: #fff; }
+    .cta-btn.primary:hover { background: #1077dc; }
+    .cta-btn.secondary {
+        background: #fff;
+        border-color: #cfd6dc;
+        color: #1077dc;
+    }
+    .cta-btn.secondary:hover { background: #f3f9ff; border-color: #1e90ff; }
+    .cta-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+    .checkout-invoice-note { margin-top: 14px; font-size: 15px; color: #777; text-align: center; }
+    .checkout-invoice-note a { color: #1077dc; }
+
+    .purchase-loading { color: #777; font-size: 14px; padding: 30px 0; }
+    .purchase-signed-out { color: #555; font-size: 14px; padding: 30px 0; }
+
+    /* Non-owner blocked state. Account members who aren't owners still
+       land on this page (e.g., via the sidebar link), but they can't
+       actually buy anything. Server enforces with a 403. We swap the
+       purchase UI for a friendly explainer + the list of owners they
+       can contact. */
+    .non-owner-card {
+        background: #fff;
+        border: 1px solid #ececec;
+        border-radius: 12px;
+        padding: 28px 28px;
+        max-width: 560px;
+        margin: 8px 0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+    .non-owner-icon { font-size: 28px; line-height: 1; margin-bottom: 10px; }
+    .non-owner-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin-bottom: 8px;
+    }
+    .non-owner-hint {
+        font-size: 14px;
+        color: #555;
+        line-height: 1.6;
+        margin: 0 0 18px 0;
+    }
+    .non-owner-owners-label {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: #888;
+        margin-bottom: 8px;
+    }
+    .non-owner-owners-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 18px;
+    }
+    .non-owner-owner-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 12px;
+        background: #fafbfc;
+        border: 1px solid #ececec;
+        border-radius: 8px;
+    }
+    .non-owner-owner-avatar {
+        flex: 0 0 auto;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #5b8def;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-transform: uppercase;
+    }
+    .non-owner-owner-id { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+    .non-owner-owner-name { font-size: 14px; font-weight: 600; color: #1a1a2e; }
+    .non-owner-owner-email {
+        font-size: 13px;
+        color: #707784;
+        word-break: break-all;
+    }
+    /* When there's no name, the email is the primary line. */
+    .non-owner-owner-id.no-name .non-owner-owner-email { font-size: 14px; color: #1a1a2e; }
+    .non-owner-owner-mail { flex: 0 0 auto; color: #1e90ff; text-decoration: none; font-size: 12px; }
+    .non-owner-owner-mail:hover { text-decoration: underline; }
+    .purchase-error {
+        font-size: 13px;
+        color: #c0392b;
+        margin-top: 10px;
+    }
+    .purchase-success {
+        font-size: 13px;
+        color: #1f7a52;
+        margin-top: 10px;
+    }
+</style>
+
+<div class="purchase-page">
+    <p class="purchase-intro">
+        Add what you need to your order: renew a license, add devices, or top up streaming credits, then check out in one transaction.
+    </p>
+
+    <div id="purchaseLoading" class="purchase-loading" style="text-align: center; padding: 60px 20px; background: #fff; border: 1px solid #ececec; border-radius: 12px;">
+        <div class="spinner" style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #1e90ff; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+        <p style="margin-top: 16px; color: #888;">Loading your licenses…</p>
+    </div>
+
+    <div id="purchaseSignedOut" class="purchase-signed-out" style="display: none;">
+        Sign in to purchase or renew a license.
+    </div>
+
+    <!-- No-account state. User is signed in but isn't a member of any
+         billing account (e.g. org-only admin). Distinct from the non-owner
+         state below; there's no account to be a non-owner of. -->
+    <div id="purchaseNoAccount" class="purchase-non-owner" style="display: none;">
+        <div class="non-owner-card">
+            <div class="non-owner-icon" aria-hidden="true">🏷️</div>
+            <div class="non-owner-title">No billing account on file</div>
+            <p class="non-owner-hint">
+                You're signed in as <strong id="noAccountEmail">this user</strong>, but you're not a member of any
+                billing account, so there's nothing to purchase against. If you expected to see an account here,
+                email <a href="mailto:info@eagleeyessearch.com">info@eagleeyessearch.com</a> and we'll get you set up.
+            </p>
+        </div>
+    </div>
+
+    <!-- Non-owner blocked state. -->
+    <div id="purchaseNonOwner" class="purchase-non-owner" style="display: none;">
+        <div class="non-owner-card">
+            <div class="non-owner-icon" aria-hidden="true">🔒</div>
+            <div class="non-owner-title">Only account owners can purchase</div>
+            <p class="non-owner-hint">
+                You're a member of <strong id="nonOwnerAccountName">this account</strong> but not an owner,
+                so you can't buy licenses, streaming credits, or subscriptions here. Reach out to one of the
+                owners below. They can purchase on the account's behalf, or promote you to an owner so you can buy directly.
+            </p>
+            <div class="non-owner-owners-label">Account owners</div>
+            <div class="non-owner-owners-list" id="nonOwnerOwnersList"></div>
+        </div>
+    </div>
+
+    <div id="purchaseContent" style="display: none;">
+
+        <!-- Hint banner (from low-balance email's license_hint resolver). -->
+        <div id="hintBanner" class="hint-banner" style="display: none;">
+            <div class="hint-banner-body" id="hintBannerBody"></div>
+            <button type="button" class="hint-banner-dismiss" id="hintBannerDismiss" aria-label="Dismiss">&times;</button>
+        </div>
+
+        <!-- Your order (cart) -->
+        <div class="purchase-card">
+            <h3 class="purchase-card-title">
+                Your order<span class="cart-count" id="cartCount"></span>
+            </h3>
+            <div id="cartEmpty" class="cart-empty">Your order is empty. Add an item below to get started.</div>
+            <div id="cartList" class="cart-list"></div>
+            <div id="cartSubtotal" class="cart-subtotal" style="display: none;">
+                <span class="cart-subtotal-label">Subtotal</span>
+                <span class="cart-subtotal-value" id="cartSubtotalValue">$0.00</span>
+            </div>
+            <div id="cartSubtotalNote" class="cart-subtotal-note" style="display: none;">
+                Final price + tax computed at checkout.
+            </div>
+        </div>
+
+        <!-- Add more to your order (catalog) -->
+        <div class="purchase-card">
+            <h3 class="purchase-card-title" id="catalogTitle">Add to your order</h3>
+            <div id="catalogList" class="catalog-list"></div>
+        </div>
+
+        <!-- Complete your order -->
+        <div class="purchase-card" id="checkoutCard">
+            <h3 class="purchase-card-title">Complete your order</h3>
+            <div class="checkout-cta-row">
+                <button type="button" class="cta-btn primary" id="ctaPayNow">Pay now</button>
+            </div>
+
+            <div id="ctaStatus" class="purchase-error" style="display: none;"></div>
+
+            <p class="checkout-invoice-note">Need an invoice or a quote? Email us at <a href="mailto:info@eagleeyessearch.com?subject=Invoice%20or%20quote%20request">info@eagleeyessearch.com</a> with your request.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    'use strict';
+
+    // ===== Constants =====
+    var SALES_EMAIL = 'info@eagleeyessearch.com';
+    // Self-service extension cap (backend-enforced). We don't show this
+    // number in customer-facing copy. Error wording stays generic.
+    var DEVICE_CAP = 50;
+    // New-license catalog caps out at 12 because that's the highest
+    // sar_1y_Ndev product in pricing.py. Independent of DEVICE_CAP above.
+    var NEW_LICENSE_MAX_DEVICES = 12;
+    var PAYG_MIN_DEFAULT = 25;
+    var RENEWAL_WINDOW_DAYS_PAID = 90;
+    var RENEWAL_WINDOW_DAYS_TRIAL = 7;
+
+    // Cart endpoints live on per-function Cloud Run URLs in prod.
+    // Emulator mode falls through to getHostUrl() + '/' + endpoint.
+    var CART_ENDPOINT_URLS = {
+        preview_cart: 'https://preview-cart-rvoe3nzu5q-uc.a.run.app',
+        create_purchase_checkout: 'https://create-purchase-checkout-rvoe3nzu5q-uc.a.run.app'
+    };
+
+    // ===== State =====
+    var state = {
+        accounts: [],
+        organizations: [],
+        licenses: [],
+        credits: null,
+        activeAccountId: null,
+        cart: { items: [] },        // synced from localStorage, per-account
+        previewSummary: null,       // last preview_cart response (or stub equivalent)
+        previewError: null,         // backend-returned validation error from preview_cart
+        submitting: false,
+        activePicker: null,         // null | 'renew' | 'devices' | 'credits' | 'new'
+        pickerDraft: null,          // per-slot working values
+        pickerError: null,
+        licenseHint: null,          // raw 5-char prefix from URL
+        hintBannerDismissed: false,
+        hintBlocked: false,         // hint resolved to 'none' -> block checkout until account switch/dismiss
+        urlAddsApplied: false,      // applied URL deep-links once at init
+        deepLinkBlocked: null       // {reason, license} when a ?add=... refused to add (e.g. cap exceeded)
+    };
+
+    // ===== DOM helpers =====
+    function $(id) { return document.getElementById(id); }
+    function getHostUrl() {
+        return window.getHostUrl ? window.getHostUrl() : 'https://us-central1-eagleeyessearch.cloudfunctions.net';
+    }
+    function esc(s) {
+        if (s == null) return '';
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+    function uuid() {
+        return 'i-' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+    }
+    function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
+
+    // Inline +/− stepper. The +/- buttons dispatch a `change` event on
+    // the inner input so existing data-edit-field / data-picker-field
+    // change handlers fire as if the user typed.
+    //   opts.fieldAttrs: string of HTML attrs to splice onto the input
+    //                     (e.g. 'data-picker-field="additional_devices"').
+    function qtyStepperHtml(opts) {
+        var min = (opts.min != null) ? opts.min : 1;
+        var max = (opts.max != null) ? opts.max : 99;
+        var step = opts.step || 1;
+        var val = (opts.value != null) ? opts.value : min;
+        val = clamp(val, min, max);
+        var decDis = val <= min ? ' disabled' : '';
+        var incDis = val >= max ? ' disabled' : '';
+        var inputClass = opts.wideInput ? ' class="wide"' : '';
+        return '<div class="qty-stepper' + (opts.wideInput ? ' is-wide' : '') + '">'
+            +   '<button type="button" data-action="stepper-dec" data-step="' + step
+            +     '" aria-label="Decrease"' + decDis + '>−</button>'
+            +   '<input type="number"' + inputClass + ' ' + (opts.fieldAttrs || '')
+            +     ' min="' + min + '" max="' + max + '" step="' + step + '" value="' + val + '">'
+            +   '<button type="button" data-action="stepper-inc" data-step="' + step
+            +     '" aria-label="Increase"' + incDis + '>+</button>'
+            + '</div>';
+    }
+
+    // ===== Accounts / licenses =====
+    function accountIdOf(a) { return (a.account_id != null) ? a.account_id : a.id; }
+    function activeAccount() {
+        return (state.accounts || []).find(function(a) {
+            return String(accountIdOf(a)) === String(state.activeAccountId);
+        }) || state.accounts[0] || null;
+    }
+    function activeAccountName() {
+        var acc = activeAccount();
+        return acc && acc.name ? acc.name : null;
+    }
+    function activeAccountIsOwner() {
+        var acc = activeAccount();
+        return !!(acc && (acc.is_admin || acc.is_owner));
+    }
+
+    function licensesForActiveAccount() {
+        if (!state.accounts.length) return state.licenses;
+        if (state.accounts.length <= 1) return state.licenses;
+        var acc = activeAccount();
+        if (!acc) return state.licenses;
+        var orgIds = acc.organization_ids || [];
+        var licIdSet = {};
+        state.organizations.forEach(function(o) {
+            if (orgIds.indexOf(o.org_id) === -1) return;
+            (o.licenses || []).forEach(function(l) {
+                if (l && l.license_id) licIdSet[l.license_id] = true;
+            });
+        });
+        return state.licenses.filter(function(l) { return licIdSet[l.license_id]; });
+    }
+
+    function findLicenseById(id) {
+        if (!id) return null;
+        return licensesForActiveAccount().find(function(l) { return l.license_id === id; }) || null;
+    }
+    function findOrgForLicense(license) {
+        if (!license || !license.license_id) return null;
+        for (var j = 0; j < state.organizations.length; j++) {
+            var org = state.organizations[j];
+            if ((org.licenses || []).some(function(l) { return l.license_id === license.license_id; })) {
+                return org;
+            }
+        }
+        return null;
+    }
+
+    // === License-name generator (mirrors backend generate_license_name) ===
+    // Format: "{Term} {License|Trial} {YY|YY/YY} - {team}"
+    // Examples: "Annual License 29/30 - SAR Alberta"
+    //           "3-Month License 26 - Marin County SAR"
+    //           "1-Week Trial 26 - Test Volunteer"
+    function termLabel(days) {
+        var d = parseInt(days, 10) || 0;
+        if (360 <= d && d <= 370) return 'Annual';
+        if (85 <= d && d <= 95) return '3-Month';
+        if (28 <= d && d <= 32) return '1-Month';
+        if (6 <= d && d <= 8) return '1-Week';
+        return d + '-Day';
+    }
+    function pad2(n) { return n < 10 ? '0' + n : String(n); }
+    function teamNameFor(sourceLicense) {
+        // Precedence: organization name → billing account name → email
+        // prefix → "Unnamed". Matches the backend chain so the frontend
+        // preview reads the same as the eventual stored name.
+        // Backend canonical field is `.name`; the dashboard response
+        // sometimes denormalizes to `.organization_name`. Prefer `.name`
+        // (what the backend actually uses) and fall back to the other.
+        if (sourceLicense) {
+            var org = findOrgForLicense(sourceLicense);
+            if (org) {
+                var n = org.name || org.organization_name;
+                if (n) return n;
+            }
+        }
+        var acc = activeAccount();
+        if (acc && acc.name) return acc.name;
+        try {
+            var user = firebase.auth && firebase.auth().currentUser;
+            if (user && user.email) return user.email.split('@')[0];
+        } catch (e) {}
+        return 'Unnamed';
+    }
+    function generateLicenseName(opts) {
+        var term = termLabel(opts.durationDays);
+        var suffix = opts.isTrial ? 'Trial' : 'License';
+        var startYy = new Date(opts.startAtTs * 1000).getFullYear() % 100;
+        var expiryYy = new Date(opts.expiryTs * 1000).getFullYear() % 100;
+        var yySpan = (startYy === expiryYy) ? pad2(startYy) : (pad2(startYy) + '/' + pad2(expiryYy));
+        return term + ' ' + suffix + ' ' + yySpan + ' - ' + teamNameFor(opts.sourceLicense);
+    }
+    // Convenience: renewal starts at the source license's current expiry
+    // and runs for duration_days.
+    function renewedLicenseName(sourceLicense, durationDays) {
+        if (!sourceLicense) return '';
+        var expiryMs = expiryToTs(sourceLicense.expiry_date);
+        if (!expiryMs) return '';
+        var dur = parseInt(durationDays, 10) || 365;
+        var startSec = Math.floor(expiryMs / 1000);
+        var expirySec = startSec + dur * 24 * 3600;
+        return generateLicenseName({
+            sourceLicense: sourceLicense,
+            durationDays: dur,
+            startAtTs: startSec,
+            expiryTs: expirySec,
+            isTrial: false
+        });
+    }
+    // For new licenses: starts now, runs 1 year. No source license, so
+    // team_name falls back to the active account's name.
+    function newLicenseDisplayName() {
+        var nowSec = Math.floor(Date.now() / 1000);
+        return generateLicenseName({
+            sourceLicense: null,
+            durationDays: 365,
+            startAtTs: nowSec,
+            expiryTs: nowSec + 365 * 24 * 3600,
+            isTrial: false
+        });
+    }
+    function deviceCountOf(license) {
+        if (!license) return 0;
+        return (typeof license.total_keys === 'number') ? license.total_keys
+            : (typeof license.n_tokens === 'number') ? license.n_tokens : 0;
+    }
+    // Under-count warning copy shared by the renewal picker and the cart's
+    // in-order renewal item: returns the "you've selected fewer devices than
+    // your current license" sentence, or '' when the selection isn't lower.
+    function renewalShortfallText(current, selected) {
+        var shortfall = current - selected;
+        if (!(shortfall > 0)) return '';
+        return 'Your current license has ' + current + (current === 1 ? ' device' : ' devices')
+            + '. You have selected ' + selected + (selected === 1 ? ' device' : ' devices')
+            + ', which is ' + shortfall + (shortfall === 1 ? ' device' : ' devices')
+            + ' less than your current license.';
+    }
+    function expiryToTs(expiry) {
+        if (expiry == null || expiry === '') return null;
+        if (typeof expiry === 'number') return expiry < 1e12 ? expiry * 1000 : expiry;
+        var d = new Date(expiry);
+        var t = d.getTime();
+        return isNaN(t) ? null : t;
+    }
+    function remainingMonthsFor(license) {
+        if (!license) return 0;
+        var expTs = expiryToTs(license.expiry_date);
+        if (!expTs) return 0;
+        var remainingMs = expTs - Date.now();
+        if (remainingMs <= 0) return 0;
+        return Math.ceil(remainingMs / (30.44 * 24 * 3600 * 1000));
+    }
+    function daysToExpiry(license) {
+        var expTs = expiryToTs(license && license.expiry_date);
+        if (!expTs) return Infinity;
+        return Math.ceil((expTs - Date.now()) / (24 * 3600 * 1000));
+    }
+    function isTrialLicense(license) {
+        return !!(license && /trial/i.test(license.tier || ''));
+    }
+    function isRenewalEligible(license) {
+        if (!license || !license.license_id) return false;
+        if (remainingMonthsFor(license) <= 0) return false;
+        if (license.successor_license_id) return false;
+        var window = isTrialLicense(license) ? RENEWAL_WINDOW_DAYS_TRIAL : RENEWAL_WINDOW_DAYS_PAID;
+        return daysToExpiry(license) <= window;
+    }
+    function isExtendableLicense(license) {
+        if (!license || !license.license_id) return false;
+        if (remainingMonthsFor(license) <= 0) return false;
+        return deviceCountOf(license) < DEVICE_CAP;
+    }
+    function licensesEligibleToRenew() {
+        return licensesForActiveAccount().filter(isRenewalEligible);
+    }
+    function licensesEligibleToExtend() {
+        return licensesForActiveAccount().filter(isExtendableLicense);
+    }
+    function anyActiveLicenses() {
+        return licensesForActiveAccount().some(function(l) { return remainingMonthsFor(l) > 0; });
+    }
+
+    // ===== Pricing (client estimates only; preview_cart is authoritative) =====
+    var streamingPricing = {
+        payg_min: PAYG_MIN_DEFAULT,
+        bundle_price: 500,
+        bundle_credits: 600,
+        per_minute_rate: 0.06
+    };
+    function currentPerMinuteRate() {
+        if (state.credits && typeof state.credits.per_minute_rate_usd === 'number') {
+            return state.credits.per_minute_rate_usd;
+        }
+        return streamingPricing.per_minute_rate;
+    }
+    function formatPrice(usd) {
+        if (typeof usd !== 'number' || isNaN(usd)) return '$0.00';
+        return '$' + usd.toFixed(2);
+    }
+    function priceForNew(deviceCount) {
+        var n = clamp(parseInt(deviceCount, 10) || 1, 1, NEW_LICENSE_MAX_DEVICES);
+        return 400 + (n - 1) * 150;
+    }
+    // Extension price: $150 per full year of remaining license + $20 per
+    // remaining month (rounded up), per added device. So a 41-month
+    // remaining license = 3 yr + 5 mo = $150×3 + $20×5 = $550/device.
+    function extensionPerDevicePrice(license) {
+        if (!license) return { months: 0, fullYears: 0, partialMonths: 0, perDevice: 0 };
+        var months = remainingMonthsFor(license);
+        var fullYears = Math.floor(months / 12);
+        var partialMonths = months - fullYears * 12;
+        var perDevice = fullYears * 150 + partialMonths * 20;
+        return { months: months, fullYears: fullYears, partialMonths: partialMonths, perDevice: perDevice };
+    }
+    function priceForAddDevices(license, addCount) {
+        if (!license || !addCount) return 0;
+        return extensionPerDevicePrice(license).perDevice * addCount;
+    }
+    // Compact textual breakdown e.g. "3 yr × $150 + 5 mo × $20 = $550/device".
+    function extensionPriceBreakdownText(license) {
+        var bd = extensionPerDevicePrice(license);
+        var parts = [];
+        if (bd.fullYears) parts.push(bd.fullYears + ' yr × $150');
+        if (bd.partialMonths) parts.push(bd.partialMonths + ' mo × $20');
+        if (!parts.length) return '';
+        return parts.join(' + ') + ' = $' + bd.perDevice + '/device';
+    }
+    function priceForRenewal(license, newDeviceCount) {
+        if (!license) return 0;
+        var n = newDeviceCount || deviceCountOf(license);
+        return priceForNew(n);
+    }
+
+    // ===== Cart state + localStorage =====
+    // Catalog-slot categories. SKUs map 1:1 except 'credits' which covers
+    // both streaming_topup_payg and streaming_topup_pro_bundle (one of
+    // either, not both).
+    var CREDITS_SKUS = ['streaming_topup_payg', 'streaming_topup_pro_bundle'];
+    function isCreditsSku(sku) { return CREDITS_SKUS.indexOf(sku) !== -1; }
+    function catalogSlotForSku(sku) {
+        if (sku === 'license_renewal') return 'renew';
+        if (sku === 'additional_devices') return 'devices';
+        if (sku === 'license_new') return 'new';
+        if (isCreditsSku(sku)) return 'credits';
+        return null;
+    }
+
+    function cartStorageKey() {
+        return 'ee-cart:' + (state.activeAccountId || 'anon');
+    }
+    function loadCart() {
+        try {
+            var raw = localStorage.getItem(cartStorageKey());
+            if (!raw) return { items: [] };
+            var parsed = JSON.parse(raw);
+            if (!parsed || !Array.isArray(parsed.items)) return { items: [] };
+            // Drop any items whose referenced license no longer exists
+            // on the active account (account swap, license deleted).
+            parsed.items = parsed.items.filter(function(it) {
+                if (it.license_id) {
+                    return !!findLicenseById(it.license_id);
+                }
+                return true;
+            });
+            return parsed;
+        } catch (e) { return { items: [] }; }
+    }
+    function saveCart() {
+        try {
+            localStorage.setItem(cartStorageKey(), JSON.stringify({
+                account_id: state.activeAccountId,
+                items: state.cart.items
+            }));
+        } catch (e) { /* quota / private mode, silent */ }
+    }
+    function clearCart() {
+        state.cart = { items: [] };
+        try { localStorage.removeItem(cartStorageKey()); } catch (e) {}
+    }
+
+    function cartFindBySku(sku) {
+        return state.cart.items.find(function(it) { return it.sku === sku; }) || null;
+    }
+    function cartFindByCategory(slot) {
+        return state.cart.items.find(function(it) { return catalogSlotForSku(it.sku) === slot; }) || null;
+    }
+    function cartHasCategory(slot) { return !!cartFindByCategory(slot); }
+    function cartHasLicenseRenewal(licenseId) {
+        return state.cart.items.some(function(it) {
+            return it.sku === 'license_renewal' && it.license_id === licenseId;
+        });
+    }
+    function cartHasLicenseExtension(licenseId) {
+        return state.cart.items.some(function(it) {
+            return it.sku === 'additional_devices' && it.license_id === licenseId;
+        });
+    }
+    function cartAdd(item) {
+        item.id = item.id || uuid();
+        // Replace any existing item in the same catalog slot.
+        var slot = catalogSlotForSku(item.sku);
+        if (slot) {
+            state.cart.items = state.cart.items.filter(function(it) {
+                return catalogSlotForSku(it.sku) !== slot;
+            });
+        }
+        state.cart.items.push(item);
+        saveCart();
+    }
+    function cartUpdate(id, patch) {
+        var it = state.cart.items.find(function(x) { return x.id === id; });
+        if (!it) return;
+        Object.keys(patch).forEach(function(k) { it[k] = patch[k]; });
+        saveCart();
+    }
+    function cartRemove(id) {
+        state.cart.items = state.cart.items.filter(function(it) { return it.id !== id; });
+        saveCart();
+    }
+
+    // ===== URL deep-link translator =====
+    // Stackable ?add=... + legacy ?mode= / ?license_id= / ?device_count=
+    // / ?package=. Returns an array of CartItem objects to push.
+    function parseUrlAddItems() {
+        var params = new URLSearchParams(window.location.search);
+        var items = [];
+
+        // ?add=... (stackable)
+        params.getAll('add').forEach(function(spec) {
+            var item = parseAddSpec(spec);
+            if (item) items.push(item);
+        });
+
+        // Legacy translator (only when no add= present, or as additive).
+        var legacyItem = parseLegacyParams(params);
+        if (legacyItem) {
+            // Avoid double-add when both ?mode= and ?add= would yield
+            // the same catalog slot.
+            var slot = catalogSlotForSku(legacyItem.sku);
+            var alreadyHas = items.some(function(it) {
+                return catalogSlotForSku(it.sku) === slot;
+            });
+            if (!alreadyHas) items.push(legacyItem);
+        }
+
+        return items;
+    }
+    function parseAddSpec(spec) {
+        if (!spec) return null;
+        var parts = spec.split(':');
+        var kind = parts[0];
+        if (kind === 'renew' && parts[1]) {
+            var lic = findLicenseById(parts[1]);
+            if (!lic) return null;
+            return {
+                id: uuid(),
+                sku: 'license_renewal',
+                license_id: lic.license_id,
+                duration_days: 365,
+                new_n_tokens: deviceCountOf(lic)
+            };
+        }
+        if (kind === 'devices' && parts[1]) {
+            var dlic = findLicenseById(parts[1]);
+            if (!dlic) return null;
+            var current = deviceCountOf(dlic);
+            // License already at/over the self-service cap → don't create a
+            // broken cart item. Surface a banner so the user understands why.
+            if (current >= DEVICE_CAP) {
+                state.deepLinkBlocked = { reason: 'device_cap_exceeded', license: dlic };
+                return null;
+            }
+            var addN = parts[2] ? parseInt(parts[2], 10) : 1;
+            if (isNaN(addN) || addN < 1) addN = 1;
+            addN = Math.min(addN, DEVICE_CAP - current);
+            return {
+                id: uuid(),
+                sku: 'additional_devices',
+                license_id: dlic.license_id,
+                additional_devices: addN
+            };
+        }
+        if (kind === 'credits') {
+            var pkg = parts[1];
+            if (pkg === 'payg') {
+                var amt = parts[2] ? parseFloat(parts[2]) : streamingPricing.payg_min;
+                if (isNaN(amt) || amt < streamingPricing.payg_min) amt = streamingPricing.payg_min;
+                return { id: uuid(), sku: 'streaming_topup_payg', amount_usd: amt };
+            }
+            if (pkg === 'pro_bundle') {
+                return { id: uuid(), sku: 'streaming_topup_pro_bundle' };
+            }
+            return null;
+        }
+        if (kind === 'new' && parts[1]) {
+            return { id: uuid(), sku: 'license_new', product_id: parts[1] };
+        }
+        return null;
+    }
+    function parseLegacyParams(params) {
+        var mode = params.get('mode');
+        var licenseId = params.get('license_id');
+        var deviceCount = parseInt(params.get('device_count') || '', 10);
+        var pkg = params.get('package');
+
+        if (mode === 'renew' && licenseId) {
+            var lic = findLicenseById(licenseId);
+            if (!lic) return null;
+            return {
+                id: uuid(), sku: 'license_renewal',
+                license_id: lic.license_id, duration_days: 365,
+                new_n_tokens: deviceCountOf(lic)
+            };
+        }
+        if ((mode === 'add_devices' || mode === 'extend') && licenseId) {
+            var dlic = findLicenseById(licenseId);
+            if (!dlic) return null;
+            var current = deviceCountOf(dlic);
+            if (current >= DEVICE_CAP) {
+                state.deepLinkBlocked = { reason: 'device_cap_exceeded', license: dlic };
+                return null;
+            }
+            var n = (isNaN(deviceCount) || deviceCount < 1) ? 1 : deviceCount;
+            n = Math.min(n, DEVICE_CAP - current);
+            return {
+                id: uuid(), sku: 'additional_devices',
+                license_id: dlic.license_id, additional_devices: n
+            };
+        }
+        if (mode === 'streaming' || mode === 'credits') {
+            if (pkg === 'pro_bundle') {
+                return { id: uuid(), sku: 'streaming_topup_pro_bundle' };
+            }
+            // unlimited is deferred in v1, silently fall through to PAYG.
+            var amt = streamingPricing.payg_min;
+            return { id: uuid(), sku: 'streaming_topup_payg', amount_usd: amt };
+        }
+        if (mode === 'new') {
+            var dc = (!isNaN(deviceCount) && deviceCount >= 1 && deviceCount <= NEW_LICENSE_MAX_DEVICES) ? deviceCount : 3;
+            return { id: uuid(), sku: 'license_new', product_id: 'sar_1y_' + dc + 'dev' };
+        }
+        return null;
+    }
+    function parseLicenseHintFromUrl() {
+        var v = (new URLSearchParams(window.location.search).get('license_hint') || '').trim();
+        if (!v) return null;
+        return v.toUpperCase().slice(0, 16);
+    }
+
+    // ===== License hint resolver =====
+    // Outcomes: { kind: 'owner' | 'member' | 'multi' | 'none', matches: [...] }
+    // matches are { license, account }.
+    function resolveLicenseHint(hint) {
+        if (!hint) return { kind: 'none', matches: [] };
+        var upper = hint.toUpperCase();
+        var allLicenses = state.licenses || [];
+        var matches = [];
+        allLicenses.forEach(function(l) {
+            if (!l.license_id) return;
+            if (String(l.license_id).toUpperCase().indexOf(upper) !== 0) return;
+            var acc = findAccountForLicense(l);
+            matches.push({ license: l, account: acc });
+        });
+        if (matches.length === 0) return { kind: 'none', matches: [] };
+        var ownerMatches = matches.filter(function(m) { return m.account && (m.account.is_admin || m.account.is_owner); });
+        if (ownerMatches.length === 1) return { kind: 'owner', matches: ownerMatches };
+        if (ownerMatches.length > 1) return { kind: 'multi', matches: ownerMatches };
+        return { kind: 'member', matches: matches };
+    }
+    function findAccountForLicense(license) {
+        if (!license || !license.license_id) return null;
+        for (var i = 0; i < state.accounts.length; i++) {
+            var acc = state.accounts[i];
+            var orgIds = acc.organization_ids || [];
+            for (var j = 0; j < state.organizations.length; j++) {
+                var org = state.organizations[j];
+                if (orgIds.indexOf(org.org_id) === -1) continue;
+                if ((org.licenses || []).some(function(l) { return l.license_id === license.license_id; })) {
+                    return acc;
+                }
+            }
+        }
+        // Fallback for single-account dashboards.
+        return state.accounts[0] || null;
+    }
+    function applyLicenseHintResolution() {
+        var banner = $('hintBanner');
+        var body = $('hintBannerBody');
+        banner.classList.remove('is-warn', 'is-error');
+        // Cleared each pass; only the unresolved-license ('none') path re-arms it.
+        state.hintBlocked = false;
+
+        // Deep-link blocked (e.g. ?add=devices:<id> for a license already at
+        // the cap) takes priority over the license_hint banner, it's the
+        // more actionable signal and the cart is otherwise empty.
+        if (state.deepLinkBlocked && !state.hintBannerDismissed) {
+            var blk = state.deepLinkBlocked;
+            if (blk.reason === 'device_cap_exceeded') {
+                var lic = blk.license || {};
+                var name = lic.license_name || ('License ' + (lic.license_id || ''));
+                body.innerHTML = "Looks like you're trying to add more devices to <strong>" + esc(name)
+                    + "</strong> than we can set up self-service. "
+                    + 'Email <a href="mailto:' + SALES_EMAIL + '">' + SALES_EMAIL + '</a> '
+                    + "and we'll take care of it for you.";
+                banner.classList.add('is-warn');
+                banner.style.display = '';
+                return null;
+            }
+        }
+
+        if (!state.licenseHint || state.hintBannerDismissed) {
+            banner.style.display = 'none';
+            return null;
+        }
+        var resolution = resolveLicenseHint(state.licenseHint);
+
+        if (resolution.kind === 'owner') {
+            var m = resolution.matches[0];
+            // Switch active account if needed.
+            var targetId = m.account ? String(accountIdOf(m.account)) : state.activeAccountId;
+            if (targetId !== String(state.activeAccountId)) {
+                state.activeAccountId = targetId;
+                state.cart = loadCart();
+            }
+            // The user owns this license and can pay - the cart is already
+            // pre-filled, so no banner is needed.
+            banner.style.display = 'none';
+            return m;
+        }
+        if (resolution.kind === 'multi') {
+            // Show a brief picker as text. v1 lets the user pick by switching
+            // the active account themselves via the page header.
+            var names = resolution.matches.map(function(m) {
+                return (m.license.license_name || m.license.license_id)
+                    + ' (' + ((m.account && m.account.name) || 'unknown') + ')';
+            }).join(', ');
+            body.innerHTML = 'Multiple licenses on your accounts start with '
+                + '<strong>' + esc(state.licenseHint) + '</strong>: ' + esc(names)
+                + '. Switch to the right account to top up.';
+            banner.classList.add('is-warn');
+            banner.style.display = '';
+            return null;
+        }
+        if (resolution.kind === 'member') {
+            var lm = resolution.matches[0];
+            // Switch to the hinted account so the non-owner panel below lists
+            // THAT account's owners (not whatever account happened to be active).
+            var memberTargetId = lm.account ? String(accountIdOf(lm.account)) : state.activeAccountId;
+            if (memberTargetId !== String(state.activeAccountId)) {
+                state.activeAccountId = memberTargetId;
+                state.cart = loadCart();
+            }
+            var lmAcc = lm.account ? (lm.account.name || 'this account') : 'an account';
+            body.innerHTML = 'This license is on the <strong>' + esc(lmAcc)
+                + '</strong> account, where you have access but aren\'t an owner. '
+                + 'Ask one of its owners below to add the credits, or to make you an owner so you can buy directly.';
+            banner.classList.add('is-warn');
+            banner.style.display = '';
+            return null;
+        }
+        // none — block checkout so nobody pays before we've matched the license
+        // to one of their accounts. Dismissing the banner clears the block (an
+        // explicit "buy for my current account instead" override).
+        state.hintBlocked = true;
+        body.innerHTML = 'This top-up link references a license ID (starting with <strong>' + esc(state.licenseHint)
+            + '</strong>) we don\'t see on your accounts, so checkout is paused. '
+            + 'Sign in with the account that owns this license, or contact '
+            + '<a href="mailto:' + SALES_EMAIL + '">' + SALES_EMAIL + '</a>. '
+            + 'To buy for your current account anyway, dismiss this notice.';
+        banner.classList.add('is-error');
+        banner.style.display = '';
+        return null;
+    }
+
+    // ===== Loaders =====
+    async function loadDashboard(user) {
+        if (window.eeDashboard) {
+            var cached = window.eeDashboard.read(user.uid);
+            if (cached) {
+                window.eeDashboard.fetch(user).catch(function() {});
+                return cached;
+            }
+            return window.eeDashboard.fetch(user);
+        }
+        var idToken = await user.getIdToken();
+        var r = await fetch(getHostUrl() + '/get_account_dashboard', {
+            method: 'GET',
+            headers: { 'Authorization': 'Bearer ' + idToken, 'Accept': 'application/json' }
+        });
+        if (!r.ok) throw new Error('Dashboard load failed (' + r.status + ')');
+        return r.json();
+    }
+    async function loadCredits(user) {
+        if (!state.activeAccountId) return null;
+        try {
+            var idToken = await user.getIdToken();
+            var r = await fetch(getHostUrl() + '/get_streaming_credits', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + idToken,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ account_id: state.activeAccountId })
+            });
+            if (!r.ok) return null;
+            return r.json();
+        } catch (e) { return null; }
+    }
+    // Streaming-package config ships embedded in get_account_dashboard
+    // (backend confirmed 2026-05-21: no standalone /get_streaming_packages
+    // endpoint exists). If the dashboard didn't include it, fall back to
+    // the hardcoded defaults in streamingPricing, they match pricing.py.
+    function loadStreamingPackages(user) {
+        var dash = window.eeDashboard ? window.eeDashboard.read(user.uid) : null;
+        return Promise.resolve((dash && dash.streaming_packages) || null);
+    }
+    function applyPackageConfig(pkgs) {
+        if (!pkgs) return;
+        var payg = pkgs.payg || {};
+        var bundle = pkgs.pro_bundle || pkgs.bundle || {};
+        if (typeof payg.min_amount_usd === 'number') {
+            streamingPricing.payg_min = payg.min_amount_usd;
+        }
+        if (typeof bundle.price_usd === 'number') streamingPricing.bundle_price = bundle.price_usd;
+        if (typeof bundle.credits_usd === 'number') streamingPricing.bundle_credits = bundle.credits_usd;
+        renderCatalog();
+        renderCart();
+    }
+    function applyPerMinuteRate(rate) {
+        if (typeof rate !== 'number') return;
+        streamingPricing.per_minute_rate = rate;
+    }
+
+    // ===== Preview cart =====
+    var previewDebounceTimer = null;
+    function schedulePreview() {
+        if (previewDebounceTimer) clearTimeout(previewDebounceTimer);
+        previewDebounceTimer = setTimeout(callPreviewCart, 250);
+    }
+    async function callPreviewCart() {
+        previewDebounceTimer = null;
+        if (!state.cart.items.length) {
+            state.previewSummary = null;
+            state.previewError = null;
+            renderOrderSummary();
+            renderCart();
+            return;
+        }
+        var payload = buildCartPayload('preview');
+        try {
+            var resp = await postBillingJson('preview_cart', payload);
+            state.previewSummary = resp && resp.cart_summary;
+            state.previewError = null;
+        } catch (err) {
+            state.previewSummary = null;
+            state.previewError = (err && err.data && err.data.code)
+                ? { code: err.data.code, message: err.data.message || err.message }
+                : { code: 'unknown', message: (err && err.message) || 'Preview failed.' };
+        }
+        renderOrderSummary();
+        renderCart();
+    }
+
+    // ===== Catalog UI =====
+    function catalogSlots() {
+        // Members (non-owners) see the full catalog, but the owner-only
+        // actions (renew, add devices, buy new license) are disabled with an
+        // "Admins only" badge. Topping up streaming credits is open to every
+        // team member. adminOnly takes precedence over the data-availability
+        // reason since a member can't do it regardless of license state.
+        var isOwner = activeAccountIsOwner();
+        var slots = [];
+        slots.push({
+            slot: 'devices',
+            label: '+ Add device slots to an existing license',
+            available: isOwner && licensesEligibleToExtend().length > 0,
+            adminOnly: !isOwner,
+            unavailableReason: 'No active licenses with room to add devices.'
+        });
+        slots.push({
+            slot: 'renew',
+            label: '+ Renew a license',
+            available: isOwner && licensesEligibleToRenew().length > 0,
+            adminOnly: !isOwner,
+            unavailableReason: 'No licenses are within their renewal window yet (≤90 days from expiry, ≤7 for trials).'
+        });
+        slots.push({
+            slot: 'credits',
+            label: '+ Add streaming credits',
+            available: true
+        });
+        if (!anyActiveLicenses()) {
+            slots.push({
+                slot: 'new',
+                label: '+ Buy a new license',
+                available: isOwner,
+                adminOnly: !isOwner
+            });
+        }
+        return slots;
+    }
+    function renderCatalog() {
+        var list = $('catalogList');
+        if (!list) return;
+        var slots = catalogSlots();
+        var html = '';
+        slots.forEach(function(s) {
+            // Already in the cart → hide the row entirely. Remove from the
+            // cart to bring it back.
+            if (cartHasCategory(s.slot)) return;
+            var open = state.activePicker === s.slot;
+            var adminLocked = !!s.adminOnly;
+            // Admin-locked rows stay clickable (they open the "Admins only"
+            // modal that lists who to ask); only data-unavailable rows are
+            // truly disabled.
+            var disabled = !adminLocked && !s.available;
+            html += '<div class="catalog-row'
+                + (open ? ' is-open' : '')
+                + (disabled ? ' is-disabled' : '')
+                + '" data-slot="' + esc(s.slot) + '">';
+            html += '<button type="button" class="catalog-row-trigger" data-action="'
+                + (adminLocked ? 'admin-locked' : 'open-picker') + '" data-slot="'
+                + esc(s.slot) + '"' + (disabled ? ' disabled' : '') + '>'
+                + '<span>' + esc(s.label) + '</span>'
+                + (adminLocked
+                    ? '<span class="catalog-admin-badge">Admins only</span>'
+                    : '<span class="catalog-row-arrow">▸</span>')
+                + '</button>';
+            // (Admin-locked rows already show the "Admins only" pill above and
+            // explain on click via the modal, so no extra line is needed here.)
+            if (!adminLocked && disabled && s.unavailableReason) {
+                html += '<div class="catalog-already" style="font-style:normal;">' + esc(s.unavailableReason) + '</div>';
+            }
+            if (open) {
+                html += '<div class="catalog-picker">' + renderPickerHtml(s.slot) + '</div>';
+            }
+            html += '</div>';
+        });
+        list.innerHTML = html;
+        wirePickerDom();
+    }
+    function openPicker(slot) {
+        state.activePicker = slot;
+        state.pickerError = null;
+        state.pickerDraft = defaultPickerDraft(slot);
+        renderCatalog();
+    }
+    function closePicker() {
+        state.activePicker = null;
+        state.pickerDraft = null;
+        state.pickerError = null;
+        renderCatalog();
+    }
+    function defaultPickerDraft(slot) {
+        if (slot === 'renew') {
+            var renewables = licensesEligibleToRenew();
+            // Skip licenses already in an additional_devices cart item.
+            renewables = renewables.filter(function(l) { return !cartHasLicenseExtension(l.license_id); });
+            var first = renewables[0];
+            return {
+                license_id: first ? first.license_id : null,
+                new_n_tokens: first ? deviceCountOf(first) : 1
+            };
+        }
+        if (slot === 'devices') {
+            var extendables = licensesEligibleToExtend();
+            extendables = extendables.filter(function(l) { return !cartHasLicenseRenewal(l.license_id); });
+            var fe = extendables[0];
+            return {
+                license_id: fe ? fe.license_id : null,
+                additional_devices: 1
+            };
+        }
+        if (slot === 'credits') {
+            return {
+                package: 'payg',
+                amount_usd: streamingPricing.payg_min
+            };
+        }
+        if (slot === 'new') {
+            return { device_count: 1 };
+        }
+        return {};
+    }
+    function renderPickerHtml(slot) {
+        if (slot === 'renew') return renderRenewPicker();
+        if (slot === 'devices') return renderDevicesPicker();
+        if (slot === 'credits') return renderCreditsPicker();
+        if (slot === 'new') return renderNewPicker();
+        return '';
+    }
+    function renderRenewPicker() {
+        var d = state.pickerDraft || {};
+        // Available renewables, with renewal-conflict licenses filtered out.
+        var renewables = licensesEligibleToRenew().filter(function(l) {
+            return !cartHasLicenseExtension(l.license_id);
+        });
+        if (!renewables.length) {
+            return '<p class="picker-error">No licenses are eligible for renewal right now. '
+                + 'A renewal becomes available within 90 days of expiry (7 for trials).</p>'
+                + renderPickerActionsHtml(true);
+        }
+        var lic = findLicenseById(d.license_id) || renewables[0];
+        if (!d.license_id || !renewables.some(function(l) { return l.license_id === d.license_id; })) {
+            d.license_id = lic.license_id;
+            d.new_n_tokens = deviceCountOf(lic);
+        }
+        var currentDevices = deviceCountOf(lic);
+        var newN = d.new_n_tokens || currentDevices;
+        var est = priceForRenewal(lic, newN);
+
+        var licOptions = renewables.map(function(l) {
+            var months = remainingMonthsFor(l);
+            var sel = l.license_id === d.license_id ? ' selected' : '';
+            var label = (l.license_name || ('License ' + l.license_id))
+                + ', ' + deviceCountOf(l) + ' dev, exp. ' + (l.expiry_date || '?')
+                + (months <= 2 ? ' (' + months + ' mo left)' : '');
+            return '<option value="' + esc(l.license_id) + '"' + sel + '>' + esc(label) + '</option>';
+        }).join('');
+
+        // Stepper runs 1 → current+10. Users can downsize on renewal as
+        // of 2026-05-21: backend dropped the renewal_cannot_shrink_devices
+        // rule. At renewal cutover, the first N devices to be active keep
+        // their slots; any excess hit the existing renewal_full 409 and
+        // need a release_device_token from the Devices page.
+        var maxDevices = Math.min(DEVICE_CAP, currentDevices + 10);
+        var shortfallMsg = renewalShortfallText(currentDevices, newN);
+        var devWarn = shortfallMsg ? '<span class="picker-row-warn">' + shortfallMsg + '</span>' : '';
+
+        var newName = renewedLicenseName(lic, 365);
+        return '<div class="picker-row">'
+            +   '<span class="picker-row-label">License</span>'
+            +   '<select data-picker-field="license_id">' + licOptions + '</select>'
+            + '</div>'
+            + '<div class="picker-row">'
+            +   '<span class="picker-row-label">Devices</span>'
+            +   qtyStepperHtml({
+                    value: newN, min: 1, max: maxDevices,
+                    fieldAttrs: 'data-picker-field="new_n_tokens"'
+                })
+            +   '<span class="picker-row-hint">' + (newN < currentDevices
+                    ? ''
+                    : 'Currently ' + currentDevices + '. Raise to add devices in the same renewal.')
+            +   devWarn
+            + '</div>'
+            + '<div class="picker-row">'
+            +   '<span class="picker-row-label">Estimate</span>'
+            +   '<span class="picker-row-estimate">' + formatPrice(est) + '</span>'
+            +   '<span class="picker-row-hint">1 year. Final price + tax computed at checkout.</span>'
+            + '</div>'
+            + (newName ? '<div class="picker-row"><span class="picker-row-label">Named</span>'
+                + '<span class="picker-row-hint" style="font-style:italic;">' + esc(newName) + '</span></div>' : '')
+            + renderPickerErrorHtml()
+            + renderPickerActionsHtml(false);
+    }
+    function renderDevicesPicker() {
+        var d = state.pickerDraft || {};
+        var extendables = licensesEligibleToExtend().filter(function(l) {
+            return !cartHasLicenseRenewal(l.license_id);
+        });
+        if (!extendables.length) {
+            return '<p class="picker-error">No active licenses can take more devices right now. '
+                + "If you need a lot more on a single license, email info@eagleeyessearch.com.</p>"
+                + renderPickerActionsHtml(true);
+        }
+        var lic = findLicenseById(d.license_id) || extendables[0];
+        if (!d.license_id || !extendables.some(function(l) { return l.license_id === d.license_id; })) {
+            d.license_id = lic.license_id;
+        }
+        var current = deviceCountOf(lic);
+        var maxAdd = Math.max(1, Math.min(10, DEVICE_CAP - current));
+        var addN = clamp(d.additional_devices || 1, 1, maxAdd);
+        d.additional_devices = addN;
+        var est = priceForAddDevices(lic, addN);
+        var bd = extensionPerDevicePrice(lic);
+        var termTxt = '';
+        if (bd.fullYears && bd.partialMonths) termTxt = bd.fullYears + ' yr ' + bd.partialMonths + ' mo';
+        else if (bd.fullYears) termTxt = bd.fullYears + ' yr';
+        else if (bd.partialMonths) termTxt = bd.partialMonths + ' mo';
+
+        var licOptions = extendables.map(function(l) {
+            var sel = l.license_id === d.license_id ? ' selected' : '';
+            var label = (l.license_name || ('License ' + l.license_id))
+                + ', ' + deviceCountOf(l) + ' dev, exp. ' + (l.expiry_date || '?');
+            return '<option value="' + esc(l.license_id) + '"' + sel + '>' + esc(label) + '</option>';
+        }).join('');
+
+        return '<div class="picker-row">'
+            +   '<span class="picker-row-label">License</span>'
+            +   '<select data-picker-field="license_id">' + licOptions + '</select>'
+            + '</div>'
+            + '<div class="picker-row">'
+            +   '<span class="picker-row-label">Add devices</span>'
+            +   qtyStepperHtml({
+                    value: addN, min: 1, max: maxAdd,
+                    fieldAttrs: 'data-picker-field="additional_devices"'
+                })
+            +   '<span class="picker-row-hint">Max ' + maxAdd + ' available on this license.</span>'
+            + '</div>'
+            + '<div class="picker-row">'
+            +   '<span class="picker-row-label">Estimate</span>'
+            +   '<span class="picker-row-estimate">' + formatPrice(est) + '</span>'
+            +   '<span class="picker-row-hint">$150/yr + $20 per remaining month, per device'
+            +     (termTxt ? ' (' + termTxt + ' left)' : '') + '.</span>'
+            + '</div>'
+            + renderPickerErrorHtml()
+            + renderPickerActionsHtml(false);
+    }
+    function renderCreditsPicker() {
+        var d = state.pickerDraft || { package: 'payg', amount_usd: streamingPricing.payg_min };
+        var pkg = d.package || 'payg';
+        var amt = (typeof d.amount_usd === 'number') ? d.amount_usd : streamingPricing.payg_min;
+        var rate = currentPerMinuteRate();
+        var mins = (rate > 0 && amt > 0) ? Math.floor(amt / rate) : 0;
+
+        // Build the "≈ N min at $X/min" subline as a discrete variable,
+        // safer than splicing it inline into a deep concat (line-continued
+        // ternaries are a foot-gun).
+        var minsHtml = '';
+        if (mins > 0) {
+            minsHtml = '<span class="payg-minutes-display">'
+                + '≈ ' + mins.toLocaleString() + ' min at $' + rate.toFixed(2) + '/min'
+                + '</span>';
+        }
+        var stepperHtml = qtyStepperHtml({
+            value: amt,
+            min: streamingPricing.payg_min,
+            max: 5000,
+            step: 5,
+            wideInput: true,
+            fieldAttrs: 'data-picker-field="amount_usd"'
+        });
+
+        return '<div style="font-size:12px; color:#777; margin-bottom:10px;">Cloud livestreaming (online viewing over the internet) requires Eagle Eyes Pilot 1.7.1 or newer. Credits are only used for this online viewing; watching on local WiFi is always free.</div>'
+            + '<div class="pkg-list">'
+            +   '<label class="pkg-row' + (pkg === 'payg' ? ' is-active' : '') + '" data-pkg="payg">'
+            +     '<input type="radio" name="creditsPkgPick" value="payg"' + (pkg === 'payg' ? ' checked' : '') + '>'
+            +     '<div class="pkg-row-body">'
+            +       '<div class="pkg-row-label">Pay as you go</div>'
+            +       '<div class="pkg-row-desc">Top up any amount. Minimum $' + streamingPricing.payg_min
+            +         '. Credits don\'t expire while you have an active license.</div>'
+            +       '<div class="pkg-row-inputs">'
+            +         '<span class="picker-row-label" style="flex:0 0 auto;">Top up:</span>'
+            +         stepperHtml
+            +         '<span class="picker-row-label" style="flex:0 0 auto;">USD</span>'
+            +         minsHtml
+            +       '</div>'
+            +     '</div>'
+            +   '</label>'
+            +   '<label class="pkg-row' + (pkg === 'pro_bundle' ? ' is-active' : '') + '" data-pkg="pro_bundle">'
+            +     '<input type="radio" name="creditsPkgPick" value="pro_bundle"' + (pkg === 'pro_bundle' ? ' checked' : '') + '>'
+            +     '<div class="pkg-row-body">'
+            +       '<div class="pkg-row-label">Pro Bundle · 20% bonus</div>'
+            +       '<div class="pkg-row-desc">$' + streamingPricing.bundle_price + ' → $'
+            +         streamingPricing.bundle_credits + ' in credits. Best value for active users.</div>'
+            +     '</div>'
+            +   '</label>'
+            + '</div>'
+            + renderPickerErrorHtml()
+            + renderPickerActionsHtml(false);
+    }
+    function renderNewPicker() {
+        var d = state.pickerDraft || { device_count: 1 };
+        var n = clamp(d.device_count || 1, 1, NEW_LICENSE_MAX_DEVICES);
+        d.device_count = n;
+        var price = priceForNew(n);
+        var options = '';
+        for (var i = 1; i <= NEW_LICENSE_MAX_DEVICES; i++) {
+            options += '<option value="' + i + '"' + (i === n ? ' selected' : '') + '>' + i + '</option>';
+        }
+        var newName = newLicenseDisplayName();
+        return '<div class="picker-row">'
+            +   '<span class="picker-row-label">Devices</span>'
+            +   '<select data-picker-field="device_count">' + options + '</select>'
+            +   '<span class="picker-row-hint">1 year. $400 for the first device, $150 each extra.</span>'
+            + '</div>'
+            + '<div class="picker-row">'
+            +   '<span class="picker-row-label">Estimate</span>'
+            +   '<span class="picker-row-estimate">' + formatPrice(price) + '</span>'
+            + '</div>'
+            + (newName ? '<div class="picker-row"><span class="picker-row-label">Named</span>'
+                + '<span class="picker-row-hint" style="font-style:italic;">' + esc(newName) + '</span></div>' : '')
+            + renderPickerErrorHtml()
+            + renderPickerActionsHtml(false);
+    }
+    function renderPickerErrorHtml() {
+        if (!state.pickerError) return '';
+        return '<p class="picker-error">' + esc(state.pickerError) + '</p>';
+    }
+    function renderPickerActionsHtml(disabled) {
+        return '<div class="picker-actions">'
+            +   '<button type="button" class="picker-btn primary" data-action="commit-picker"'
+            +     (disabled ? ' disabled' : '') + '>Add to order</button>'
+            +   '<button type="button" class="picker-btn secondary" data-action="close-picker">Cancel</button>'
+            + '</div>';
+    }
+    function wirePickerDom() {
+        var picker = document.querySelector('.catalog-row.is-open .catalog-picker');
+        if (!picker) return;
+        // Listen only to `change` (commits on blur / Enter / stepper-click).
+        // Listening to `input` here re-renders on every keystroke and
+        // steals focus from the field the user is typing in.
+        picker.querySelectorAll('[data-picker-field]').forEach(function(el) {
+            el.addEventListener('change', onPickerFieldChange);
+        });
+        picker.querySelectorAll('input[name="creditsPkgPick"]').forEach(function(el) {
+            el.addEventListener('change', function(e) {
+                state.pickerDraft.package = e.target.value;
+                renderCatalog();
+            });
+        });
+    }
+    function onPickerFieldChange(e) {
+        var field = e.target.getAttribute('data-picker-field');
+        if (!field) return;
+        var val = e.target.value;
+        if (e.target.type === 'number') val = parseFloat(val);
+        if (field === 'new_n_tokens' || field === 'device_count' || field === 'additional_devices') {
+            val = parseInt(val, 10);
+        }
+        state.pickerDraft[field] = val;
+        // Re-render only the picker (no full catalog re-render needed for
+        // simple field updates, but a re-render also updates the estimate).
+        renderCatalog();
+    }
+    function commitPicker() {
+        var slot = state.activePicker;
+        if (!slot) return;
+        var d = state.pickerDraft || {};
+        var item = null;
+        state.pickerError = null;
+
+        if (slot === 'renew') {
+            var rlic = findLicenseById(d.license_id);
+            if (!rlic) { state.pickerError = 'Pick a license to renew.'; renderCatalog(); return; }
+            var devs = parseInt(d.new_n_tokens, 10) || deviceCountOf(rlic);
+            if (devs < 1 || devs > DEVICE_CAP) {
+                state.pickerError = 'Pick at least 1 device.';
+                renderCatalog(); return;
+            }
+            item = {
+                sku: 'license_renewal',
+                license_id: rlic.license_id,
+                duration_days: 365,
+                new_n_tokens: devs
+            };
+        } else if (slot === 'devices') {
+            var elic = findLicenseById(d.license_id);
+            if (!elic) { state.pickerError = 'Pick a license.'; renderCatalog(); return; }
+            var addN = parseInt(d.additional_devices, 10) || 1;
+            var maxAdd = Math.max(1, Math.min(10, DEVICE_CAP - deviceCountOf(elic)));
+            if (addN < 1 || addN > maxAdd) {
+                state.pickerError = 'Pick between 1 and ' + maxAdd + ' devices to add.';
+                renderCatalog(); return;
+            }
+            item = {
+                sku: 'additional_devices',
+                license_id: elic.license_id,
+                additional_devices: addN
+            };
+        } else if (slot === 'credits') {
+            if (d.package === 'pro_bundle') {
+                item = { sku: 'streaming_topup_pro_bundle' };
+            } else {
+                var amt = parseFloat(d.amount_usd);
+                if (isNaN(amt) || amt < streamingPricing.payg_min) {
+                    state.pickerError = 'Minimum top-up is $' + streamingPricing.payg_min + '.';
+                    renderCatalog(); return;
+                }
+                item = { sku: 'streaming_topup_payg', amount_usd: Math.round(amt * 100) / 100 };
+            }
+        } else if (slot === 'new') {
+            var dc = parseInt(d.device_count, 10);
+            if (isNaN(dc) || dc < 1 || dc > NEW_LICENSE_MAX_DEVICES) {
+                state.pickerError = 'Pick between 1 and ' + NEW_LICENSE_MAX_DEVICES + ' devices.';
+                renderCatalog(); return;
+            }
+            item = { sku: 'license_new', product_id: 'sar_1y_' + dc + 'dev' };
+        }
+
+        if (!item) return;
+        cartAdd(item);
+        closePicker();
+        renderAll();
+        schedulePreview();
+    }
+
+    // ===== Cart panel UI =====
+    function describeItem(item) {
+        if (item.sku === 'license_renewal') {
+            var lic = findLicenseById(item.license_id);
+            var name = (lic && lic.license_name) || ('License ' + item.license_id);
+            var n = item.new_n_tokens || (lic ? deviceCountOf(lic) : 0);
+            var cur = lic ? deviceCountOf(lic) : 0;
+            var raised = lic && n > cur ? ' (+' + (n - cur) + ' devices)'
+                : (lic && n < cur ? ' (−' + (cur - n) + ' devices)' : '');
+            var newName = lic ? renewedLicenseName(lic, item.duration_days || 365) : '';
+            return {
+                title: 'Renew ' + name,
+                meta: n + ' device' + (n === 1 ? '' : 's') + ', 1 year' + raised
+                    + (lic && lic.expiry_date ? ' · starts at expiry ' + lic.expiry_date : ''),
+                note: newName ? '→ ' + newName : null
+            };
+        }
+        if (item.sku === 'additional_devices') {
+            var lic2 = findLicenseById(item.license_id);
+            var name2 = (lic2 && lic2.license_name) || ('License ' + item.license_id);
+            var n2 = item.additional_devices || 1;
+            var current = lic2 ? deviceCountOf(lic2) : 0;
+            var breakdown = lic2 ? extensionPriceBreakdownText(lic2) : '';
+            return {
+                title: '+ ' + n2 + ' device' + (n2 === 1 ? '' : 's') + ' on ' + name2,
+                meta: (current ? current + ' → ' + (current + n2) + ' devices · ' : '')
+                    + (breakdown || 'prorated to current expiry')
+                    + (lic2 && lic2.expiry_date ? ' (until ' + lic2.expiry_date + ')' : '')
+            };
+        }
+        if (item.sku === 'streaming_topup_payg') {
+            var rate = currentPerMinuteRate();
+            var amt = item.amount_usd || 0;
+            var mins = (rate > 0 && amt > 0) ? Math.floor(amt / rate) : 0;
+            return {
+                title: 'Streaming credits',
+                meta: 'Pay as you go top-up'
+                    + (mins > 0 ? ' · ≈ ' + mins.toLocaleString() + ' min at $' + rate.toFixed(2) + '/min' : '')
+            };
+        }
+        if (item.sku === 'streaming_topup_pro_bundle') {
+            return {
+                title: 'Pro Bundle streaming credits',
+                meta: '$' + streamingPricing.bundle_price + ' → $' + streamingPricing.bundle_credits + ' in credits'
+            };
+        }
+        if (item.sku === 'license_new') {
+            var m = /sar_1y_(\d+)dev/.exec(item.product_id || '');
+            var devs = m ? parseInt(m[1], 10) : 1;
+            return {
+                title: 'New SAR license',
+                meta: devs + ' device' + (devs === 1 ? '' : 's') + ', 1 year',
+                note: '→ ' + newLicenseDisplayName()
+            };
+        }
+        return { title: item.sku, meta: '' };
+    }
+    function clientPriceFor(item) {
+        if (item.sku === 'license_renewal') {
+            var lic = findLicenseById(item.license_id);
+            return priceForRenewal(lic, item.new_n_tokens);
+        }
+        if (item.sku === 'additional_devices') {
+            var lic2 = findLicenseById(item.license_id);
+            return priceForAddDevices(lic2, item.additional_devices || 1);
+        }
+        if (item.sku === 'streaming_topup_payg') return item.amount_usd || 0;
+        if (item.sku === 'streaming_topup_pro_bundle') return streamingPricing.bundle_price;
+        if (item.sku === 'license_new') {
+            var m = /sar_1y_(\d+)dev/.exec(item.product_id || '');
+            return priceForNew(m ? parseInt(m[1], 10) : 1);
+        }
+        return 0;
+    }
+    function priceFor(item, idx) {
+        // Prefer backend-authoritative price from preview_cart when available.
+        if (state.previewSummary && Array.isArray(state.previewSummary.line_items)
+            && typeof state.previewSummary.line_items[idx] === 'object'
+            && typeof state.previewSummary.line_items[idx].amount_usd === 'number') {
+            return state.previewSummary.line_items[idx].amount_usd;
+        }
+        return clientPriceFor(item);
+    }
+    function renderCart() {
+        var listEl = $('cartList');
+        var emptyEl = $('cartEmpty');
+        var subEl = $('cartSubtotal');
+        var subNote = $('cartSubtotalNote');
+        var countEl = $('cartCount');
+        var items = state.cart.items || [];
+
+        countEl.textContent = items.length ? ' (' + items.length + ')' : '';
+        var catTitle = $('catalogTitle');
+        if (catTitle) catTitle.textContent = items.length ? 'Add more to your order' : 'Add to your order';
+
+        if (!items.length) {
+            listEl.innerHTML = '';
+            emptyEl.style.display = '';
+            subEl.style.display = 'none';
+            subNote.style.display = 'none';
+            updateCtaState();
+            return;
+        }
+        emptyEl.style.display = 'none';
+        var subtotal = 0;
+        var html = items.map(function(item, idx) {
+            var d = describeItem(item);
+            var p = priceFor(item, idx);
+            subtotal += p;
+            var errMsg = errorMessageForItem(item);
+            var rowClass = 'cart-item' + (errMsg ? ' has-error' : '');
+            var inline = inlineEditHtml(item, idx);
+            // Under-count heads-up for a renewal whose device count is below
+            // the current license. Not an error (downsizing is allowed) — a
+            // red caption beneath the editor, same copy as the picker.
+            var warnMsg = '';
+            if (item.sku === 'license_renewal') {
+                var wlic = findLicenseById(item.license_id);
+                if (wlic) warnMsg = renewalShortfallText(deviceCountOf(wlic), item.new_n_tokens || deviceCountOf(wlic));
+            }
+            return '<div class="' + rowClass + '" data-item-id="' + esc(item.id) + '">'
+                +   '<div class="cart-item-body">'
+                +     '<div class="cart-item-title">' + esc(d.title) + '</div>'
+                +     '<div class="cart-item-meta">' + esc(d.meta) + '</div>'
+                +     (d.note ? '<div class="cart-item-note">' + esc(d.note) + '</div>' : '')
+                +     (inline ? '<div class="cart-item-edit">' + inline + '</div>' : '')
+                +     (warnMsg ? '<div class="cart-item-warn">' + esc(warnMsg) + '</div>' : '')
+                +     (errMsg ? '<div class="cart-item-error">' + esc(errMsg) + '</div>' : '')
+                +   '</div>'
+                +   '<div class="cart-item-price">' + formatPrice(p) + '</div>'
+                +   '<button type="button" class="cart-item-remove" data-action="remove-item" data-id="' + esc(item.id) + '" aria-label="Remove">&times;</button>'
+                + '</div>';
+        }).join('');
+        listEl.innerHTML = html;
+        wireCartInlineEdits();
+
+        subEl.style.display = '';
+        subNote.style.display = '';
+        // If preview gave us an authoritative subtotal, use it.
+        var displaySubtotal = (state.previewSummary && typeof state.previewSummary.subtotal_usd === 'number')
+            ? state.previewSummary.subtotal_usd
+            : subtotal;
+        $('cartSubtotalValue').textContent = formatPrice(displaySubtotal);
+
+        updateCtaState();
+    }
+    function inlineEditHtml(item, idx) {
+        if (item.sku === 'license_renewal') {
+            var lic = findLicenseById(item.license_id);
+            if (!lic) return '';
+            var current = deviceCountOf(lic);
+            var n = item.new_n_tokens || current;
+            // Same −/+ stepper as the renewal picker (parity). Downsizing is
+            // allowed; the under-count warning is rendered separately in
+            // renderCart so it can sit on its own line beneath the row.
+            return 'Devices: ' + qtyStepperHtml({
+                value: n, min: 1, max: Math.min(DEVICE_CAP, current + 10),
+                fieldAttrs: 'data-edit-field="new_n_tokens" data-id="' + esc(item.id) + '"'
+            });
+        }
+        if (item.sku === 'additional_devices') {
+            var lic2 = findLicenseById(item.license_id);
+            if (!lic2) return '';
+            var current2 = deviceCountOf(lic2);
+            var maxAdd = Math.max(1, Math.min(10, DEVICE_CAP - current2));
+            return 'Devices to add: ' + qtyStepperHtml({
+                value: item.additional_devices || 1, min: 1, max: maxAdd,
+                fieldAttrs: 'data-edit-field="additional_devices" data-id="' + esc(item.id) + '"'
+            });
+        }
+        if (item.sku === 'streaming_topup_payg') {
+            return 'Amount: <input type="number" data-edit-field="amount_usd" data-id="'
+                + esc(item.id) + '" min="' + streamingPricing.payg_min + '" step="1" value="'
+                + (item.amount_usd || streamingPricing.payg_min) + '"> USD';
+        }
+        return '';
+    }
+    function wireCartInlineEdits() {
+        document.querySelectorAll('#cartList [data-edit-field]').forEach(function(el) {
+            el.addEventListener('change', onCartEdit);
+        });
+    }
+    function onCartEdit(e) {
+        var field = e.target.getAttribute('data-edit-field');
+        var id = e.target.getAttribute('data-id');
+        if (!field || !id) return;
+        var val = e.target.value;
+        if (e.target.type === 'number') val = parseFloat(val);
+        if (field === 'new_n_tokens' || field === 'additional_devices') val = parseInt(val, 10);
+        var patch = {};
+        patch[field] = val;
+        cartUpdate(id, patch);
+        renderCart();
+        schedulePreview();
+    }
+    function errorMessageForItem(item) {
+        // Client-side guards in addition to backend preview errors.
+        if (item.sku === 'streaming_topup_payg') {
+            if ((item.amount_usd || 0) < streamingPricing.payg_min) {
+                return 'PAYG minimum is $' + streamingPricing.payg_min + '.';
+            }
+        }
+        if (item.sku === 'additional_devices') {
+            var lic = findLicenseById(item.license_id);
+            if (lic) {
+                var newTotal = deviceCountOf(lic) + (item.additional_devices || 0);
+                if (newTotal > DEVICE_CAP) {
+                    return "That's more devices than we cover with self-service. "
+                        + "Email info@eagleeyessearch.com and we'll set it up for you.";
+                }
+            }
+        }
+        return null;
+    }
+
+    // ===== Order summary =====
+    function renderOrderSummary() {
+        // The subtotal lives on the cart card. Nothing else to do today;
+        // preview-driven updates flow through renderCart.
+        renderCart();
+    }
+    function updateCtaState() {
+        var items = state.cart.items || [];
+        var hasItems = items.length > 0;
+        var anyError = items.some(function(it) { return !!errorMessageForItem(it); });
+        var disabled = !hasItems || anyError || state.submitting || state.hintBlocked;
+        var btn = $('ctaPayNow');
+        btn.disabled = disabled;
+        btn.title = state.hintBlocked
+            ? "We can't match the license from your top-up link to your accounts. Switch to the account it was sent to, or dismiss the notice above to buy for your current account."
+            : '';
+    }
+
+    // ===== Endpoints =====
+    async function postBillingJson(endpoint, body) {
+        var user = firebase.auth().currentUser;
+        if (!user) throw new Error('Not signed in');
+        var idToken = await user.getIdToken();
+        var useEmulator = new URLSearchParams(window.location.search).get('is_emulator') === 'true';
+        var url = (!useEmulator && CART_ENDPOINT_URLS[endpoint])
+            ? CART_ENDPOINT_URLS[endpoint]
+            : (getHostUrl() + '/' + endpoint);
+        var r = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + idToken,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(body || {})
+        });
+        var text = await r.text();
+        var data = {};
+        if (text) { try { data = JSON.parse(text); } catch (e) { data = { message: text }; } }
+        if (!r.ok) {
+            var err = new Error((data && (data.message || data.error)) || ('Request failed (' + r.status + ')'));
+            err.status = r.status;
+            err.data = data;
+            throw err;
+        }
+        return data;
+    }
+    // Build the cart-shaped payload for preview_cart / create_purchase_*.
+    function buildCartPayload(intent) {
+        var items = state.cart.items.map(function(it) {
+            var copy = { sku: it.sku };
+            ['license_id', 'duration_days', 'new_n_tokens', 'additional_devices',
+             'amount_usd', 'product_id'].forEach(function(k) {
+                if (it[k] != null && it[k] !== '') copy[k] = it[k];
+            });
+            return copy;
+        });
+        var payload = {
+            account_id: parseInt(state.activeAccountId, 10),
+            items: items,
+            is_emulator: false
+        };
+        // Forward emulator/test flag if the page URL carries it.
+        var qs = new URLSearchParams(window.location.search);
+        if (qs.get('is_emulator') === '1' || qs.get('is_emulator') === 'true') {
+            payload.is_emulator = true;
+        }
+        return payload;
+    }
+
+    // ===== CTA handlers =====
+    function clearCtaStatus() {
+        var e = $('ctaStatus');
+        if (!e) return;
+        e.style.display = 'none';
+        e.textContent = '';
+        e.className = 'purchase-error';
+    }
+    function showCtaError(msg) {
+        var e = $('ctaStatus');
+        if (!e) { alert(msg); return; }
+        e.className = 'purchase-error';
+        e.style.display = '';
+        e.textContent = msg;
+    }
+    function showCtaSuccess(msg) {
+        var e = $('ctaStatus');
+        if (!e) { alert(msg); return; }
+        e.className = 'purchase-success';
+        e.style.display = '';
+        e.textContent = msg;
+    }
+
+    async function withCtaInflight(btn, label, fn) {
+        clearCtaStatus();
+        if (state.submitting) return;
+        state.submitting = true;
+        var orig = btn.textContent;
+        btn.textContent = label;
+        updateCtaState();
+        try { await fn(); }
+        finally {
+            state.submitting = false;
+            btn.textContent = orig;
+            updateCtaState();
+        }
+    }
+
+    async function onPayNow() {
+        // Safety net: never reach Stripe while the top-up link's license is
+        // unmatched to one of the user's accounts (button is also disabled).
+        if (state.hintBlocked) { applyLicenseHintResolution(); return; }
+        await withCtaInflight($('ctaPayNow'), 'Redirecting…', async function() {
+            try {
+                var payload = buildCartPayload('checkout');
+                var resp = await postBillingJson('create_purchase_checkout', payload);
+                if (!resp || !resp.checkout_url) throw new Error('No checkout URL returned.');
+                clearCart();
+                window.location.href = resp.checkout_url;
+            } catch (err) {
+                console.error('Pay now failed:', err);
+                showCtaError(formatErrorMessage(err));
+            }
+        });
+    }
+    function formatErrorMessage(err) {
+        if (!err) return 'Something went wrong.';
+        var code = err && err.data && err.data.code;
+        if (code === 'billing_address_required') {
+            return 'Add a billing address to this account first.';
+        }
+        if (err.data && err.data.message) return err.data.message;
+        return err.message || String(err);
+    }
+    // ===== Non-owner / no-account panels =====
+    function applyOwnerVisibility() {
+        var acc = activeAccount();
+        var hasAccount = !!acc;
+        if (!hasAccount) {
+            // Signed in but not a member of any billing account.
+            $('purchaseContent').style.display = 'none';
+            $('purchaseNonOwner').style.display = 'none';
+            renderNoAccountPanel();
+            $('purchaseNoAccount').style.display = '';
+            return;
+        }
+        // Both owners and members see the full purchase page now. Members can
+        // top up streaming credits; the owner-only catalog rows (renew, add
+        // devices, buy new license) render disabled with an "Admins only"
+        // badge (see catalogSlots / renderCatalog). The old member lock-out
+        // panel is no longer shown.
+        $('purchaseNoAccount').style.display = 'none';
+        $('purchaseNonOwner').style.display = 'none';
+        $('purchaseContent').style.display = '';
+    }
+    function renderNoAccountPanel() {
+        var emailEl = $('noAccountEmail');
+        if (!emailEl) return;
+        var email = '';
+        try { email = ((firebase.auth().currentUser || {}).email || ''); } catch (e) {}
+        emailEl.textContent = email || 'this user';
+    }
+    function renderNonOwnerPanel(acc) {
+        var nameEl = $('nonOwnerAccountName');
+        var listEl = $('nonOwnerOwnersList');
+        if (!acc) {
+            if (listEl) listEl.innerHTML = '';
+            return;
+        }
+        if (nameEl) nameEl.textContent = acc.name || 'this account';
+        var members = acc.members || {};
+        // Owner display names, when the backend provides them. Map of
+        // email -> "First Last" (see acc.member_names). Falls back to
+        // email-only when absent.
+        var memberNames = acc.member_names || {};
+        var owners = Object.keys(members).filter(function(email) {
+            return String(members[email]).toLowerCase() === 'owner';
+        });
+        owners.sort();
+        if (!listEl) return;
+        if (!owners.length) {
+            listEl.innerHTML = '<div class="non-owner-owner-row"><div class="non-owner-owner-id no-name"><span class="non-owner-owner-email">No owners on file. Contact info@eagleeyessearch.com.</span></div></div>';
+            return;
+        }
+        var rowsHtml = owners.map(function(email) {
+            var name = (memberNames[email] || '').trim();
+            var seed = name || email;
+            var initial = (seed.charAt(0) || '?').toUpperCase();
+            var color = (typeof colorForEmail === 'function') ? colorForEmail(email) : '#5b8def';
+            var idHtml = name
+                ? '<div class="non-owner-owner-id">'
+                  +   '<span class="non-owner-owner-name">' + esc(name) + '</span>'
+                  +   '<span class="non-owner-owner-email">' + esc(email) + '</span>'
+                  + '</div>'
+                : '<div class="non-owner-owner-id no-name">'
+                  +   '<span class="non-owner-owner-email">' + esc(email) + '</span>'
+                  + '</div>';
+            return '<div class="non-owner-owner-row">'
+                + '<span class="non-owner-owner-avatar" style="background:' + color + '">'
+                +   esc(initial)
+                + '</span>'
+                + idHtml
+                + '<a class="non-owner-owner-mail" href="mailto:' + esc(email)
+                +   '?subject=' + encodeURIComponent('Eagle Eyes purchase request for ' + (acc.name || 'our account'))
+                +   '&body=' + encodeURIComponent(buildNonOwnerEmailBody(acc, owners))
+                +   '">Email</a>'
+                + '</div>';
+        }).join('');
+        listEl.innerHTML = rowsHtml;
+    }
+    function buildNonOwnerEmailBody(acc, owners) {
+        var requesterEmail = '';
+        try { requesterEmail = ((firebase.auth().currentUser || {}).email || ''); } catch (e) {}
+        return [
+            "Hi,",
+            "",
+            "I'm a member of the Eagle Eyes account \"" + (acc.name || 'our account') + "\" and I'd like to ",
+            "(pick one): renew a license / add devices / buy streaming credits.",
+            "",
+            "Either purchase on the account's behalf via /account/purchase/, or add me as an account",
+            "owner so I can buy directly.",
+            "",
+            "Thanks,",
+            requesterEmail
+        ].join('\n');
+    }
+
+    // ===== Init =====
+    function readActiveAccountId(uid) {
+        try { return sessionStorage.getItem('ee-active-account:' + uid); } catch (e) { return null; }
+    }
+    function renderAll() {
+        renderCart();
+        renderCatalog();
+        applyLicenseHintResolution();
+        // Re-evaluate the Pay button after resolution (it may set hintBlocked
+        // or switch the active account), so an unmatched top-up link can't reach Stripe.
+        updateCtaState();
+    }
+    async function initSignedIn(user) {
+        $('purchaseLoading').style.display = '';
+        $('purchaseSignedOut').style.display = 'none';
+        $('purchaseContent').style.display = 'none';
+
+        var dash;
+        try {
+            dash = await loadDashboard(user);
+        } catch (err) {
+            console.error('Dashboard load failed:', err);
+            $('purchaseLoading').innerHTML = '<p style="color: #555; padding: 30px 0; text-align: center;">Couldn\'t load your licenses. Please refresh.</p>';
+            return;
+        }
+        state.accounts = (dash && dash.accounts) || [];
+        state.organizations = (dash && dash.organizations) || [];
+        state.licenses = (dash && dash.license_overview) || [];
+
+        var stored = readActiveAccountId(user.uid);
+        var firstId = state.accounts.length ? accountIdOf(state.accounts[0]) : null;
+        if (stored && state.accounts.some(function(a) { return String(accountIdOf(a)) === String(stored); })) {
+            state.activeAccountId = stored;
+        } else {
+            state.activeAccountId = firstId != null ? String(firstId) : null;
+            // Stored id no longer resolves (account deleted, user removed, etc.),
+            // clear it so other pages don't keep pointing at the dead id.
+            if (stored) {
+                try { sessionStorage.removeItem('ee-active-account:' + user.uid); } catch (e) {}
+            }
+        }
+
+        // Load cart for active account.
+        state.cart = loadCart();
+
+        // Partial-license-id resolver may switch the active account.
+        state.licenseHint = parseLicenseHintFromUrl();
+        if (state.licenseHint) {
+            applyLicenseHintResolution();
+            // The resolver may have switched accounts; re-load that cart.
+            state.cart = loadCart();
+        }
+
+        // Apply URL deep-link items (once). Preserve any user edits made
+        // in a prior visit: if the slot already holds an item pointing at
+        // the same target (same license / product), skip the URL add.
+        if (!state.urlAddsApplied) {
+            state.urlAddsApplied = true;
+            var urlItems = parseUrlAddItems();
+            var ownerForAdds = activeAccountIsOwner();
+            urlItems.forEach(function(it) {
+                // Members can only add streaming credits. Ignore owner-only
+                // deep-link items (renew / devices / new license) so a shared
+                // ?add=... URL can't seed a cart they're not allowed to buy.
+                if (!ownerForAdds && !isCreditsSku(it.sku)) return;
+                var slot = catalogSlotForSku(it.sku);
+                var existing = slot && state.cart.items.find(function(x) {
+                    return catalogSlotForSku(x.sku) === slot;
+                });
+                var sameTarget = !!existing
+                    && existing.sku === it.sku
+                    && (existing.license_id || null) === (it.license_id || null)
+                    && (existing.product_id || null) === (it.product_id || null);
+                if (sameTarget) return;
+                cartAdd(it);
+            });
+        }
+
+        loadCredits(user).then(function(c) {
+            if (!c) return;
+            state.credits = c;
+            applyPerMinuteRate(c.per_minute_rate_usd);
+            renderCart();
+        });
+        loadStreamingPackages(user).then(applyPackageConfig);
+
+        renderAll();
+        schedulePreview();
+
+        $('purchaseLoading').style.display = 'none';
+        applyOwnerVisibility();
+    }
+    function initSignedOut() {
+        $('purchaseLoading').style.display = 'none';
+        $('purchaseContent').style.display = 'none';
+        $('purchaseSignedOut').style.display = '';
+    }
+    function applyAuth(user) {
+        if (user) initSignedIn(user);
+        else initSignedOut();
+    }
+
+    // ===== Event wiring =====
+    document.addEventListener('click', function(e) {
+        var act = e.target.closest('[data-action]');
+        if (!act) return;
+        var action = act.getAttribute('data-action');
+        if (action === 'open-picker') {
+            openPicker(act.getAttribute('data-slot'));
+        } else if (action === 'admin-locked') {
+            // Member clicked an owner-only catalog row: explain it's an Admin
+            // action and show who to ask (shared modal from the layout).
+            var slot = act.getAttribute('data-slot');
+            var modalAction = slot === 'devices' ? 'add_devices' : (slot === 'new' ? 'purchase' : 'renew');
+            var lockedAcc = activeAccount();
+            if (window.eeAdminActionModal) {
+                window.eeAdminActionModal.show({
+                    action: modalAction,
+                    accountName: (lockedAcc && lockedAcc.name) || '',
+                    adminEmails: window.eeAdminActionModal.adminEmailsForAccount(lockedAcc)
+                });
+            }
+        } else if (action === 'close-picker') {
+            closePicker();
+        } else if (action === 'commit-picker') {
+            commitPicker();
+        } else if (action === 'remove-item') {
+            cartRemove(act.getAttribute('data-id'));
+            renderAll();
+            schedulePreview();
+        } else if (action === 'stepper-dec' || action === 'stepper-inc') {
+            var stepper = act.closest('.qty-stepper');
+            if (!stepper) return;
+            var input = stepper.querySelector('input[type="number"]');
+            if (!input) return;
+            var minA = parseFloat(input.min); if (isNaN(minA)) minA = 1;
+            var maxA = parseFloat(input.max); if (isNaN(maxA)) maxA = 99;
+            var stepA = parseFloat(act.getAttribute('data-step')) || parseFloat(input.step) || 1;
+            var cur = parseFloat(input.value); if (isNaN(cur)) cur = minA;
+            var next = action === 'stepper-dec' ? cur - stepA : cur + stepA;
+            next = clamp(next, minA, maxA);
+            if (next === cur) return;
+            // Drop trailing .0 for integer steps so the displayed value
+            // stays clean ("30" not "30.0").
+            input.value = (stepA % 1 === 0) ? String(Math.round(next)) : String(next);
+            // Dispatch a synthetic change so the existing field handlers
+            // (data-picker-field / data-edit-field) fire as if the user typed.
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        $('ctaPayNow').addEventListener('click', onPayNow);
+
+        var dismiss = $('hintBannerDismiss');
+        if (dismiss) {
+            dismiss.addEventListener('click', function() {
+                state.hintBannerDismissed = true;
+                $('hintBanner').style.display = 'none';
+            });
+        }
+    });
+
+    document.addEventListener('authStateChanged', function(e) {
+        applyAuth(e.detail && e.detail.user);
+    });
+    document.addEventListener('accountScopeChanged', function(e) {
+        if (!e.detail || e.detail.scope !== 'account') return;
+        var u = firebase.auth().currentUser;
+        if (!u) return;
+        state.activeAccountId = String(e.detail.id);
+        state.cart = loadCart();
+        state.activePicker = null;
+        state.pickerDraft = null;
+        state.pickerError = null;
+        loadCredits(u).then(function(c) {
+            if (!c) return;
+            state.credits = c;
+            applyPerMinuteRate(c.per_minute_rate_usd);
+            renderCart();
+        });
+        renderAll();
+        schedulePreview();
+        applyOwnerVisibility();
+    });
+    if (typeof firebase !== 'undefined' && firebase.auth) {
+        try { applyAuth(firebase.auth().currentUser); } catch (e) {}
+    }
+
+    // The sign-in modal lives only on /account/. A signed-out visitor can't do
+    // anything here, so bounce to the one sign-in page once auth resolves.
+    // onAuthStateChanged fires post-resolution, so null = truly signed out
+    // (not a transient pre-restore null) — no risk of bouncing a signed-in user.
+    if (typeof firebase !== 'undefined' && firebase.auth) {
+        try {
+            firebase.auth().onAuthStateChanged(function(user) {
+                if (!user) window.location.replace('{{ "/account/" | relative_url }}');
+            });
+        } catch (e) { /* ignore */ }
+    }
+})();
+</script>

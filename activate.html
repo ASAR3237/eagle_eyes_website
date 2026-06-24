@@ -343,6 +343,20 @@ noindex: true
         background: #e9ecef;
         text-decoration: none;
     }
+    .license-help {
+        margin-top: 8px;
+        padding: 14px 16px;
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        font-size: 13px;
+        line-height: 1.55;
+        color: #555;
+    }
+    .license-help p { margin: 0 0 8px; }
+    .license-help p:last-child { margin: 0; }
+    .license-help strong { color: #333; }
+    .license-help a { color: #1e90ff; }
 
     /* Compact other-license rows */
     .other-license-row {
@@ -617,6 +631,17 @@ noindex: true
                         </div>
                     </div>
                 </div>
+
+                <!-- "License not visible?". Explanation expander -->
+                <div>
+                    <a href="#" class="expand-toggle" onclick="toggleLicenseHelp(); return false;" id="licenseHelpLink">License not visible?</a>
+                    <div id="licenseHelpSection" class="license-help" style="display: none;">
+                        <p>If a license isn't showing up here, your account may not be added to the team that owns it yet.</p>
+                        <p><strong>Soon, licenses will only be activatable by accounts that have been added to their organization.</strong> If your team already has a license, ask a teammate to add <strong id="licenseHelpEmail">your email</strong> so it appears here automatically. Anyone already on the team can do this at EagleEyesSearch.com &rarr; Account &rarr; People &rarr; "Invite someone to this team".</p>
+                        <p><strong>Don't have a license yet?</strong> <a href="{{ '/pricing/' | relative_url }}" target="_blank">Get one here &rarr;</a></p>
+                    </div>
+                </div>
+
             </div>
             <!-- Device summary at bottom -->
             <div class="device-summary" id="deviceSummary" style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #f1f3f4;">
@@ -740,7 +765,7 @@ noindex: true
         // Fallback: if Firebase auth hasn't responded after 5s, show sign-in
         setTimeout(function() {
             if (!authResolved) {
-                console.warn('Firebase auth timeout — showing sign-in as fallback');
+                console.warn('Firebase auth timeout. Showing sign-in as fallback');
                 showAuthRequired();
             }
         }, 5000);
@@ -783,6 +808,7 @@ noindex: true
             $('#addLicenseBtn').siblings('.success-message, .error-message-inline').remove();
             addLicenseToAccount(licenseId);
         });
+
     });
 
     function showAuthRequired() {
@@ -961,6 +987,26 @@ noindex: true
     let userLicenses = [];
     let selectedLicense = null;
 
+    // Future-start (renewal) licenses: the backend creates a successor
+    // license whose billable period begins at the current one's expiry.
+    // The token can be pre-fetched early, but the license isn't active
+    // until start_at, so we show it but block device activation until then.
+    // This is a UX gate, not a security check — expiry is absolute, so
+    // activating early steals no time; the backend stays permissive on
+    // purpose so token pre-fetch keeps working.
+    // Handles both endpoint shapes: float seconds (start_at, from
+    // check_available_licenses_and_tokens) and ISO string (start_at_iso,
+    // from get_license_overview).
+    function licenseStartMs(lic) {
+        if (lic.start_at != null)  return lic.start_at * 1000;       // Unix seconds → ms
+        if (lic.start_at_iso)      return new Date(lic.start_at_iso).getTime();
+        return null;                                                 // no start date → active now
+    }
+    function licenseIsPending(lic) {
+        const startMs = licenseStartMs(lic);
+        return startMs != null && startMs > Date.now();
+    }
+
     function loadUserLicenses() {
         console.log('loadUserLicenses called');
         $('#licensesLoading').show();
@@ -1018,6 +1064,9 @@ noindex: true
                                     const dispensedTokens = licenseInfo.n_tokens_dispensed || 0;
                                     license.remaining_keys = Math.max(0, totalTokens - dispensedTokens);
                                     license.has_existing_key = existingKeysForMachine.includes(licenseId);
+                                    // start_at is a sibling of .license on the dispensed entry.
+                                    license.start_at = licenseInfo.start_at;
+                                    license.is_pending = licenseIsPending(license);
                                     if (license.expiry_timestamp === null) continue;
                                     userLicenses.push(license);
                                 }
@@ -1056,12 +1105,23 @@ noindex: true
         otherToggle.hide();
 
         if (userLicenses.length === 0) {
-            primaryEl.html('<p style="color: #888; font-size: 14px;">No active licenses found. Add one below.</p>');
+            const userEmail = (firebase.auth().currentUser && firebase.auth().currentUser.email) || 'this email';
+            primaryEl.html(
+                '<div style="color: #555; font-size: 14px; line-height: 1.6; padding: 12px 4px;">' +
+                  '<p style="margin: 0 0 8px;">No active licenses are linked to <strong>' + userEmail + '</strong> yet.</p>' +
+                  '<p style="margin: 0; color: #888;">If your team already has a license, ask an admin to add this email to the team. ' +
+                    'Otherwise, you can <a href="' + '{{ "/pricing/" | relative_url }}' + '" target="_blank" style="color: #1e90ff;">get a license here</a>.' +
+                  '</p>' +
+                '</div>'
+            );
             return;
         }
 
-        // Sort: reactivate first, then available, then used up
+        // Sort: pending (future-start) last, then reactivate first, then
+        // available, then used up. Pending ranks last so a not-yet-started
+        // renewal is never auto-selected as the primary license.
         const sortedLicenses = [...userLicenses].sort((a, b) => {
+            if (a.is_pending !== b.is_pending) return a.is_pending ? 1 : -1;
             if (a.has_existing_key && !b.has_existing_key) return -1;
             if (!a.has_existing_key && b.has_existing_key) return 1;
             const aAvailable = a.remaining_keys > 0;
@@ -1098,7 +1158,14 @@ noindex: true
         let buttonHtml = '';
         let statusText = '';
 
-        if (hasExistingKey) {
+        if (license.is_pending) {
+            // Future-start renewal: show it (so the queued renewal is
+            // visible) but don't allow activation until start_at.
+            const startDate = new Date(licenseStartMs(license)).toLocaleDateString();
+            cardClass += ' disabled';
+            buttonHtml = `<button class="btn-select-license btn-disabled" disabled>Available from ${startDate}</button>`;
+            statusText = `<span style="color: #888; font-size: 12px;">Available from ${startDate}. Your current license covers you until then.</span>`;
+        } else if (hasExistingKey) {
             cardClass += ' reactivate';
             buttonHtml = `<button class="btn-reactivate-license" onclick="selectLicense('${license.license_id}')">Reactivate on this license</button>`;
             statusText = '<span style="color: #28a745; font-size: 12px;">Already activated on this device</span>';
@@ -1130,8 +1197,13 @@ noindex: true
         const expiryDate = license.expiry_timestamp ?
             new Date(license.expiry_timestamp * 1000).toLocaleDateString() : 'No expiry';
         let buttonHtml = '';
+        let metaText = `${license.license_id} &middot; ${license.remaining_keys} remaining &middot; Expires: ${expiryDate}`;
 
-        if (hasExistingKey) {
+        if (license.is_pending) {
+            const startDate = new Date(licenseStartMs(license)).toLocaleDateString();
+            buttonHtml = `<button class="disabled-btn" disabled>Available from ${startDate}</button>`;
+            metaText = `${license.license_id} &middot; Available from ${startDate} &middot; Expires: ${expiryDate}`;
+        } else if (hasExistingKey) {
             buttonHtml = `<button class="reactivate-btn" onclick="selectLicense('${license.license_id}')">Reactivate</button>`;
         } else if (!hasAvailable) {
             buttonHtml = `<button class="disabled-btn" disabled>No slots</button>`;
@@ -1143,7 +1215,7 @@ noindex: true
             <div class="other-license-row">
                 <div>
                     <div class="license-row-name">${license.license_name || 'Eagle Eyes License'}</div>
-                    <div class="license-row-meta">${license.license_id} &middot; ${license.remaining_keys} remaining &middot; Expires: ${expiryDate}</div>
+                    <div class="license-row-meta">${metaText}</div>
                 </div>
                 ${buttonHtml}
             </div>
@@ -1170,6 +1242,23 @@ noindex: true
             link.text('Have a license ID?');
         } else {
             section.slideDown(200);
+            link.text('Hide');
+        }
+    }
+
+    function toggleLicenseHelp() {
+        const section = $('#licenseHelpSection');
+        const link = $('#licenseHelpLink');
+        if (section.is(':visible')) {
+            section.slideUp(150);
+            link.text('License not visible?');
+        } else {
+            // Fill in the user's email so the "ask an admin to add ___" hint
+            // is concrete instead of just saying "your email".
+            const user = firebase.auth().currentUser;
+            const email = (user && user.email) || 'your email';
+            $('#licenseHelpEmail').text(email);
+            section.slideDown(150);
             link.text('Hide');
         }
     }
@@ -1222,6 +1311,7 @@ noindex: true
         $('.other-license-row button').prop('disabled', true).css('opacity', '0.5');
         $('#otherLicensesToggle').hide();
         $('#manualEntryLink').parent().hide();
+        $('#licenseHelpLink').parent().hide();
 
         // Scroll to confirmation
         setTimeout(() => {
@@ -1240,12 +1330,26 @@ noindex: true
             $('#otherLicensesToggle').show();
         }
         $('#manualEntryLink').parent().show();
+        $('#licenseHelpLink').parent().show();
     }
 
     function confirmActivation() {
         const license = userLicenses.find(l => l.license_id === selectedLicense);
         const hasExistingKey = license ? license.has_existing_key : false;
         const deviceName = $('#deviceName').text();
+
+        // Defense in depth with the disabled button: if a stale UI or a
+        // second tab let a pending (future-start) license through, refuse
+        // to activate it and show when it becomes available.
+        if (license && license.is_pending) {
+            const startDate = new Date(licenseStartMs(license)).toLocaleDateString();
+            showActivationError(
+                'This license is available from ' + startDate +
+                '. Your current license covers you until then.',
+                hasExistingKey
+            );
+            return;
+        }
 
         // Show loading
         $('#inlineConfirmArea .confirm-actions').hide();
@@ -1355,7 +1459,13 @@ noindex: true
         let errorMessage = 'Failed to activate device. ';
         try {
             const errorResponse = JSON.parse(xhr.responseText);
-            if (errorResponse.error) {
+            // Structured 403 from the team-membership gate. The backend has
+            // gone back and forth on the exact `error` string ("not_a_team_member"
+            // vs "not_authorized"), so detect either code OR fall back to the
+            // payload shape (org_name + admin_emails present).
+            if (isTeamMembershipError(errorResponse)) {
+                errorMessage = formatTeamMembershipError(errorResponse);
+            } else if (errorResponse.error) {
                 errorMessage = errorResponse.error;
             } else if (errorResponse.message) {
                 errorMessage = errorResponse.message;
@@ -1366,6 +1476,43 @@ noindex: true
             errorMessage = getGenericErrorMessage(xhr, status, error, errorMessage);
         }
         showActivationError(errorMessage, hasExistingKey);
+    }
+
+    function isTeamMembershipError(data) {
+        if (!data) return false;
+        const code = data.error || data.error_code || '';
+        if (code === 'not_a_team_member'
+            || code === 'not_authorized'
+            || code === 'team_member_required') return true;
+        // Shape-based fallback. If the server included org context, treat as
+        // a membership rejection even if the code string is different.
+        if (data.org_name || (Array.isArray(data.admin_emails) && data.admin_emails.length)) return true;
+        return false;
+    }
+
+    function escapeHtmlForActivation(s) {
+        if (s == null) return '';
+        return String(s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function formatTeamMembershipError(resp) {
+        const orgName = escapeHtmlForActivation(resp.org_name || 'this organization');
+        const userEmail = (firebase.auth().currentUser && firebase.auth().currentUser.email) || '';
+        const admins = Array.isArray(resp.admin_emails) ? resp.admin_emails : [];
+        let html = 'This license belongs to <strong>' + orgName + '</strong>, and ';
+        html += userEmail ? '<strong>' + escapeHtmlForActivation(userEmail) + '</strong> is not a member of that team yet.' : 'you\'re not a member of that team yet.';
+        if (admins.length) {
+            const links = admins.map(function(e) {
+                const safe = escapeHtmlForActivation(e);
+                return '<a href="mailto:' + safe + '">' + safe + '</a>';
+            }).join(', ');
+            html += ' Ask an admin to add your email to the team: ' + links + '.';
+        } else {
+            html += ' Ask an admin to add your email to the team.';
+        }
+        return html;
     }
 
     function getGenericErrorMessage(xhr, status, error, defaultMessage) {
@@ -1521,6 +1668,8 @@ noindex: true
                     const dispensedTokens = licenseInfo.n_tokens_dispensed || 0;
                     license.remaining_keys = Math.max(0, totalTokens - dispensedTokens);
                     license.has_existing_key = existingKeysForMachine.includes(licenseId);
+                    license.start_at = licenseInfo.start_at;
+                    license.is_pending = licenseIsPending(license);
                     if (license.expiry_timestamp === null) continue;
                     userLicenses.push(license);
                 }
