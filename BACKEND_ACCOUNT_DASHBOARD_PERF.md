@@ -1,54 +1,97 @@
-# Backend: /account/ slow to load (and sometimes stuck) — cold starts
+# Backend: /account/ slow to load (and sometimes stuck) — context + instructions
 
-## Symptom
+## Context
 
-`/account/` often sits on "Loading your account…" for several seconds, and
-occasionally hangs there. The whole account view reveal is gated on the
-`get_account_dashboard` response.
+### What the page is
+`https://www.eagleeyessearch.com/account/` is the signed-in account area
+(Licenses & credits, People, Devices, Configurations, Billing, etc.). It is the
+primary authenticated surface for customers, so its load time is the first thing
+a signed-in user experiences.
 
-## What the frontend already did
+### How it loads (frontend architecture)
+To avoid a fan-out of slow calls, the account area was built around **one
+bundled endpoint, `get_account_dashboard`**, which server-side parallelizes the
+pieces it needs (`user_account_info` + `accounts` + `organizations` +
+`license_overview`, plus `streaming_credits` for the first account). The
+frontend:
+1. Reads a `sessionStorage` cache for an instant first paint when present, and
+   revalidates in the background.
+2. On a cache miss (first visit, new session, cleared cache, or right after a
+   deploy), it must wait for `get_account_dashboard` before it can render.
 
-Bounded it so it can't hang forever: `eeDashboard.fetch` now aborts after 20s,
-and the content reveal races the fetch against an 8s timeout (sections fill in
-when data lands). That fixes the *stuck* case and caps the worst case — but the
-page is still slow whenever the function cold-starts. That part is backend.
+Crucially, the **entire account view is hidden behind a "Loading your account…"
+spinner until `get_account_dashboard` resolves** (the reveal is gated on that
+promise). So the perceived load time of the whole page ≈ the latency of that one
+call on a cache miss.
 
-## Root cause
+### What we observed (prod console, signed in as athompson@winnipeg.ca)
+- The page sat on "Loading your account…" for several seconds, and occasionally
+  appeared to hang there.
+- Multiple Cloud Function calls on load: `get_account_dashboard`,
+  `get_user_account_info`, and per-org `get_team_configurations`.
+- `get_team_configurations` returned **403 (Forbidden)** for org `33526989`
+  (Winnipeg Police Service) — logged as `get_team_configurations failed for
+  33526989 Error: Forbidden`.
+- `get_user_account_info` succeeded (`userStatus: approved`).
 
-`get_account_dashboard` (and the other account endpoints) are Cloud Functions
-that **cold-start** when idle — multi-second spin-up before any work runs. The
-account page can't render until this returns, so cold starts = long spinners.
+### Why it's slow / sometimes stuck
+The dominant factor is **Cloud Functions cold starts**: when a function is idle
+it must spin up (multi-second) before running any logic. Because the page reveal
+is gated on `get_account_dashboard`, a cold start there directly becomes a long
+spinner. If that request *stalls* (network or backend), the gating promise never
+settles and the spinner stays up indefinitely.
 
-## Backend fixes
+### What the frontend already changed (so you don't need to)
+We bounded the hang on the client so it can't wait forever:
+- `eeDashboard.fetch` now aborts `get_account_dashboard` after **20s** (frees the
+  in-flight promise so the fallback path can run).
+- The reveal now races the dashboard promise against an **8s timeout**, so the
+  page shell appears within a few seconds even on a cold start; individual
+  sections keep their own spinners and fill in when the data lands.
 
-**1. Keep the hot account endpoints warm (biggest win).**
-Set `min_instances >= 1` on `get_account_dashboard` so there's always a warm
-instance and users don't pay cold-start. Strongly recommended for at least
-`get_account_dashboard`; consider it too for the other endpoints the account
-area hits on load: `get_user_account_info`, `list_account_billing`,
-`get_team_configurations`, `list_account_devices`.
-(Gen-2 / Cloud Run functions: `min_instances`. Trade-off: a small always-on cost
-per kept-warm instance — worth it for the primary signed-in page.)
+That removes the "stuck forever" failure and caps the worst case — but it does
+**not** make a cold start fast. Eliminating the underlying latency is the backend
+part below.
 
-**2. `get_team_configurations` returns 403 for funding-account admins.**
-On load the page calls `get_team_configurations` per org. For a user who is a
-**billing admin of the account that funds an org but not an org member**
-(e.g. `athompson@winnipeg.ca` for org `33526989` / Winnipeg Police Service) it
-returns **403**, a wasted round-trip + console error. Decide one:
-  - (a) Authorize billing admins of the funding account to read that org's
-    team configurations (likely correct, since they manage it), **or**
-  - (b) Confirm it's intended (org-members only). If so, the dashboard could
-    return a per-org `can_view_configurations` flag so the frontend skips the
-    call (and the 403) for orgs the user can't read.
+## Instructions / ideas
 
-**3. (Optional) Redundant `get_user_account_info` call.**
+### 1. Keep the hot account endpoints warm (highest impact)
+Set **`min_instances >= 1`** on `get_account_dashboard` so there is always a warm
+instance and signed-in users don't pay cold-start latency on the main account
+page. Strongly recommended for `get_account_dashboard` at minimum; consider it
+for the other endpoints the account area hits on load too:
+`get_user_account_info`, `list_account_billing`, `get_team_configurations`,
+`list_account_devices`.
+- Gen-2 / Cloud Run functions expose `min_instances`.
+- Trade-off: a small always-on cost per kept-warm instance. For the primary
+  signed-in page this is almost certainly worth it. Even `min_instances = 1` on
+  just `get_account_dashboard` should remove most of the visible slowness.
+
+### 2. `get_team_configurations` 403 for funding-account admins
+On load the page fetches `get_team_configurations` per org. For a user who is a
+**billing admin of the account that funds an org but is not an org member**
+(observed: `athompson@winnipeg.ca` for org `33526989`), it returns **403** — a
+wasted round-trip plus a console error on every load. Pick one:
+- **(a)** Authorize billing admins of the funding account to read that org's
+  team configurations (likely the correct behavior, since they manage/fund it),
+  **or**
+- **(b)** If org-members-only is intended, add a per-org `can_view_configurations`
+  boolean to the `get_account_dashboard` `organizations[]` payload so the
+  frontend can skip the call (and the 403) for orgs the user can't read.
+
+Either way the goal is to stop issuing a request that's guaranteed to 403.
+
+### 3. (Optional) Redundant `get_user_account_info` call
 The page calls `get_user_account_info` separately even though
-`get_account_dashboard` already bundles `user_account_info`. If the bundled
-field is sufficient, the separate call can be dropped (one fewer cold-startable
-round-trip) — partly a frontend change; flag if the bundled payload already
-carries everything `get_user_account_info` returns.
+`get_account_dashboard` already bundles `user_account_info`. If the bundled field
+already carries everything `get_user_account_info` returns (status + form_data),
+the separate call can be dropped — one fewer cold-startable round-trip on load.
+This is partly a frontend change; please confirm whether the bundled
+`user_account_info` is a complete substitute (same `userStatus` + `form_data`).
 
 ## Priority
-
-#1 (min_instances on `get_account_dashboard`) is the single highest-impact
-change for the "really slow" complaint. #2 removes a recurring 403 + wasted call.
+1. **min_instances on `get_account_dashboard`** — the single biggest win for the
+   "really slow" complaint.
+2. **Resolve the `get_team_configurations` 403** — removes a recurring failed
+   call on every load.
+3. Optional dedupe of `get_user_account_info`.
