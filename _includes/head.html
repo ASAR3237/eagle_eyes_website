@@ -383,8 +383,13 @@
 	<script>
 		(function() {
 			var TTL_MS = 5 * 60 * 1000;
-			function key(uid) { return 'account-dashboard-cache:' + uid; }
-			function tokensKey(uid) { return 'account-tokens-cache:' + uid; }
+			// Bump CACHE_VER whenever the cached payload shape changes (e.g. a
+			// dashboard field is added/renamed). The version is part of the key,
+			// so old-shaped caches from a previous deploy are simply never read
+			// (a fresh fetch repopulates) instead of being rendered as-is.
+			var CACHE_VER = 'v1';
+			function key(uid) { return 'account-dashboard-cache:' + CACHE_VER + ':' + uid; }
+			function tokensKey(uid) { return 'account-tokens-cache:' + CACHE_VER + ':' + uid; }
 
 			function readCache(k) {
 				try {

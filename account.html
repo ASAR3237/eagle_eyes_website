@@ -9552,15 +9552,33 @@ active: account
     }
 
     function recomputeAndRender() {
-        cachedSources = computeSources(cachedOrganizations);
-        applyHashToState();
-        // Sidebar injection is owned by the layout (so it works on Profile,
-        // Downloads, Support too). We just render the active view here.
-        renderActiveView();
+        // Guard the whole render: a throw on one odd record or a stale cached
+        // payload must not leave the page blank or stuck on a spinner. Log it,
+        // make sure the load spinners are cleared, and keep the page usable.
+        try {
+            cachedSources = computeSources(cachedOrganizations);
+            applyHashToState();
+            // Sidebar injection is owned by the layout (so it works on Profile,
+            // Downloads, Support too). We just render the active view here.
+            renderActiveView();
+        } catch (e) {
+            console.error('recomputeAndRender failed:', e);
+            try { if (window.hideAccountAuthChecking) window.hideAccountAuthChecking(); } catch (e2) {}
+            var lo = document.getElementById('loading-overlay');
+            if (lo) lo.style.display = 'none';
+            var plansSpinner = document.getElementById('plansSpinner');
+            if (plansSpinner) plansSpinner.style.display = 'none';
+        }
     }
 
     function getActiveSource() {
         return cachedSources.find(function(s) { return s.id === activeSourceId; }) || null;
+    }
+
+    // Render one section defensively: a single section throwing (bad record,
+    // stale cache shape) must not abort the sibling sections or stick the page.
+    function safeRender(label, fn) {
+        try { fn(); } catch (e) { console.error('section render failed:', label, e); }
     }
 
     function renderActiveView() {
@@ -9603,7 +9621,7 @@ active: account
             if (typeof window.setAccountPageTopic === 'function') {
                 window.setAccountPageTopic('Dashboard');
             }
-            renderActiveDashboard();
+            safeRender('dashboard', renderActiveDashboard);
             return;
         }
 
@@ -9662,8 +9680,8 @@ active: account
             // on a view so a cached render from an earlier scope reflects
             // current state.
             if (!isAccessView) {
-                renderStreamingCreditsWidget();
-                renderActiveAccountLicenses();
+                safeRender('streamingCredits', renderStreamingCreditsWidget);
+                safeRender('accountLicenses', renderActiveAccountLicenses);
             }
             return;
         }
@@ -9723,10 +9741,10 @@ active: account
             sections[view].style.display = isMatch ? '' : 'none';
         });
 
-        renderActiveDevices2(source);
-        renderActiveLicense(source);
-        renderActiveMembers(source);
-        renderActiveConfigurations(source);
+        safeRender('devices', function() { renderActiveDevices2(source); });
+        safeRender('license', function() { renderActiveLicense(source); });
+        safeRender('people', function() { renderActiveMembers(source); });
+        safeRender('configurations', function() { renderActiveConfigurations(source); });
     }
 
     // Render all licenses owned by the active account. Each card surfaces
