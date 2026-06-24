@@ -1280,12 +1280,9 @@ active: purchase
                 state.activeAccountId = targetId;
                 state.cart = loadCart();
             }
-            var licName = m.license.license_name || ('License ' + m.license.license_id);
-            var accName = (m.account && m.account.name) || 'this account';
-            body.innerHTML = 'Pre-filled from your low-balance email. Credits top up the '
-                + '<strong>' + esc(accName) + '</strong> account balance, shared by all its licenses '
-                + '(including <strong>' + esc(licName) + '</strong>).';
-            banner.style.display = '';
+            // The user owns this license and can pay - the cart is already
+            // pre-filled, so no banner is needed.
+            banner.style.display = 'none';
             return m;
         }
         if (resolution.kind === 'multi') {
