@@ -535,10 +535,11 @@ active: billing
             // Two actions:
             //  - "View receipt": Stripe's own hosted HTML page (receipt_url) -
             //    a public URL, so a plain link is fine.
-            //  - "Download PDF": our branded PDF (receipt_pdf_url) is a relative,
-            //    token-protected endpoint, so it must be an authenticated fetch ->
-            //    blob download, not an <a href>. Falls back to a direct pdf_url
-            //    link (the Stripe invoice PDF) for invoice-backed charges.
+            //  - "Download PDF": our branded, PAID receipt (receipt_pdf_url) is a
+            //    relative, token-protected endpoint, so it must be an authenticated
+            //    fetch -> blob download, not an <a href>.
+            // pdf_url / hosted_url are deprecated on charges (always null); the
+            // real download is always receipt_pdf_url.
             if (item.receipt_url) {
                 actions.push('<a class="billing-item-link" href="' + escapeHtml(item.receipt_url)
                     + '" target="_blank" rel="noopener">View receipt</a>');
@@ -547,9 +548,6 @@ active: billing
                 actions.push('<button type="button" class="billing-item-link billing-pdf-btn"'
                     + ' data-endpoint="' + escapeHtml(item.receipt_pdf_url) + '"'
                     + ' data-charge-id="' + escapeHtml(item.id || '') + '">Download PDF</button>');
-            } else if (item.pdf_url) {
-                actions.push('<a class="billing-item-link" href="' + escapeHtml(item.pdf_url)
-                    + '" target="_blank" rel="noopener" download>Download PDF</a>');
             }
         } else if (item.type === 'quote') {
             pill = item.status || 'quote';
