@@ -200,17 +200,14 @@ faqs:
     </p>
     <span id="ls-how" style="scroll-margin-top: 100px;"></span>
     <p style="font-size: 1.3em; font-weight: bold; color: #314268; margin-bottom: 15px;">How does Eagle Eyes Livestreaming work?</p>
-    <p>Eagle Eyes Livestreaming lets you share your drone's live video, detections, and map information with viewers on mobile or desktop.</p>
-    <p>Viewers can watch in two ways:</p>
+    <p>Eagle Eyes Livestreaming lets you share your drone's live video, detections, and map information with viewers on mobile or desktop. Viewers can watch in two ways:</p>
     <ul style="margin: 15px 0; padding-left: 20px;">
     <li><strong>Local viewing (free of charge):</strong> anyone on the same Wi-Fi network as the controller can watch without using credits.</li>
     <li><strong>Remote viewing (paid, available in Eagle Eyes Pilot 1.7.1 and later):</strong> anyone outside your local network can watch over the internet using the QR code, shared link, or livestream button in CalTopo. This uses livestreaming credits only while at least one remote viewer is actively watching.</li>
     </ul>
     <span id="ls-start" style="scroll-margin-top: 100px;"></span>
     <p style="font-size: 1.3em; font-weight: bold; color: #314268; margin-bottom: 15px;">How do I start a livestream?</p>
-    <p>From the Eagle Eyes Pilot home screen, tap the <strong>Live Stream</strong> card.</p>
-    <p>If you are already in fly mode, tap the livestreaming icon at the top of the screen, or go to Menu &rarr; Livestreaming &rarr; Livestreaming (Beta).</p>
-    <p>Tap <strong>Start Streaming</strong> and wait for it to connect. A QR code and link will appear on the controller screen.</p>
+    <p>From the Eagle Eyes Pilot home screen, tap the <strong>Live Stream</strong> card. If you are already in fly mode, tap the livestreaming icon at the top of the screen, or go to Menu &rarr; Livestreaming &rarr; Livestreaming (Beta). Then tap <strong>Start Streaming</strong> and wait for it to connect &mdash; a QR code and link will appear on the controller screen.</p>
     <span id="ls-open" style="scroll-margin-top: 100px;"></span>
     <p style="font-size: 1.3em; font-weight: bold; color: #314268; margin-bottom: 15px;">How do viewers open the livestream?</p>
     <p>Viewers can:</p>
@@ -222,23 +219,16 @@ faqs:
     <p>In CalTopo, click on the drone on the map, then select the livestream option. The livestream opens in a new browser tab.</p>
     <span id="ls-viewer" style="scroll-margin-top: 100px;"></span>
     <p style="font-size: 1.3em; font-weight: bold; color: #314268; margin-bottom: 15px;">What does the Eagle Eyes Viewer show?</p>
-    <p>The Eagle Eyes Viewer shows a split-screen with the live drone video on one side and a synced map on the other. The map shows the drone's location, altitude, orientation, and connected CalTopo map features.</p>
-    <p>The viewer can also show detections from Eagle Eyes Pilot, so viewers can follow detected objects alongside the live drone feed and map.</p>
-    <p>Both the video and map panels can be expanded to full screen, and a quick link to the current CalTopo map is included.</p>
+    <p>The Eagle Eyes Viewer shows a split-screen with the live drone video on one side and a synced map on the other. The map shows the drone's location, altitude, orientation, and connected CalTopo map features. The viewer can also show detections from Eagle Eyes Pilot, so viewers can follow detected objects alongside the live drone feed and map. Both the video and map panels can be expanded to full screen, and a quick link to the current CalTopo map is included.</p>
     <div style="position:relative; width:100%; height:0px; padding-bottom:56.250%; margin: 20px 0 6px;"><iframe allow="fullscreen" allowfullscreen height="100%" src="https://streamable.com/e/0eojil?loop=0" width="100%" style="border:none; width:100%; height:100%; position:absolute; left:0px; top:0px; overflow:hidden;"></iframe></div>
     <p style="text-align:center; font-style:italic; color:#666; font-size:0.9em; margin:0 0 18px;">Opening a livestream from CalTopo and viewing detections in the Eagle Eyes Viewer.</p>
     <p>Livestreaming is currently in beta. The livestreaming feature is included with Eagle Eyes Pro licenses, but remote viewing over the internet uses livestreaming credits.</p>
     <span id="ls-credits-when" style="scroll-margin-top: 100px;"></span>
     <p style="font-size: 1.3em; font-weight: bold; color: #314268; margin-bottom: 15px;">When are credits used?</p>
-    <p>Credits are only used for remote viewing over the internet.</p>
-    <p>You are charged only while at least one remote viewer is actively watching. If nobody is watching remotely, or if everyone watching is on the same local Wi-Fi network as the controller, no credits are used.</p>
-    <p>Local Wi-Fi viewing never uses credits.</p>
+    <p>Credits are only used for remote viewing over the internet. You are charged only while at least one remote viewer is actively watching &mdash; if nobody is watching remotely, or everyone watching is on the same local Wi-Fi network as the controller, no credits are used. Local Wi-Fi viewing never uses credits.</p>
     <span id="ls-credits-out" style="scroll-margin-top: 100px;"></span>
     <p style="font-size: 1.3em; font-weight: bold; color: #314268; margin-bottom: 15px;">What happens if credits run out?</p>
-    <p>Remote internet viewing stops until you top up your balance.</p>
-    <p>Local Wi-Fi viewing keeps working for free, even with a zero credit balance.</p>
-    <p>While streaming, Eagle Eyes Pilot shows your credit balance and whether your current stream is using credits or streaming for free.</p>
-    <p>For best results, use a stable internet connection such as Starlink, Wi-Fi, or a strong mobile hotspot.</p>
+    <p>Remote internet viewing stops until you top up your balance, but local Wi-Fi viewing keeps working for free, even with a zero credit balance. While streaming, Eagle Eyes Pilot shows your credit balance and whether your current stream is using credits or streaming for free. For best results, use a stable internet connection such as Starlink, Wi-Fi, or a strong mobile hotspot.</p>
     <p>Please reach out at <span class="faq-email-link" onclick="copyEmailToClipboard()" style="color: #1e90ff; cursor: pointer; text-decoration: underline; font-weight: 500;">info@EagleEyesSearch.com</span></p>
     <div style="position:relative; width:100%; height:0px; padding-bottom:56.250%; margin-top: 24px;">
     <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="" frameborder="0" height="100%" referrerpolicy="strict-origin-when-cross-origin" src="https://www.youtube.com/embed/5C5rXdrCVVU" style="border:none; width:100%; height:100%; position:absolute; left:0px; top:0px; overflow:hidden;" title="YouTube video player" width="100%"></iframe>
