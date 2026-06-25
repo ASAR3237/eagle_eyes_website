@@ -1,0 +1,301 @@
+---
+layout: main
+permalink: /submit-receipt/
+title: Submit a Receipt
+---
+
+<style>
+    /* ── Eagle Eyes brand theme (css/brand.css) ──
+       primary #344F8C · dark #2b4173 · secondary green #1D4E2C ·
+       gold #D9A21B · text #333 / #666 · light bg #f5f7fa · Inter + Source Sans */
+
+    .receipt-wrap {
+        max-width: 680px;
+        /* clear the fixed site header so the card doesn't tuck under it */
+        margin: 130px auto 100px;
+        padding: 0 20px;
+    }
+    .receipt-card {
+        background: #ffffff;
+        border: 1px solid #e0e0e0;
+        border-top: 5px solid #344F8C;          /* brand accent bar */
+        border-radius: 12px;
+        box-shadow: 0 12px 44px rgba(52, 79, 140, 0.15);
+        padding: 44px 44px 40px;
+    }
+
+    .receipt-eyebrow {
+        font-family: 'Inter', sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #344F8C;
+        margin: 0 0 12px;
+    }
+    .receipt-card h1 {
+        font-family: 'Inter', sans-serif;
+        font-size: 3.2rem;
+        font-weight: 700;
+        color: #2b4173;
+        margin: 0 0 32px;
+        line-height: 1.15;
+    }
+    .receipt-intro {
+        font-family: 'Source Sans 3', sans-serif;
+        color: #666666;
+        font-size: 1.3rem;
+        line-height: 1.6;
+        margin: 0 0 34px;
+    }
+
+    .receipt-form label {
+        font-family: 'Inter', sans-serif;
+        display: block;
+        font-weight: 600;
+        color: #2b4173;
+        font-size: 1.3rem;
+        margin: 0 0 10px;
+    }
+    .receipt-field { margin-bottom: 24px; }
+    .receipt-form input[type="text"],
+    .receipt-form input[type="email"] {
+        width: 100%;
+        padding: 15px 16px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 1.25rem;
+        font-family: 'Source Sans 3', sans-serif;
+        box-sizing: border-box;
+        color: #333333;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .receipt-form input:focus {
+        outline: none;
+        border-color: #344F8C;
+        box-shadow: 0 0 0 3px rgba(52, 79, 140, 0.15);
+    }
+
+    /* File picker styled as a drop-style zone */
+    .receipt-file-zone {
+        border: 2px dashed #c3cede;
+        border-radius: 10px;
+        padding: 28px 16px;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 0.2s ease, background 0.2s ease;
+        background: #f5f7fa;
+    }
+    .receipt-file-zone:hover { border-color: #344F8C; background: #eef2f8; }
+    .receipt-file-zone.has-file { border-color: #1D4E2C; background: rgba(29, 78, 44, 0.06); border-style: solid; }
+    .receipt-file-zone input[type="file"] { display: none; }
+    .receipt-file-icon { font-size: 2rem; display: block; margin-bottom: 8px; }
+    .receipt-file-text { font-family: 'Source Sans 3', sans-serif; color: #666666; font-size: 1.25rem; }
+    .receipt-file-text b { color: #2b4173; }
+    .receipt-file-hint { color: #8a97ab; font-size: 1rem; margin-top: 6px; }
+
+    .receipt-button {
+        width: 100%;
+        margin-top: 10px;
+        padding: 18px;
+        font-size: 1.35rem;
+        font-weight: 700;
+        font-family: 'Inter', sans-serif;
+        letter-spacing: 0.01em;
+        color: #fff;
+        background: #344F8C;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.2s ease;
+    }
+    .receipt-button:hover { background: #2b4173; }
+    .receipt-button:disabled { opacity: 0.65; cursor: default; }
+
+    .receipt-error { color: #dc3545; font-weight: 600; font-size: 1.02rem; margin: 14px 0 0; min-height: 1em; }
+
+    .receipt-spinner {
+        display: inline-block;
+        width: 16px; height: 16px;
+        margin-right: 9px;
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        border-top-color: #fff;
+        border-radius: 50%;
+        vertical-align: -2px;
+        animation: receipt-spin 0.7s linear infinite;
+    }
+    @keyframes receipt-spin { to { transform: rotate(360deg); } }
+
+    .receipt-done { text-align: center; padding: 16px 0; }
+    .receipt-done .receipt-check {
+        width: 72px; height: 72px; line-height: 72px;
+        margin: 0 auto 20px;
+        border-radius: 50%;
+        background: rgba(29, 78, 44, 0.12);
+        color: #1D4E2C;
+        font-size: 2.2rem;
+    }
+
+    @media (max-width: 600px) {
+        .receipt-wrap { margin: 90px auto 60px; }
+        .receipt-card { padding: 30px 24px 26px; }
+        .receipt-card h1 { font-size: 2.1rem; }
+        .receipt-eyebrow { font-size: 0.95rem; }
+        .receipt-intro { font-size: 1.12rem; }
+        .receipt-form label { font-size: 1.15rem; }
+        .receipt-form input[type="text"],
+        .receipt-form input[type="email"] { font-size: 1.1rem; }
+        .receipt-button { font-size: 1.2rem; }
+    }
+</style>
+
+<div class="receipt-wrap">
+    <div class="receipt-card" id="receipt-container">
+        <p class="receipt-eyebrow">Eagle Eyes — Advanced RPAS Course</p>
+        <h1>Please submit your receipt here</h1>
+
+        <form id="receipt-form" class="receipt-form" onsubmit="submitReceipt(event)">
+            <div class="receipt-field">
+                <label for="r-name">Full name</label>
+                <input type="text" id="r-name" name="name" autocomplete="name" required>
+            </div>
+            <div class="receipt-field">
+                <label for="r-email">Email</label>
+                <input type="email" id="r-email" name="email" autocomplete="email" required>
+            </div>
+            <div class="receipt-field">
+                <label for="r-org">Organization</label>
+                <input type="text" id="r-org" name="organization" autocomplete="organization" required>
+            </div>
+
+            <div class="receipt-field">
+                <label>Receipt file</label>
+                <label class="receipt-file-zone" id="r-file-zone" for="r-file">
+                    <span class="receipt-file-icon" aria-hidden="true">📄</span>
+                    <span class="receipt-file-text" id="r-file-text"><b>Choose a file</b> or drag it here</span>
+                    <div class="receipt-file-hint">PDF or image (JPG, PNG, HEIC) · up to 8&nbsp;MB</div>
+                    <input type="file" id="r-file" name="file"
+                           accept=".pdf,application/pdf,image/*" required>
+                </label>
+            </div>
+
+            <!-- Honeypot: hidden from humans, bots tend to fill it. -->
+            <input type="text" name="honeypot" value="" style="display:none" tabindex="-1" autocomplete="off">
+
+            <button type="submit" id="receipt-btn" class="receipt-button">Upload receipt</button>
+            <p id="receipt-error" class="receipt-error" role="alert"></p>
+        </form>
+    </div>
+</div>
+
+<script>
+    var RECEIPT_MAX_BYTES = 8 * 1024 * 1024; // 8 MB
+
+    // Reflect the chosen file name in the drop zone.
+    (function () {
+        var input = document.getElementById('r-file');
+        var zone = document.getElementById('r-file-zone');
+        var text = document.getElementById('r-file-text');
+        if (!input) return;
+        input.addEventListener('change', function () {
+            if (input.files && input.files[0]) {
+                text.innerHTML = '<b>' + escapeHtml(input.files[0].name) + '</b>';
+                zone.classList.add('has-file');
+            } else {
+                text.innerHTML = '<b>Choose a file</b> or drag it here';
+                zone.classList.remove('has-file');
+            }
+        });
+    })();
+
+    function escapeHtml(s) {
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function submitReceipt(event) {
+        event.preventDefault();
+
+        var form = document.getElementById('receipt-form');
+        var name = form.name.value.trim();
+        var email = form.email.value.trim();
+        var organization = form.organization.value.trim();
+        var honeypot = form.honeypot.value.trim();
+        var fileInput = document.getElementById('r-file');
+        var file = fileInput.files && fileInput.files[0];
+        var btn = document.getElementById('receipt-btn');
+        var errEl = document.getElementById('receipt-error');
+        errEl.textContent = '';
+
+        // Require every field individually, with a clear message for each.
+        if (!name) { errEl.textContent = 'Please enter your full name.'; form.name.focus(); return; }
+        if (!email) { errEl.textContent = 'Please enter your email.'; form.email.focus(); return; }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            errEl.textContent = 'Please enter a valid email address.'; form.email.focus(); return;
+        }
+        if (!organization) { errEl.textContent = 'Please enter your organization.'; form.organization.focus(); return; }
+        if (!file) { errEl.textContent = 'Please choose a receipt file (PDF or image) to upload.'; fileInput.focus(); return; }
+
+        // Only allow PDFs or images.
+        var isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+        var isImage = /^image\//.test(file.type) || /\.(jpe?g|png|heic|heif|webp|gif|tiff?)$/i.test(file.name);
+        if (!isPdf && !isImage) {
+            errEl.textContent = 'That file type isn’t supported. Please upload a PDF or an image (JPG, PNG, HEIC).';
+            return;
+        }
+        if (file.size === 0) {
+            errEl.textContent = 'That file appears to be empty. Please choose a different file.';
+            return;
+        }
+        if (file.size > RECEIPT_MAX_BYTES) {
+            errEl.textContent = 'That file is over 8 MB. Please upload a smaller photo or PDF.';
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="receipt-spinner"></span>Uploading…';
+
+        var reader = new FileReader();
+        reader.onload = function () {
+            var base64 = String(reader.result).split(',')[1] || '';
+            fetch(getHostUrl() + "/receipt_submission", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: name,
+                    email: email,
+                    organization: organization,
+                    honeypot: honeypot,
+                    fileName: file.name,
+                    mimeType: file.type || 'application/octet-stream',
+                    fileData: base64
+                })
+            })
+            .then(function (response) {
+                if (!response.ok) { throw new Error("Network response was not ok"); }
+                return response.text();
+            })
+            .then(function () {
+                document.getElementById('receipt-container').innerHTML =
+                    '<div class="receipt-done">' +
+                        '<div class="receipt-check">✓</div>' +
+                        '<h1>Receipt received</h1>' +
+                        '<p class="receipt-intro">Thanks, ' + escapeHtml(name) + '. Your receipt has been ' +
+                        'sent to the Eagle Eyes team. We\'ll reach out if we need anything else.</p>' +
+                    '</div>';
+            })
+            .catch(function (error) {
+                console.error("Error during receipt submission:", error);
+                btn.disabled = false;
+                btn.innerHTML = 'Upload receipt';
+                errEl.textContent = "Something went wrong. Please try again, or email us at info@eagleeyessearch.com.";
+            });
+        };
+        reader.onerror = function () {
+            btn.disabled = false;
+            btn.innerHTML = 'Upload receipt';
+            errEl.textContent = "Couldn't read that file. Please try a different one.";
+        };
+        reader.readAsDataURL(file);
+    }
+</script>

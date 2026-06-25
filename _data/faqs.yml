@@ -185,38 +185,54 @@ faqs:
   search:
     alternates: live stream broadcast youtube facebook rtmp
     tags: livestream streaming broadcast rtmp youtube
-  content: '<div style="position:relative; width:100%; height:0px; padding-bottom:56.250%; margin-bottom: 20px;">
-
+  content: |
+    <div style="position:relative; width:100%; height:0px; padding-bottom:56.250%; margin-bottom: 24px;">
     <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="" frameborder="0" height="100%" referrerpolicy="strict-origin-when-cross-origin" src="https://www.youtube.com/embed/2U1mS0QmBrU" style="border:none; width:100%; height:100%; position:absolute; left:0px; top:0px; overflow:hidden;" title="YouTube video player" width="100%"></iframe>
-
     </div>
-
-    <p>In our latest release, Eagle Eyes Pilot v1.5.0, we''ve added the <strong>Eagle Eyes Livestream Viewer</strong>, a new way to share your drone''s live view wirelessly while your drone is in the air. This feature lets you stream your drone feed over the internet so both on-site teams and remote viewers can watch what the drone sees, from anywhere.</p>
-
-    <p>This first beta release of Eagle Eyes Livestreaming works only while flying your DJI drone in Eagle Eyes Pilot and supports up to three remote viewers (three separate devices viewing the drone''s live stream). It currently performs best under the following conditions:</p>
-
+    <p style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #314268; margin-bottom: 20px;">
+    <strong>Contents</strong><br/>
+    <a href="javascript:void(0);" onclick="document.getElementById('ls-how').scrollIntoView({behavior: 'smooth', block: 'start'}); return false;" style="color: #314268; text-decoration: underline; cursor: pointer;">&rarr; How does Eagle Eyes Livestreaming work?</a><br/>
+    <a href="javascript:void(0);" onclick="document.getElementById('ls-start').scrollIntoView({behavior: 'smooth', block: 'start'}); return false;" style="color: #314268; text-decoration: underline; cursor: pointer;">&rarr; How do I start a livestream?</a><br/>
+    <a href="javascript:void(0);" onclick="document.getElementById('ls-open').scrollIntoView({behavior: 'smooth', block: 'start'}); return false;" style="color: #314268; text-decoration: underline; cursor: pointer;">&rarr; How do viewers open the livestream?</a><br/>
+    <a href="javascript:void(0);" onclick="document.getElementById('ls-viewer').scrollIntoView({behavior: 'smooth', block: 'start'}); return false;" style="color: #314268; text-decoration: underline; cursor: pointer;">&rarr; What does the Eagle Eyes Viewer show?</a><br/>
+    <a href="javascript:void(0);" onclick="document.getElementById('ls-credits-when').scrollIntoView({behavior: 'smooth', block: 'start'}); return false;" style="color: #314268; text-decoration: underline; cursor: pointer;">&rarr; When are credits used?</a><br/>
+    <a href="javascript:void(0);" onclick="document.getElementById('ls-credits-out').scrollIntoView({behavior: 'smooth', block: 'start'}); return false;" style="color: #314268; text-decoration: underline; cursor: pointer;">&rarr; What happens if credits run out?</a>
+    </p>
+    <span id="ls-how" style="scroll-margin-top: 100px;"></span>
+    <p style="font-size: 1.3em; font-weight: bold; color: #314268; margin-bottom: 15px;">How does Eagle Eyes Livestreaming work?</p>
+    <p>Eagle Eyes Livestreaming lets you share your drone's live video, detections, and map information with viewers on mobile or desktop. Viewers can watch in two ways:</p>
     <ul style="margin: 15px 0; padding-left: 20px;">
-
-    <li>Both the drone controller and the viewing device (via mobile or desktop browser) are connected / tethering to the same mobile hotspot network.</li>
-
-    <li>The drone controller is connected to a Wi-Fi network, and the viewing devices are connected to another Wi-Fi network (for example, Starlink to another Starlink, Starlink to home or office internet, or vice versa).</li>
-
+    <li><strong>Local viewing (free of charge):</strong> anyone on the same Wi-Fi network as the controller can watch without using credits.</li>
+    <li><strong>Remote viewing (paid, available in Eagle Eyes Pilot 1.7.1 and later):</strong> anyone outside your local network can watch over the internet using the QR code, shared link, or livestream button in CalTopo. This uses livestreaming credits only while at least one remote viewer is actively watching.</li>
     </ul>
-
-    <p>Outside these two configurations, mileage may vary. We''ve observed that some mobile data networks may not relay livestream data reliably between different providers or hotspots, which can prevent the stream from connecting across networks. This means that if your drone controller is hosting the livestream via a mobile data hotspot, and a viewer attempts to connect using a device on another mobile network or provider, the stream may not be accessible unless both are on the same hotspot. When connected to a Wi-Fi, Starlink, or home or office internet connection (non-mobile data), the livestream should work. (Feedback on how this works in your environment is greatly appreciated.)</p>
-
-    <p>To start a livestream, open Eagle Eyes Pilot, tap the <img alt="Livestream icon" src="/images/livestream.png" style="height: 1.2em; vertical-align: middle; display: inline;"/> Livestream icon at the top of the screen, start livestreaming. Alternatively tap the three lines in the top right → Livestream → Start Livestreaming, and then scan the QR code that appears on the controller screen. The QR code connects viewers to <a class="resource-link" href="/livestream/">eagleeyessearch.com/livestream</a>, where they can watch the live drone feed on their mobile or desktop browser. The Eagle Eyes Viewer shows a split-screen with the live drone video on the left and a synced map on the right, displaying the drone''s location, altitude, orientation, and connected CalTopo map features. Both panels can be expanded to full screen, and a quick link to the current CalTopo map is included. This livestreaming feature is currently in beta and available
-    at no additional cost for all Eagle Eyes Pro plan license users. For more information, see our <a class="resource-link" href="/pricing/">pricing page</a>.</p>
-
-    <p>This is our first public version of wireless livestreaming, expect quirks, share your feedback from field tests, and help us refine how Eagle Eyes teams everywhere pump the feed!</p>
-
+    <span id="ls-start" style="scroll-margin-top: 100px;"></span>
+    <p style="font-size: 1.3em; font-weight: bold; color: #314268; margin-bottom: 15px;">How do I start a livestream?</p>
+    <p>From the Eagle Eyes Pilot home screen, tap the <strong>Live Stream</strong> card. If you are already in fly mode, tap the livestreaming icon at the top of the screen, or go to Menu &rarr; Livestreaming &rarr; Livestreaming (Beta). Then tap <strong>Start Streaming</strong> and wait for it to connect &mdash; a QR code and link will appear on the controller screen.</p>
+    <span id="ls-open" style="scroll-margin-top: 100px;"></span>
+    <p style="font-size: 1.3em; font-weight: bold; color: #314268; margin-bottom: 15px;">How do viewers open the livestream?</p>
+    <p>Viewers can:</p>
+    <ul style="margin: 15px 0; padding-left: 20px;">
+    <li>Scan the QR code on the controller</li>
+    <li>Open the shared livestream link</li>
+    <li>Open it from CalTopo, if your team has a CalTopo service account set up</li>
+    </ul>
+    <p>In CalTopo, click on the drone on the map, then select the livestream option. The livestream opens in a new browser tab.</p>
+    <span id="ls-viewer" style="scroll-margin-top: 100px;"></span>
+    <p style="font-size: 1.3em; font-weight: bold; color: #314268; margin-bottom: 15px;">What does the Eagle Eyes Viewer show?</p>
+    <p>The Eagle Eyes Viewer shows a split-screen with the live drone video on one side and a synced map on the other. The map shows the drone's location, altitude, orientation, and connected CalTopo map features. The viewer can also show detections from Eagle Eyes Pilot, so viewers can follow detected objects alongside the live drone feed and map. Both the video and map panels can be expanded to full screen, and a quick link to the current CalTopo map is included.</p>
+    <div style="position:relative; width:100%; height:0px; padding-bottom:56.250%; margin: 20px 0 6px;"><iframe allow="fullscreen" allowfullscreen height="100%" src="https://streamable.com/e/0eojil?loop=0" width="100%" style="border:none; width:100%; height:100%; position:absolute; left:0px; top:0px; overflow:hidden;"></iframe></div>
+    <p style="text-align:center; font-style:italic; color:#666; font-size:0.9em; margin:0 0 18px;">Opening a livestream from CalTopo and viewing detections in the Eagle Eyes Viewer.</p>
+    <p>Livestreaming is currently in beta. The livestreaming feature is included with Eagle Eyes Pro licenses, but remote viewing over the internet uses livestreaming credits.</p>
+    <span id="ls-credits-when" style="scroll-margin-top: 100px;"></span>
+    <p style="font-size: 1.3em; font-weight: bold; color: #314268; margin-bottom: 15px;">When are credits used?</p>
+    <p>Credits are only used for remote viewing over the internet. You are charged only while at least one remote viewer is actively watching &mdash; if nobody is watching remotely, or everyone watching is on the same local Wi-Fi network as the controller, no credits are used. Local Wi-Fi viewing never uses credits.</p>
+    <span id="ls-credits-out" style="scroll-margin-top: 100px;"></span>
+    <p style="font-size: 1.3em; font-weight: bold; color: #314268; margin-bottom: 15px;">What happens if credits run out?</p>
+    <p>Remote internet viewing stops until you top up your balance, but local Wi-Fi viewing keeps working for free, even with a zero credit balance. While streaming, Eagle Eyes Pilot shows your credit balance and whether your current stream is using credits or streaming for free. For best results, use a stable internet connection such as Starlink, Wi-Fi, or a strong mobile hotspot.</p>
     <p>Please reach out at <span class="faq-email-link" onclick="copyEmailToClipboard()" style="color: #1e90ff; cursor: pointer; text-decoration: underline; font-weight: 500;">info@EagleEyesSearch.com</span></p>
-
-    <div style="position:relative; width:100%; height:0px; padding-bottom:56.250%; margin-top: 20px;">
-
+    <div style="position:relative; width:100%; height:0px; padding-bottom:56.250%; margin-top: 24px;">
     <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="" frameborder="0" height="100%" referrerpolicy="strict-origin-when-cross-origin" src="https://www.youtube.com/embed/5C5rXdrCVVU" style="border:none; width:100%; height:100%; position:absolute; left:0px; top:0px; overflow:hidden;" title="YouTube video player" width="100%"></iframe>
-
-    </div>'
+    </div>
 - id: pilot-vs-scan
   emoji: ''
   question: ⚡ How do I Use Eagle Eyes Pilot and Scan together?
@@ -228,7 +244,7 @@ faqs:
     tags: pilot scan together workflow combination
   content: '<p>You can use Eagle Eyes Pilot and Scan together. The benefit is that you will be able to transmit live video <em>and live coordinates</em> to a nearby laptop for analysis. You can do this by either piloting the drone directly in Eagle Eyes Pilot, or by flying with DJI Pilot 2 while running Eagle Eyes Pilot in the background. Connect the controller to your computer using an HDMI cable and capture card for the video feed, while live coordinates are transmitted wirelessly.</p>
 
-    <p>You don''t need to run Eagle Eyes Pilot on the controller to get a live feed into Eagle Eyes Scan — but doing so enables live coordinate transmission, which adds map integration and tracking capabilities in Eagle Eyes Scan.</p>
+    <p>You don''t need to run Eagle Eyes Pilot on the controller to get a live feed into Eagle Eyes Scan. But doing so enables live coordinate transmission, which adds map integration and tracking capabilities in Eagle Eyes Scan.</p>
 
     <p>The video below explains the setup and process.</p>
 
@@ -438,19 +454,19 @@ faqs:
 
     <h4 style="margin: 20px 0 10px 0; color: #333; font-size: 16px;">Eagle Eyes Pilot Compatibility</h4>
     <ul style="margin: 5px 0 15px 0; color: #555; line-height: 1.8; font-size: 14px;">
-    <li><span style="background: #d4edda; padding: 2px 8px; border-radius: 4px;">✔ Fully Compatible and tested</span> — Fully compatibile, tested in house.</li>
-    <li><span style="background: #d4edda; padding: 2px 8px; border-radius: 4px;">✔ Should be compatible, not yet tested</span> — Expected to work based on DJI SDK support, but not yet verified by our team.</li>
-    <li><span style="background: #E5E9F1; padding: 2px 8px; border-radius: 4px;">◑ Background Mode compatible and tested</span> — Background Mode lets you run Eagle Eyes Pilot in the background, so it can track to CalTopo and livestream from the drone while flying with the native piloting app. See <a class="resource-link" href="https://www.youtube.com/watch?v=aqBQ2lXOQVI&amp;t=835s" target="_blank">Video</a>.</li>
-    <li><span style="background: #E5E9F1; padding: 2px 8px; border-radius: 4px;">◑ Background Mode should be compatible</span> — Expected to support Background Mode, but not yet verified by our team.</li>
-    <li><span style="background: #f8d7da; padding: 2px 8px; border-radius: 4px;">✖ Controller does not allow 3rd party apps</span> — The controller does not support installing third-party Android apps, including Eagle Eyes Pilot.  You can still use Eagle Eyes Scan/Mirada to view footage post flight.</li>
-    <li><span style="background: #f8d7da; padding: 2px 8px; border-radius: 4px;">✖ Drone/Controller not compatible with each other</span> — This DJI drone/controller combo are not compatible with eachother.</li>
-    <li><span style="background: #f8d7da; padding: 2px 8px; border-radius: 4px;">✖ Not yet..</span> — Not currently supported.</li>
+    <li><span style="background: #d4edda; padding: 2px 8px; border-radius: 4px;">✔ Fully Compatible and tested</span>. Fully compatibile, tested in house.</li>
+    <li><span style="background: #d4edda; padding: 2px 8px; border-radius: 4px;">✔ Should be compatible, not yet tested</span>. Expected to work based on DJI SDK support, but not yet verified by our team.</li>
+    <li><span style="background: #E5E9F1; padding: 2px 8px; border-radius: 4px;">◑ Background Mode compatible and tested</span>. Background Mode lets you run Eagle Eyes Pilot in the background, so it can track to CalTopo and livestream from the drone while flying with the native piloting app. See <a class="resource-link" href="https://www.youtube.com/watch?v=aqBQ2lXOQVI&amp;t=835s" target="_blank">Video</a>.</li>
+    <li><span style="background: #E5E9F1; padding: 2px 8px; border-radius: 4px;">◑ Background Mode should be compatible</span>. Expected to support Background Mode, but not yet verified by our team.</li>
+    <li><span style="background: #f8d7da; padding: 2px 8px; border-radius: 4px;">✖ Controller does not allow 3rd party apps</span>. The controller does not support installing third-party Android apps, including Eagle Eyes Pilot.  You can still use Eagle Eyes Scan/Mirada to view footage post flight.</li>
+    <li><span style="background: #f8d7da; padding: 2px 8px; border-radius: 4px;">✖ Drone/Controller not compatible with each other</span>. This DJI drone/controller combo are not compatible with eachother.</li>
+    <li><span style="background: #f8d7da; padding: 2px 8px; border-radius: 4px;">✖ Not yet..</span>. Not currently supported.</li>
     </ul>
 
     <h4 style="margin: 20px 0 10px 0; color: #333; font-size: 16px;">Eagle Eyes Scan/Mirada Compatibility</h4>
     <ul style="margin: 5px 0 15px 0; color: #555; line-height: 1.8; font-size: 14px;">
-    <li><span style="background: #d4edda; padding: 2px 8px; border-radius: 4px;">✔ HDMI Livestreams + Post-flight footage</span> — Supports real-time detection via HDMI input and processing of recorded footage.</li>
-    <li><span style="background: #e8f5e9; padding: 2px 8px; border-radius: 4px;">✓ Post-flight footage</span> — Supports processing recorded images and video after the flight (no HDMI output available on this controller).</li>
+    <li><span style="background: #d4edda; padding: 2px 8px; border-radius: 4px;">✔ HDMI Livestreams + Post-flight footage</span>. Supports real-time detection via HDMI input and processing of recorded footage.</li>
+    <li><span style="background: #e8f5e9; padding: 2px 8px; border-radius: 4px;">✓ Post-flight footage</span>. Supports processing recorded images and video after the flight (no HDMI output available on this controller).</li>
     </ul>
 
     <div style="background: #e7f3ff; border: 1px solid #b3d9ff; border-radius: 8px; padding: 15px; margin: 20px 0;">
@@ -482,7 +498,7 @@ faqs:
 
     <p>All you need is an HDMI video signal that can be fed into a laptop or Windows tablet onboard the aircraft. Once the camera is active, Eagle Eyes Scan will automatically detect and import the HDMI livestream.</p>
 
-    <p>If you''d like to include live GPS data in your feed, you can connect an external GPS receiver (such as <a class="resource-link" href="https://www.amazon.com/Receiver-Antenna-Gmouse-Laptop-Navigation/dp/B073P3Y48Q?source=ps-sl-shoppingads-lpcontext&amp;smid=A1X15BMDI3KRH7" target="_blank">this model</a>) to your laptop. When you select the live feed in Scan, you''ll see an option to choose a GPS source — this allows detections and imagery to be automatically georeferenced during flight.</p>'
+    <p>If you''d like to include live GPS data in your feed, you can connect an external GPS receiver (such as <a class="resource-link" href="https://www.amazon.com/Receiver-Antenna-Gmouse-Laptop-Navigation/dp/B073P3Y48Q?source=ps-sl-shoppingads-lpcontext&amp;smid=A1X15BMDI3KRH7" target="_blank">this model</a>) to your laptop. When you select the live feed in Scan, you''ll see an option to choose a GPS source. This allows detections and imagery to be automatically georeferenced during flight.</p>'
 - id: autel-compatibility
   emoji: 🔌
   question: Does Eagle Eyes work with Autel drones?
@@ -492,7 +508,7 @@ faqs:
     tags: autel compatibility drone live-deck hdmi pre-recorded evo
   content: '<p>Our drone app, <strong>Eagle Eyes Pilot</strong>, is currently compatible only with DJI drones, though we plan to expand cross-platform compatibility in the future.</p>
 
-    <p>Our desktop app, <strong>Eagle Eyes Scan</strong>, can however be used with Autel drones — with a few considerations.</p>
+    <p>Our desktop app, <strong>Eagle Eyes Scan</strong>, can however be used with Autel drones. With a few considerations.</p>
 
     <div style="margin: 20px 0; padding: 15px; background-color: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
 
@@ -646,9 +662,9 @@ faqs:
 
     <ul style="line-height: 1.8; margin-bottom: 20px;">
 
-    <li><strong>Video.Motion</strong> (e.g., <code>V2.5.Video.Motion</code>) — For recorded footage</li>
+    <li><strong>Video.Motion</strong> (e.g., <code>V2.5.Video.Motion</code>). For recorded footage</li>
 
-    <li><strong>Live.Motion</strong> — For livestreams</li>
+    <li><strong>Live.Motion</strong>. For livestreams</li>
 
     </ul>
 
@@ -860,7 +876,7 @@ faqs:
 
     <p>That said - if we''re forced to say one mode of flight that works well overall: <strong>50m high, camera pitched 70° down, moving slowly enough to avoid blur</strong> (depends on light conditions). Briefly stopping every 15s to detect possible motion.</p>
 
-    <p style="margin-top: 25px;">Don''t just take our word for it — here are a few additional resources you might find useful.</p>
+    <p style="margin-top: 25px;">Don''t just take our word for it. Here are a few additional resources you might find useful.</p>
 
     <details style="margin-top: 20px; border: 1px solid #ddd; border-radius: 8px; padding: 15px; background-color: #f8f9fa;">
 
@@ -892,7 +908,7 @@ faqs:
 
     <div style="margin-top: 15px;">
 
-    <p>The Norwegian police drone search approach pairs data-driven SAR planning (the "bike-wheel" model) with task-specific drone tactics — a 75° gimbal, ~100 m AGL, thermal-first sensing and six standardized search patterns (GLS, PS, SS variants) — to maximize probability of detection while keeping searches fast and repeatable.</p>
+    <p>The Norwegian police drone search approach pairs data-driven SAR planning (the "bike-wheel" model) with task-specific drone tactics. A 75° gimbal, ~100 m AGL, thermal-first sensing and six standardized search patterns (GLS, PS, SS variants). To maximize probability of detection while keeping searches fast and repeatable.</p>
 
     <p><a class="resource-link" href="https://drive.google.com/file/d/1YdoWFcl8HB4G0quexip1VOjPPlgsiwLX/view?usp=sharing" target="_blank">View the full document</a></p>
 
@@ -1181,7 +1197,7 @@ faqs:
 
     <li>Tap <strong>Connect</strong> next to the listed license to begin</li>
 
-    <li>Each license includes an expiry date — you can start activation anytime from the app''s start screen, or switch to a different license</li>
+    <li>Each license includes an expiry date. You can start activation anytime from the app''s start screen, or switch to a different license</li>
 
     </ul>
 
@@ -1193,7 +1209,7 @@ faqs:
 
     <li>This opens the activation page in your browser (you may be asked to log in first)</li>
 
-    <li>Select the license ID you want to use — you''ll see how many device activations remain</li>
+    <li>Select the license ID you want to use. You''ll see how many device activations remain</li>
 
     <li>If your license isn''t listed, scroll down and enter your 20-character license ID (found in your activation email)</li>
 
@@ -1215,7 +1231,7 @@ faqs:
 
     <li>Enter the 6-character code and follow the steps to complete activation</li>
 
-    <li>Keep your controller on and connected — you''ll see a confirmation once activation succeeds</li>
+    <li>Keep your controller on and connected. You''ll see a confirmation once activation succeeds</li>
 
     </ul>
 
@@ -1407,7 +1423,7 @@ faqs:
 
     <p>Tap it and a dialog will pop up.</p>
 
-    <p>By default, "Capture View" is selected — open the dropdown and choose No photo, just add a marker.</p>
+    <p>By default, "Capture View" is selected. Open the dropdown and choose No photo, just add a marker.</p>
 
     <p><img alt="Dialog with dropdown selection" src="/images/image(1).png" style="max-width: 100%; height: auto; border-radius: 8px;"/></p>
 
@@ -1433,7 +1449,7 @@ faqs:
 
     <li>Tap the saved point.</li>
 
-    <li>Tap the "++" circle icon — a red line will draw from your drone''s location to that point, helping you navigate back.</li>
+    <li>Tap the "++" circle icon. A red line will draw from your drone''s location to that point, helping you navigate back.</li>
 
     </ol>'
 - id: app-store
@@ -1487,7 +1503,7 @@ faqs:
     <p>Eagle Eyes Scan is currently only set up to read geolocation data from standalone <code>.SRT</code> files, and cannot yet extract it from within MP4 files that have the telemetry embedded inside them.</p>
 
     <div style="margin: 20px 0; padding: 20px; background-color: #f0f7ff; border-radius: 8px; border-left: 4px solid #1e90ff;">
-      <h4 style="margin-bottom: 10px; color: #333;">🔜 Eagle Eyes Mirada — Coming Soon</h4>
+      <h4 style="margin-bottom: 10px; color: #333;">🔜 Eagle Eyes Mirada. Coming Soon</h4>
       <p style="color: #555; margin-bottom: 10px;">Eagle Eyes Scan is being succeeded by <strong>Eagle Eyes Mirada</strong>, which will natively read geolocation data embedded in Matrice 4 series MP4 files (and others). Stay tuned to our <a class="resource-link" href="/newsletter/">newsletter</a> for updates on Eagle Eyes Mirada.</p>
     </div>
 

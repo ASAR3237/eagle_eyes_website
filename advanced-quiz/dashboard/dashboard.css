@@ -1,0 +1,174 @@
+/* Dashboard-specific styles (loaded in addition to ../style.css). */
+
+.gate label { display: block; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+.gate input {
+  width: 100%; padding: 14px; border: 2px solid var(--line); border-radius: 10px;
+  font-size: 1rem; font-family: inherit; margin-bottom: 12px; box-sizing: border-box;
+}
+.gate input:focus { outline: none; border-color: var(--sky); }
+.gate .btn { width: 100%; }
+
+.card.dash { padding: 18px 20px; margin-bottom: 16px; }
+.dash-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+  border-bottom: 2px solid var(--line); padding-bottom: 10px; margin-bottom: 6px;
+  cursor: pointer; user-select: none; -webkit-user-select: none; }
+.dash-head:focus-visible { outline: 2px solid var(--sky); outline-offset: 3px; border-radius: 4px; }
+.dash-head h2 { margin: 0; font-size: 1.15rem; color: var(--navy); }
+.dash-head .resp { color: var(--muted); font-size: 0.85rem; font-weight: 700; white-space: nowrap; }
+
+/* left group: chevron + section title */
+.dash-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.dash-chevron { flex: 0 0 auto; width: 0; height: 0;
+  border-left: 7px solid var(--muted);
+  border-top: 5px solid transparent; border-bottom: 5px solid transparent;
+  transition: transform 0.2s ease; }
+.dash-head[aria-expanded="true"] .dash-chevron { transform: rotate(90deg); }
+
+/* collapsed: hide the questions, tighten the header so it reads as a folded row */
+.card.dash.collapsed .dash-body { display: none; }
+.card.dash.collapsed .dash-head { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+
+/* ---- Compact question rows: one per line, click to expand the breakdown.
+   The whole section fits on screen for a projector overview. ---- */
+.qrow { border-bottom: 1px solid #d7deea; }
+.qrow:last-child { border-bottom: none; }
+.qhead {
+  display: flex; align-items: center; gap: 14px; padding: 9px 0;
+  cursor: pointer; user-select: none; -webkit-user-select: none;
+}
+.qhead:hover { background: rgba(11, 37, 69, 0.03); }
+.qhead:focus-visible { outline: 2px solid var(--sky); outline-offset: -2px; border-radius: 4px; }
+
+.qchevron { flex: 0 0 auto; width: 0; height: 0;
+  border-left: 6px solid var(--muted);
+  border-top: 4px solid transparent; border-bottom: 4px solid transparent;
+  transition: transform 0.2s ease; }
+.qhead[aria-expanded="true"] .qchevron { transform: rotate(90deg); }
+
+.qn { flex: 0 0 auto; min-width: 26px; font-weight: 800; color: var(--muted); font-size: 0.8rem; }
+.qtext { flex: 1 1 auto; min-width: 0; font-size: 0.92rem; color: var(--ink); line-height: 1.3; }
+.qcount { flex: 0 0 auto; min-width: 46px; text-align: right; white-space: nowrap;
+  font-size: 0.82rem; font-weight: 700; color: var(--muted); }
+
+/* compact score bar pinned to the right of each row */
+.bar { flex: 0 0 150px; height: 12px; border-radius: 6px; overflow: hidden;
+  background-color: #eef2f7;
+  background-image: linear-gradient(90deg, #d7deea 1px, transparent 1px);
+  background-size: 25% 100%; }
+.bar > span { display: block; height: 100%; border-radius: 6px 0 0 6px; min-width: 2px;
+  transition: width 0.4s ease; }
+.bar > span.hot { background: var(--red); }
+.bar > span.warm { background: var(--amber); }
+.bar > span.ok { background: var(--green); }
+.barpct { flex: 0 0 46px; text-align: right; font-weight: 800; font-size: 0.95rem; }
+.barpct.hot { color: var(--red); }
+.barpct.warm { color: var(--amber); }
+.barpct.ok { color: var(--green); }
+
+@media (max-width: 520px) {
+  .qhead { gap: 9px; }
+  .bar { flex-basis: 80px; }
+  .qcount { min-width: 36px; font-size: 0.74rem; }
+}
+
+.choices { margin: 4px 0 14px; padding-left: 28px; display: flex; flex-direction: column; gap: 8px; }
+/* keep the hidden attribute working despite the display:flex above */
+.choices[hidden] { display: none; }
+
+/* Each option is a poll-style row: a fill bar behind the text shows how
+   popular the pick was, the tally sits on the right of the same row. */
+.choice {
+  position: relative; overflow: hidden;
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 14px; border: 1px solid var(--line); border-radius: 10px; background: #fff;
+}
+.choice-fill {
+  position: absolute; left: 0; top: 0; bottom: 0; min-width: 3px;
+  background: #eef2f7; border-radius: 10px 0 0 10px;
+}
+.choice.correct { border-color: var(--green); }
+.choice.correct .choice-fill { background: rgba(46, 139, 87, 0.14); }
+.choice > .choice-letter, .choice > .choice-text, .choice > .choice-count {
+  position: relative; z-index: 1;
+}
+.choice-letter {
+  flex: 0 0 auto; width: 24px; height: 24px; line-height: 24px; text-align: center;
+  border-radius: 50%; font-size: 0.74rem; font-weight: 800; color: #fff; background: #9aa7bb;
+}
+.choice.correct .choice-letter { background: var(--green); }
+.choice-text { flex: 1 1 auto; font-size: 0.9rem; color: var(--ink); }
+.choice-tag {
+  margin-left: 8px; color: var(--green); font-weight: 800; font-size: 0.74rem; white-space: nowrap;
+}
+.choice-count {
+  flex: 0 0 auto; font-size: 0.8rem; color: var(--muted); white-space: nowrap; text-align: right;
+}
+.choice-count b { color: var(--ink); font-size: 0.95rem; }
+
+@media (max-width: 480px) {
+  .choice { flex-wrap: wrap; }
+  .choice-text { flex: 1 1 100%; order: 2; padding-left: 36px; }
+  .choice-count { order: 1; margin-left: auto; }
+}
+
+/* ---- Settings disclosure (hides Refresh / Lock / Reset until opened) ---- */
+.settings { margin-top: 18px; text-align: center; }
+.settings-toggle {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 16px; font: inherit; font-size: 0.85rem; font-weight: 700;
+  color: var(--muted); background: none; border: none; cursor: pointer;
+}
+.settings-toggle:hover { color: var(--navy); }
+.settings-toggle .dash-chevron { border-left-color: currentColor; }
+.settings-toggle[aria-expanded="true"] .dash-chevron { transform: rotate(90deg); }
+.settings-body { margin-top: 10px; text-align: left; }
+.settings-body[hidden] { display: none; }
+
+/* ---- Reset / archive for next class ---- */
+.resetbox {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  text-align: center;
+}
+.resetbox .btn { width: 100%; }
+.btn-danger { background: var(--red); color: #fff; }
+.btn-danger:hover { filter: brightness(1.06); }
+.resetnote { color: var(--muted); font-size: 0.82rem; margin: 10px 0 0; }
+
+/* ---- Projector / big-screen view ----
+   The shared layout is mobile-first (640px column). On wider screens the
+   dashboard widens and scales up so it's readable across a room. */
+@media (min-width: 800px) {
+  .wrap { max-width: 1100px; }
+  .topbar { padding: 28px 28px; }
+  .topbar h1 { font-size: 2rem; }
+  .topbar p { font-size: 1.05rem; }
+  .card.dash { padding: 22px 32px; margin-bottom: 22px; }
+  .dash-head h2 { font-size: 1.6rem; }
+  .dash-head .resp { font-size: 1rem; }
+  .qhead { gap: 20px; padding: 11px 0; }
+  .qchevron { border-left-width: 8px; border-top-width: 5px; border-bottom-width: 5px; }
+  .qn { min-width: 42px; font-size: 1.1rem; }
+  .qtext { font-size: 1.25rem; }
+  .qcount { min-width: 72px; font-size: 1.05rem; }
+  .bar { flex-basis: 280px; height: 18px; border-radius: 8px; }
+  .bar > span { border-radius: 8px 0 0 8px; }
+  .barpct { flex-basis: 78px; font-size: 1.45rem; }
+  .choices { padding-left: 62px; }
+  .choice-text { font-size: 1.05rem; }
+  .choice-letter { width: 28px; height: 28px; line-height: 28px; font-size: 0.82rem; }
+  .choice-count { font-size: 0.95rem; }
+}
+
+@media (min-width: 1300px) {
+  .wrap { max-width: 1320px; }
+  .topbar h1 { font-size: 2.3rem; }
+  .dash-head h2 { font-size: 1.95rem; }
+  .qhead { padding: 13px 0; }
+  .qn { font-size: 1.2rem; }
+  .qtext { font-size: 1.45rem; }
+  .qcount { font-size: 1.15rem; }
+  .bar { flex-basis: 340px; height: 22px; }
+  .barpct { flex-basis: 90px; font-size: 1.6rem; }
+}
