@@ -67,3 +67,15 @@ permalink: /blog/:year/:month/:day/:title/
 #   - vendor/cache/
 #   - vendor/gems/
 #   - vendor/ruby/
+
+# Keep non-site directories out of the build (and off the public Pages site).
+# Setting `exclude` overrides Jekyll's defaults, so the defaults are re-listed.
+exclude:
+  - .sass-cache
+  - .jekyll-cache
+  - gemfiles
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
+  - faq-backend
