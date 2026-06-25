@@ -1259,7 +1259,7 @@ faqs:
 
     <ul style="margin: 0; padding-left: 20px;">
 
-    <li>Anyone can do it: sign in with your email plus 2FA on the controller.</li>
+    <li>Anyone with a CalTopo account can do this. Sign in with your email plus 2FA on the controller.</li>
 
     <li>The session expires, so you may have to log in again, often right as you are about to fly.</li>
 
@@ -1331,7 +1331,7 @@ faqs:
 
     <li>Set up Eagle Eyes Pilot as usual: name the drone, tap <strong>Connect license</strong>, and scan the QR code to activate at <a class="resource-link" href="https://www.eagleeyessearch.com" target="_blank">eagleeyessearch.com</a>.</li>
 
-    <li>At the <strong>Configuration</strong> step, create a new configuration and set your units and coordinate system. (You can also add procedures and emergency contacts.)</li>
+    <li>At the <strong>Configuration</strong> step, create a new configuration and set your units and coordinate system. You will then be asked if you want to set up a CalTopo Service Account. You can also add procedures and emergency contacts later in the process.</li>
 
     <li>Open <strong>CalTopo Service Account</strong> and leave that page open. Then move to a desktop or laptop for the next part.</li>
 
@@ -1365,9 +1365,7 @@ faqs:
 
     <h4 style="margin-top: 25px; margin-bottom: 15px; color: #333;">Adding more controllers later</h4>
 
-    <p>Once your team has a Service Account connected through its license, new team members do not repeat the CalTopo steps. On a fresh install they grant permissions, name the drone, scan the QR code to activate the license, and pick the existing configuration. The permanent CalTopo login comes with it, and they are ready to fly. First time painful, second time not so bad.</p>
-
-    <p>See additional instructions in the <a class="resource-link" href="https://docs.google.com/document/d/1Uq8lHS-V7B7ekQ9h6gRrnnclu9vuM4zKRBzB3tS0fGQ/edit?tab=t.0#bookmark=id.me3hnlz43xno" target="_blank">📘 Eagle Eyes Pilot Manual</a></p>'
+    <p>Once your team has a Service Account connected through its license, new team members do not repeat the CalTopo steps. On a fresh install they grant permissions, name the drone, scan the QR code to activate the license, and pick the existing configuration. The permanent CalTopo login comes with it, and they are ready to fly. First time painful, second time not so bad.</p>'
 - id: offline-tracks-upload
   emoji: 📴
   question: Can I fly my drone offline and upload my drone's tracks to CalTopo?
