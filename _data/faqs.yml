@@ -1226,50 +1226,130 @@ faqs:
     </div>'
 - id: connect-caltopo
   emoji: 🗺
-  question: ️ How do I connect to Caltopo?
+  question: How do I connect to CalTopo?
   pages: []
   search:
-    alternates: caltopo integration link account connect setup
-    tags: caltopo connect integration link account
-  content: '<p style="margin-bottom: 20px; padding: 15px; background-color: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;"><strong>Note:</strong> The following Instructions apply to Eagle Eyes Pilot 1.5.0 <span style="background: #fd7e14; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; text-transform: uppercase; display: inline-block;">BETA</span>. For instructions on connecting CalTopo in Eagle Eyes Pilot 1.3.1 <span style="background: #28a745; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; text-transform: uppercase; display: inline-block;">STABLE</span>, see the video at the bottom of this answer.</p>
+    alternates: caltopo integration link account connect setup map browser login service account permanent login team admin one-off configuration controller
+    tags: caltopo connect integration link account service account permanent login team configuration setup admin browser login map
+  content: '<p>Connecting to CalTopo is optional. Separate from Eagle Eyes, CalTopo (also known as SARTopo) is already a great application for mapping and team situational awareness. If you have not tried it yet, we recommend creating an account and trying it out together with Eagle Eyes.</p>
 
-    <p style="text-align:center; font-size:2rem; font-weight:700; font-family:''Segoe UI'', ''Arial'', sans-serif; margin-bottom: 24px;">Optionally connect to a default Caltopo map and optionally connect to a CalTapo Service Account. <span style="background: #fd7e14; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; text-transform: uppercase; display: inline-block; margin-left: 8px;">BETA</span></p>
+    <p>Connecting Eagle Eyes with CalTopo means everyone with access to the CalTopo map can see the drone''s flight tracks and real-time location, and the drone pilot can fly with reference to the CalTopo map.</p>
 
-    <div style="position:relative; width:100%; height:0px; padding-bottom:56.250%; margin-bottom: 20px;">
+    <p>There are two ways to connect Eagle Eyes Pilot to CalTopo:</p>
 
-    <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="" frameborder="0" height="100%" referrerpolicy="strict-origin-when-cross-origin" src="https://www.youtube.com/embed/2U1mS0QmBrU?start=82" style="border:none; width:100%; height:100%; position:absolute; left:0px; top:0px; overflow:hidden;" title="YouTube video player" width="100%"></iframe>
+    <div style="padding: 12px 15px; background-color: #f4f6f9; border-left: 4px solid #2b6cb0; border-radius: 4px; margin-bottom: 12px;">
+
+    <p style="margin: 0 0 6px;"><strong>Option 1: Browser login.</strong> Quick, but temporary.</p>
+
+    <ul style="margin: 0; padding-left: 20px;">
+
+    <li>Anyone can do it: sign in with your email plus 2FA on the controller.</li>
+
+    <li>The session expires, so you may have to log in again, often right as you are about to fly.</li>
+
+    </ul>
+
+    </div>
+
+    <div style="padding: 12px 15px; background-color: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px; margin-bottom: 20px;">
+
+    <p style="margin: 0 0 6px;"><strong>Option 2: CalTopo Service Account.</strong> A permanent login (recommended).</p>
+
+    <ul style="margin: 0; padding-left: 20px;">
+
+    <li>Set up once per team, then every member reuses it. No more signing in.</li>
+
+    <li>Requires CalTopo Teams and an admin to create it (see Requirements below).</li>
+
+    </ul>
 
     </div>
 
-    <p style="text-align:center; font-size:2rem; font-weight:700; font-family:''Segoe UI'', ''Arial'', sans-serif; margin-bottom: 24px; margin-top: 40px;">Change the CalTapo map you''re on by scanning a QR code. <span style="background: #fd7e14; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; text-transform: uppercase; display: inline-block; margin-left: 8px;">BETA</span></p>
+    <h4 style="margin-top: 25px; margin-bottom: 15px; color: #333;">Option 1: Logging in with a browser</h4>
 
-    <div style="position:relative; width:100%; height:0px; padding-bottom:56.250%; margin-bottom: 20px;">
-
-    <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="" frameborder="0" height="100%" referrerpolicy="strict-origin-when-cross-origin" src="https://www.youtube.com/embed/AcoXas2zgsY?start=31" style="border:none; width:100%; height:100%; position:absolute; left:0px; top:0px; overflow:hidden;" title="YouTube video player" width="100%"></iframe>
-
-    </div>
-
-    <p style="text-align:center; font-size:2rem; font-weight:700; font-family:''Segoe UI'', ''Arial'', sans-serif; margin-bottom: 24px; margin-top: 40px;">Connecting to your team''s CalTopo map. - For Eagle Eyes Pilot 1.3.1 <span style="background: #28a745; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; text-transform: uppercase; display: inline-block; margin-left: 8px;">STABLE</span></p>
-
-    <div class="video-container">
-
-    <iframe allowfullscreen="" frameborder="0" height="400px" src="https://streamable.com/e/vyy7oc?autoplay=0" style="border-radius: 8px;" width="100%"></iframe>
-
-    </div>
+    <p>This gets you onto a CalTopo map for the current session. It is the quickest way to start, but the login is temporary, so you may need to sign in again later.</p>
 
     <ol>
 
-    <li>Select Fly in Eagle Eyes Pilot</li>
+    <li>Select <strong>Fly</strong> in Eagle Eyes Pilot.</li>
 
-    <li>Select the three lines at the top right of the screen</li>
+    <li>Select the three lines at the top right of the screen.</li>
 
-    <li>Select "Connect to Caltopo"</li>
+    <li>Select <strong>Connect to CalTopo</strong>.</li>
 
-    <li>Sign into Caltopo</li>
+    <li>Sign in to CalTopo.</li>
 
-    <li>Choose the map from "Your Data" in Caltopo (double tap to select)</li>
+    <li>Choose the map from <strong>Your Data</strong> in CalTopo (double tap to select).</li>
 
     </ol>
+
+    <h4 style="margin-top: 25px; margin-bottom: 15px; color: #333;">Option 2: Setting up a CalTopo Service Account (permanent login)</h4>
+
+    <p>A Service Account gives your whole team a permanent login to CalTopo on the controller, so nobody has to sign in again before a search. You set it up once per team, and from then on a new controller goes from a fresh install to fully set up in under a minute. The video below walks through the whole process.</p>
+
+    <div style="position:relative; width:100%; height:0px; padding-bottom:56.250%; margin-bottom: 20px;">
+
+    <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="" frameborder="0" height="100%" referrerpolicy="strict-origin-when-cross-origin" src="https://www.youtube.com/embed/tyNlhDdTn3I" style="border:none; width:100%; height:100%; position:absolute; left:0px; top:0px; overflow:hidden;" title="YouTube video player" width="100%"></iframe>
+
+    </div>
+
+    <h4 style="margin-top: 25px; margin-bottom: 15px; color: #333;">Requirements</h4>
+
+    <p>To set up a Service Account, you need:</p>
+
+    <ol style="margin-top: 0;">
+
+    <li>Your organization is on <strong>CalTopo Teams</strong>.</li>
+
+    <li>You have <strong>admin access</strong> to your CalTopo team (or you work with someone who does).</li>
+
+    </ol>
+
+    <p>This is a one-off. Once it is done, future team members only scan a QR code and pick the existing configuration.</p>
+
+    <h4 style="margin-top: 25px; margin-bottom: 15px; color: #333;">Setting up the Service Account</h4>
+
+    <p style="margin-bottom: 8px;"><strong>On the controller</strong></p>
+
+    <ol style="margin-top: 0;">
+
+    <li>Set up Eagle Eyes Pilot as usual: name the drone, tap <strong>Connect license</strong>, and scan the QR code to activate at <a class="resource-link" href="https://www.eagleeyessearch.com" target="_blank">eagleeyessearch.com</a>.</li>
+
+    <li>At the <strong>Configuration</strong> step, create a new configuration and set your units and coordinate system. (You can also add procedures and emergency contacts.)</li>
+
+    <li>Open <strong>CalTopo Service Account</strong> and leave that page open. Then move to a desktop or laptop for the next part.</li>
+
+    </ol>
+
+    <p style="margin-bottom: 8px;"><strong>On your laptop, in CalTopo</strong> (you must be a team admin)</p>
+
+    <ol style="margin-top: 0;">
+
+    <li>Go to <a class="resource-link" href="https://www.eagleeyessearch.com/caltopo" target="_blank">eagleeyessearch.com/caltopo</a>, which walks you through these CalTopo steps.</li>
+
+    <li>Sign in at <a class="resource-link" href="https://caltopo.com" target="_blank">caltopo.com</a>, open your team''s <strong>Admin</strong> menu, and go to <strong>Details</strong>.</li>
+
+    <li><strong>Create a service account</strong> with <strong>Update</strong> permissions. (Update lets the drone add objects to a map and delete its own, but not anyone else''s.)</li>
+
+    <li>Copy the <strong>credential secret</strong>, <strong>account ID</strong>, and <strong>credential ID</strong> into the Service Account page.</li>
+
+    <li>Create a <strong>connect key</strong> for live tracking: go to <strong>Access &rarr; Trackable Devices</strong>, create one, paste it in, and click <strong>Verify and connect</strong>. This lets your drone appear as a live shared location on the map.</li>
+
+    </ol>
+
+    <p style="margin-bottom: 8px;"><strong>Back on the controller</strong></p>
+
+    <ol style="margin-top: 0;">
+
+    <li>Scan the <strong>QR code</strong> shown on the laptop to load the Service Account onto the controller. (You can also save it as a file or copy the code.)</li>
+
+    <li>Tap <strong>Save configuration</strong>. After a few seconds the controller reports setup complete, and you are ready to choose a map and fly.</li>
+
+    </ol>
+
+    <h4 style="margin-top: 25px; margin-bottom: 15px; color: #333;">Adding more controllers later</h4>
+
+    <p>Once your team has a Service Account connected through its license, new team members do not repeat the CalTopo steps. On a fresh install they grant permissions, name the drone, scan the QR code to activate the license, and pick the existing configuration. The permanent CalTopo login comes with it, and they are ready to fly. First time painful, second time not so bad.</p>
 
     <p>See additional instructions in the <a class="resource-link" href="https://docs.google.com/document/d/1Uq8lHS-V7B7ekQ9h6gRrnnclu9vuM4zKRBzB3tS0fGQ/edit?tab=t.0#bookmark=id.me3hnlz43xno" target="_blank">📘 Eagle Eyes Pilot Manual</a></p>'
 - id: offline-tracks-upload
