@@ -233,6 +233,117 @@ faqs:
     <div style="position:relative; width:100%; height:0px; padding-bottom:56.250%; margin-top: 24px;">
     <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="" frameborder="0" height="100%" referrerpolicy="strict-origin-when-cross-origin" src="https://www.youtube.com/embed/5C5rXdrCVVU" style="border:none; width:100%; height:100%; position:absolute; left:0px; top:0px; overflow:hidden;" title="YouTube video player" width="100%"></iframe>
     </div>
+- id: flight-missions
+  emoji: 📐
+  question: How do automated flight missions work?
+  pages:
+  - page: pilot
+    order: 6
+  search:
+    alternates: flight mission automated grid line corridor search pattern polygon autonomous coverage IRT segment KMZ export saved missions star square waypoint
+    tags: flight missions grid line corridor automated search pattern polygon coverage KMZ saved star square
+  content: |
+    <style>.fm-faq p{margin:0 0 10px}.fm-faq ul,.fm-faq ol{margin:6px 0 12px}.fm-faq li{margin:0 0 4px}</style>
+    <div class="fm-faq">
+    <div style="position:relative; width:100%; height:0px; padding-bottom:56.250%; margin-bottom: 24px;"><iframe allow="fullscreen" allowfullscreen height="100%" src="https://streamable.com/e/r87cul?loop=0" width="100%" style="border:none; width:100%; height:100%; position:absolute; left:0px; top:0px; overflow:hidden;"></iframe></div>
+    <p style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #314268; margin-bottom: 20px;">
+    <strong>Contents</strong><br/>
+    <a href="javascript:void(0);" onclick="document.getElementById('fm-what').scrollIntoView({behavior: 'smooth', block: 'start'}); return false;" style="color: #314268; text-decoration: underline; cursor: pointer;">&rarr; What are flight missions?</a><br/>
+    <a href="javascript:void(0);" onclick="document.getElementById('fm-which').scrollIntoView({behavior: 'smooth', block: 'start'}); return false;" style="color: #314268; text-decoration: underline; cursor: pointer;">&rarr; Which mission type should I use?</a><br/>
+    <a href="javascript:void(0);" onclick="document.getElementById('fm-line').scrollIntoView({behavior: 'smooth', block: 'start'}); return false;" style="color: #314268; text-decoration: underline; cursor: pointer;">&rarr; Line &amp; Corridor missions</a><br/>
+    <a href="javascript:void(0);" onclick="document.getElementById('fm-grid').scrollIntoView({behavior: 'smooth', block: 'start'}); return false;" style="color: #314268; text-decoration: underline; cursor: pointer;">&rarr; Grid missions</a><br/>
+    <a href="javascript:void(0);" onclick="document.getElementById('fm-params').scrollIntoView({behavior: 'smooth', block: 'start'}); return false;" style="color: #314268; text-decoration: underline; cursor: pointer;">&rarr; Setting grid parameters</a><br/>
+    <a href="javascript:void(0);" onclick="document.getElementById('fm-fly').scrollIntoView({behavior: 'smooth', block: 'start'}); return false;" style="color: #314268; text-decoration: underline; cursor: pointer;">&rarr; Review, fly, or export</a><br/>
+    <a href="javascript:void(0);" onclick="document.getElementById('fm-saved').scrollIntoView({behavior: 'smooth', block: 'start'}); return false;" style="color: #314268; text-decoration: underline; cursor: pointer;">&rarr; Saved missions</a><br/>
+    <a href="javascript:void(0);" onclick="document.getElementById('fm-after').scrollIntoView({behavior: 'smooth', block: 'start'}); return false;" style="color: #314268; text-decoration: underline; cursor: pointer;">&rarr; Processing the imagery afterward</a>
+    </p>
+    <span id="fm-what" style="scroll-margin-top: 100px;"></span>
+    <p style="font-size: 1.3em; font-weight: bold; color: #314268; margin: 24px 0 8px;">What are flight missions?</p>
+    <p>Flight missions are available in Eagle Eyes Pilot 1.7.1 and up. They let the drone fly a search pattern automatically and capture photos or video as it goes, instead of flying every pass by hand. You plan the mission on the map, review the preview, and launch.</p>
+    <p>Why fly an automated mission:</p>
+    <ul style="padding-left: 20px;">
+    <li><strong>Uniform coverage:</strong> systematic coverage of the search area, tuned for terrain and vegetation.</li>
+    <li><strong>Eliminate human error:</strong> automated flight paths keep passes consistent and close the gaps manual piloting leaves.</li>
+    <li><strong>Liability protection:</strong> documented coverage proves the area was thoroughly searched.</li>
+    </ul>
+    <span id="fm-which" style="scroll-margin-top: 100px;"></span>
+    <p style="font-size: 1.3em; font-weight: bold; color: #314268; margin: 24px 0 8px;">Which mission type should I use?</p>
+    <p>Eagle Eyes supports the following flight mission types:</p>
+    <div style="display: flex; gap: 20px; margin: 14px 0; flex-wrap: wrap;">
+    <div style="flex: 1; min-width: 260px; background:#f4f6f9; border-left: 4px solid #2b6cb0; border-radius: 6px; padding: 14px 16px;"><p style="margin:0 0 8px; font-weight:bold; color:#314268;">Line &amp; Corridor</p><ul style="margin:0; padding-left:18px;"><li>Best for linear features: trails, roads, rivers, and shorelines</li><li>Cover IRT assignments quickly</li><li>Ideal early in the search, when the subject may still be responsive</li></ul></div>
+    <div style="flex: 1; min-width: 260px; background:#f4f6f9; border-left: 4px solid #2b6cb0; border-radius: 6px; padding: 14px 16px;"><p style="margin:0 0 8px; font-weight:bold; color:#314268;">Grid</p><ul style="margin:0; padding-left:18px;"><li>Uniform, thorough coverage of open areas and defined search segments</li><li>Systematic coverage tuned for terrain and vegetation</li><li>Use when more time has elapsed or the subject is unresponsive</li></ul></div>
+    </div>
+    <span id="fm-line" style="scroll-margin-top: 100px;"></span>
+    <p style="font-size: 1.3em; font-weight: bold; color: #314268; margin: 24px 0 8px;">Line &amp; Corridor missions</p>
+    <p>A <strong>Line</strong> mission flies a single path along a feature. A <strong>Corridor</strong> mission flies parallel passes on either side of that feature for wider coverage. Both are based on a line drawn in the Eagle Eyes Pilot app or imported from CalTopo, and both support photo and video with configurable overlap.</p>
+    <p style="margin: 16px 0 6px;"><strong>Building a Line or Corridor mission</strong></p>
+    <ol style="padding-left: 22px;">
+    <li>Tap the line on the map, then tap the <strong>Line Mission</strong> icon to open the mission dialog.</li>
+    <li>Select the <strong>Line</strong> or <strong>Corridor</strong> mission type.</li>
+    <li>Enter the altitude and speed you want the drone to fly.</li>
+    <li>Set the camera parameters for your search (photo or video, with overlap).</li>
+    <li>Set return-to-home behavior, review the checklist, upload to the drone, and fly.</li>
+    </ol>
+    <div style="margin: 14px 0; text-align: center;"><img alt="Open a line mission: tap a line on the map, then the line-mission icon." src="/images/mission-line-find.png" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"/><p style="text-align: center; margin: 8px 0 0; font-size: 0.9em; color: #666;">Open a line mission: tap a line on the map, then the line-mission icon.</p></div>
+    <span id="fm-grid" style="scroll-margin-top: 100px;"></span>
+    <p style="font-size: 1.3em; font-weight: bold; color: #314268; margin: 24px 0 8px;">Grid missions</p>
+    <p>A <strong>Grid</strong> mission flies back-and-forth parallel passes to cover an area uniformly. It is based on a polygon drawn in the app or imported from CalTopo. If you need to draw one, tap the draw tool, sketch the polygon, tap Finish, name it, choose whether to upload it to CalTopo, and save.</p>
+    <p style="margin: 16px 0 6px;"><strong>Building a Grid mission</strong></p>
+    <ol style="padding-left: 22px;">
+    <li>Tap a drawn area or polygon on the map, then tap the <strong>Grid</strong> icon.</li>
+    <li>Choose a <strong>Grid</strong>, <strong>Square</strong>, or <strong>Star</strong> search pattern.</li>
+    <li>Enter the altitude and speed you want the drone to fly.</li>
+    <li>Set the camera parameters for your search.</li>
+    </ol>
+    <div style="margin: 14px 0; text-align: center;"><img alt="Open a grid mission: tap a drawn area, then the grid icon." src="/images/mission-grid-find.png" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"/><p style="text-align: center; margin: 8px 0 0; font-size: 0.9em; color: #666;">Open a grid mission: tap a drawn area, then the grid icon.</p></div>
+    <div style="margin: 14px 0; text-align: center;"><img alt="The Generate Grid dialog, with a live mission preview." src="/images/mission-grid-dialog.png" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"/><p style="text-align: center; margin: 8px 0 0; font-size: 0.9em; color: #666;">The Generate Grid dialog, with a live mission preview.</p></div>
+    <span id="fm-params" style="scroll-margin-top: 100px;"></span>
+    <p style="font-size: 1.3em; font-weight: bold; color: #314268; margin: 24px 0 8px;">Setting grid parameters</p>
+    <p>Fine-tune the pattern with grid line spacing, overlap percentage, IR camera, grid orientation, and the start corner (NW, NE, SW, or SE). The <strong>Mission Preview</strong> updates in real time as you adjust, showing flight altitude, estimated photos, area coverage, flight distance, and estimated flight time.</p>
+    <span id="fm-fly" style="scroll-margin-top: 100px;"></span>
+    <p style="font-size: 1.3em; font-weight: bold; color: #314268; margin: 24px 0 8px;">Review, fly, or export</p>
+    <p>When the pattern looks right, you have three options:</p>
+    <ul style="padding-left: 20px;">
+    <li><strong>Generate Grid:</strong> preview the flight path on the map before committing.</li>
+    <li><strong>Fly Mission:</strong> run the checklist, upload to the drone, and launch.</li>
+    <li><strong>Export KMZ:</strong> save the flight plan for use in other mapping software.</li>
+    </ul>
+    <p>While the mission flies itself, you or a teammate can watch the feed and the map for detections as coverage proceeds.</p>
+    <span id="fm-saved" style="scroll-margin-top: 100px;"></span>
+    <p style="font-size: 1.3em; font-weight: bold; color: #314268; margin: 24px 0 8px;">Saved missions</p>
+    <p>Missions you create are saved so you can return to them later.</p>
+    <ol style="padding-left: 22px;">
+    <li>Tap the <strong>Saved Missions</strong> icon in the map toolbar.</li>
+    <li>View the saved missions list with flight details.</li>
+    <li>Start, resume, view, or add notes to any mission.</li>
+    </ol>
+    <div style="margin: 14px 0; text-align: center;"><img alt="Find saved missions in the map toolbar." src="/images/mission-saved-find.png" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"/><p style="text-align: center; margin: 8px 0 0; font-size: 0.9em; color: #666;">Find saved missions in the map toolbar.</p></div>
+    <span id="fm-after" style="scroll-margin-top: 100px;"></span>
+    <p style="font-size: 1.3em; font-weight: bold; color: #314268; margin: 24px 0 8px;">Processing the imagery afterward</p>
+    <p>To review all the imagery a grid mission captures, process it after the flight in our desktop app <strong>Eagle Eyes Scan</strong>, or in <strong>Eagle Eyes Mirada</strong>.</p>
+    </div>
+- id: disconnect-device
+  emoji: 🔁
+  question: How do I disconnect a device from a license (free up a device slot)?
+  pages: []
+  search:
+    alternates: disconnect device release license slot transfer rotate move replace controller free up reactivate device-locked new device swap factory reset
+    tags: disconnect device release transfer rotate slot replace controller move license device-locked free
+  content: |
+    <span id="dd-how" style="scroll-margin-top: 100px;"></span>
+    <p style="font-size: 1.3em; font-weight: bold; color: #314268; margin-bottom: 15px;">How device transfers work</p>
+    <p>Eagle Eyes licenses are largely <strong>device-locked</strong>. Once a license is activated on a device, that license is tied to that device until the license expires, and that device slot cannot be used on another device. In other words, you cannot freely rotate a single license between different devices.</p>
+    <p>That said, limited device rotation is allowed when a device needs to be replaced, such as when you swap to a new controller. Each device slot can be transferred up to <strong>twice</strong> over the license term, so a license with 4 device slots allows up to <strong>8 device transfers in total</strong> (4 slots &times; 2).</p>
+    <p><strong>Reinstalling the Eagle Eyes app on the same device does not use a transfer.</strong> The app reuses the existing slot when it reactivates. Only disconnect a device when the license needs to move to a different physical device, such as replacing a controller, resetting a device to factory defaults, or moving a device between users.</p>
+    <span id="dd-steps" style="scroll-margin-top: 100px;"></span>
+    <p style="font-size: 1.3em; font-weight: bold; color: #314268; margin-bottom: 15px;">How to disconnect a device from a license</p>
+    <ol style="margin: 12px 0; padding-left: 22px;">
+    <li>In your account, go to the <strong>Devices</strong> page.</li>
+    <li>Find the device you want to disconnect.</li>
+    <li>Click the license shown on that device.</li>
+    <li>Click <strong>Disconnect</strong>.</li>
+    </ol>
+    <p>Before you confirm, the page shows how many transfers are left on that slot. Once you disconnect, the slot is freed and a different device can activate the license in its place.</p>
 - id: pilot-vs-scan
   emoji: ''
   question: ⚡ How do I Use Eagle Eyes Pilot and Scan together?
@@ -1243,7 +1354,9 @@ faqs:
 - id: connect-caltopo
   emoji: 🗺
   question: How do I connect to CalTopo?
-  pages: []
+  pages:
+  - page: pilot
+    order: 3
   search:
     alternates: caltopo integration link account connect setup map browser login service account permanent login team admin one-off configuration controller
     tags: caltopo connect integration link account service account permanent login team configuration setup admin browser login map
