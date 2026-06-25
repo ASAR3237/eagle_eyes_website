@@ -225,6 +225,9 @@ faqs:
     <p>While streaming, Eagle Eyes Pilot shows your credit balance and whether your current stream is using credits or streaming for free.</p>
     <p>For best results, use a stable internet connection such as Starlink, Wi-Fi, or a strong mobile hotspot.</p>
     <p>Please reach out at <span class="faq-email-link" onclick="copyEmailToClipboard()" style="color: #1e90ff; cursor: pointer; text-decoration: underline; font-weight: 500;">info@EagleEyesSearch.com</span></p>
+    <div style="position:relative; width:100%; height:0px; padding-bottom:56.250%; margin-top: 24px;">
+    <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="" frameborder="0" height="100%" referrerpolicy="strict-origin-when-cross-origin" src="https://www.youtube.com/embed/5C5rXdrCVVU" style="border:none; width:100%; height:100%; position:absolute; left:0px; top:0px; overflow:hidden;" title="YouTube video player" width="100%"></iframe>
+    </div>
 - id: pilot-vs-scan
   emoji: ''
   question: ⚡ How do I Use Eagle Eyes Pilot and Scan together?
