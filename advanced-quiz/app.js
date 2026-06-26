@@ -58,11 +58,46 @@
   let score = 0;
   let answered = false;
   let responses = [];        // indexed by ORIGINAL question position (canonical order)
-  const total = quiz.questions.length;
   // Display order is shuffled each attempt (anti-copying in a room of phones),
   // but results are recorded in the original order so the Sheet columns and
-  // dashboard stay aligned across students.
-  let order = shuffle(quiz.questions.map(function (_, i) { return i; }));
+  // dashboard stay aligned across students. For a "sample" quiz (e.g. the full
+  // practice exam) we draw a stratified random subset of the bank each attempt.
+  let order = buildOrder();
+  let total = order.length;
+
+  // Collect results for THIS quiz only when an endpoint is configured AND the
+  // quiz isn't flagged self-graded (e.g. the practice exam is self-graded).
+  function collecting() { return !!CONFIG.RESULTS_URL && !quiz.selfGraded; }
+
+  // Build the display order. If quiz.sample is set, draw that many questions:
+  // stratified by quiz.samplePlan (section -> count) when present, otherwise a
+  // plain random draw. No sample = the whole bank. Result is shuffled.
+  function buildOrder() {
+    var i, all = quiz.questions;
+    if (quiz.sample && quiz.sample < all.length) {
+      var chosen = [];
+      if (quiz.samplePlan) {
+        var bySec = {};
+        for (i = 0; i < all.length; i++) {
+          var s = all[i].section || "_";
+          (bySec[s] = bySec[s] || []).push(i);
+        }
+        for (var sec in quiz.samplePlan) {
+          if (!quiz.samplePlan.hasOwnProperty(sec)) continue;
+          var p = shuffle((bySec[sec] || []).slice());
+          chosen = chosen.concat(p.slice(0, quiz.samplePlan[sec]));
+        }
+      }
+      if (chosen.length < quiz.sample) {            // top up (no plan, or short)
+        var pool = shuffle(all.map(function (_, k) { return k; }));
+        for (i = 0; i < pool.length && chosen.length < quiz.sample; i++) {
+          if (chosen.indexOf(pool[i]) === -1) chosen.push(pool[i]);
+        }
+      }
+      return shuffle(chosen.slice(0, quiz.sample));
+    }
+    return shuffle(all.map(function (_, k) { return k; }));
+  }
 
   start();
 
@@ -71,7 +106,7 @@
   // yet, ask for name + email ONCE up front. After that (stored locally),
   // every quiz scanned on this phone skips straight to the questions.
   function start() {
-    if (CONFIG.RESULTS_URL && !hasStudent()) { renderStartGate(); }
+    if (collecting() && !hasStudent()) { renderStartGate(); }
     else { render(); }
   }
 
@@ -122,7 +157,7 @@
         '<a class="quizlink" href="?q=' + encodeURIComponent(id) + '">' +
           '<h3>' + escapeHtml(qz.title) + '</h3>' +
           '<p>' + escapeHtml(qz.description || "") + '</p>' +
-          '<div class="meta">' + qz.questions.length + ' questions &rarr;</div>' +
+          '<div class="meta">' + (qz.sample || qz.questions.length) + ' questions &rarr;</div>' +
         '</a>'
       );
     }).join("");
@@ -242,7 +277,7 @@
     else                  msg = "Keep studying this one and try again.";
 
     const stored = loadStudent();
-    const known = !!(CONFIG.RESULTS_URL && hasStudent());
+    const known = !!(collecting() && hasStudent());
 
     var saveBox = '';
     if (known) {
@@ -253,7 +288,7 @@
           '<p class="savemsg" id="savemsg">Sending…</p>' +
           '<p class="notme"><a href="#" id="notme">Not you?</a></p>' +
         '</div>';
-    } else if (CONFIG.RESULTS_URL) {
+    } else if (collecting()) {
       // Fallback (e.g. storage blocked) — ask here as before.
       saveBox =
         '<div class="save" id="save">' +
@@ -293,7 +328,7 @@
 
     document.getElementById("retry").addEventListener("click", function () {
       current = 0; score = 0; responses = [];
-      order = shuffle(quiz.questions.map(function (_, i) { return i; }));
+      order = buildOrder(); total = order.length;
       render();
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
@@ -305,7 +340,7 @@
         location.reload();   // re-runs the up-front name/email gate
       });
       submitAuto(pct);       // fire-and-update: send right away
-    } else if (CONFIG.RESULTS_URL) {
+    } else if (collecting()) {
       document.getElementById("savebtn")
         .addEventListener("click", function () { submitResults(pct); });
     }
