@@ -217,6 +217,14 @@ html, body {
 .notme a { color: var(--muted); }
 
 .footnote { text-align: center; color: var(--muted); font-size: 0.8rem; margin-top: 28px; }
-.sitenote { max-width: 640px; margin: 36px auto 24px; padding: 0 20px; text-align: center;
-  color: var(--muted); opacity: 0.6; font-size: 0.68rem; line-height: 1.45; }
+.disclaimer { max-width: 640px; margin: 24px auto 40px; padding: 0 16px; text-align: center; }
+.disclaimer summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center;
+  gap: 7px; color: var(--muted); font-size: 0.9rem; font-weight: 600; user-select: none; padding: 6px; }
+.disclaimer summary::-webkit-details-marker { display: none; }
+.disclaimer summary .ico { display: inline-grid; place-items: center; width: 18px; height: 18px;
+  border-radius: 50%; border: 1.5px solid var(--muted); font-size: 0.72rem; font-weight: 700;
+  font-style: italic; line-height: 1; }
+.disclaimer[open] summary { margin-bottom: 10px; }
+.disclaimer p { margin: 0; text-align: left; color: var(--ink); font-size: 1rem; line-height: 1.55;
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
 .error { text-align:center; padding: 40px 20px; color: var(--muted); }
